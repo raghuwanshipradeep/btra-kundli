@@ -1,0 +1,105 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.astro_details_title }}</h2>
+
+    {% if astro %}
+    <table class="kv-table">
+        <tbody>
+            <tr>
+                <td>{{ locale.ascendant }}</td>
+                <td>{{ astro.ascendant }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.sign_lord }}</td>
+                <td>{{ astro.ascendant_lord }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.sun_sign }}</td>
+                <td>{{ astro.sign }} ({{ astro.SignLord }})</td>
+            </tr>
+            <tr>
+                <td>{{ locale.nakshatra }}</td>
+                <td>{{ astro.Naksahtra }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.nak_lord_col }}</td>
+                <td>{{ astro.NaksahtraLord }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.charan }}</td>
+                <td>{{ astro.Charan }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.tithi }}</td>
+                <td>{{ astro.Tithi }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.yoga }}</td>
+                <td>{{ astro.Yog }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.karana }}</td>
+                <td>{{ astro.Karan }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.varna }}</td>
+                <td>{{ astro.Varna }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.vashya }}</td>
+                <td>{{ astro.Vashya }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.yoni }}</td>
+                <td>{{ astro.Yoni }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.gan }}</td>
+                <td>{{ astro.Gan }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.nadi }}</td>
+                <td>{{ astro.Nadi }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.tatva }}</td>
+                <td>{{ astro.tatva }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.yunja }}</td>
+                <td>{{ astro.yunja }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.name_alphabet }}</td>
+                <td>{{ astro.name_alphabet }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.paya }}</td>
+                <td>{{ astro.paya }}</td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if ayanamsha_list %}
+    <hr class="divider">
+    <h3 class="section-subheader">{{ locale.ayanamsha_systems_title }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ locale.ayanamsha_type }}</th>
+                <th>{{ locale.ayanamsha_degree }}</th>
+                <th>{{ locale.ayanamsha_formatted }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in ayanamsha_list %}
+            <tr>
+                <td><strong>{{ a.type }}</strong></td>
+                <td>{{ "%.6f"|format(a.degree) }}&deg;</td>
+                <td>{{ a.formatted }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>

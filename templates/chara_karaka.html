@@ -1,0 +1,24 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.chara_karaka_title }}</h2>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{{ locale.karaka_col }}</th>
+        <th>{{ locale.planet_col }}</th>
+        <th>{{ locale.sign_col }}</th>
+        <th>{{ locale.degree_col }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in karaka_rows %}
+      <tr>
+        <td><strong>{{ locale.karaka_names.get(row.karaka, row.karaka) }}</strong></td>
+        <td>{{ locale.planet_names.get(row.planet, row.planet) }}</td>
+        <td>{{ locale.sign_names.get(row.sign, row.sign) }}</td>
+        <td>{{ row.degree }}°</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

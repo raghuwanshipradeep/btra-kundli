@@ -1,0 +1,82 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.tp_title }}</h2>
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 6mm; text-align: justify; color: #555;">
+    {{ locale.tp_subtitle }}
+  </p>
+
+  {% if lagna %}
+  <div style="margin-bottom: 6mm;">
+    <div class="dasha-current-card" style="background: linear-gradient(135deg, #8B0000 0%, #C62828 100%); margin-bottom: 3mm;">
+      <div class="period-label">{{ locale.tp_lagna_title }}</div>
+      <div class="planet-name">{{ lagna.sign }}</div>
+      <div class="period-dates">{{ locale.tp_lagna_desc }}</div>
+    </div>
+    {% if narratives and narratives.get("pillar_lagna") %}
+    <div class="report-card" style="border-left: 4px solid #8B0000; margin-top: 0;">
+      <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+        {{ narratives.get("pillar_lagna") }}
+      </p>
+    </div>
+    {% else %}
+    <div class="report-card" style="border-left: 4px solid #8B0000; margin-top: 0;">
+      <table class="kv-table">
+        <tr><td>{{ locale.tp_lagna_title }}</td><td>{{ lagna.sign }}</td></tr>
+        <tr><td>Lord</td><td>{{ lagna.lord }}</td></tr>
+        <tr><td>Nakshatra</td><td>{{ lagna.nakshatra }}</td></tr>
+        <tr><td>Degree</td><td>{{ lagna.degree }}°</td></tr>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if moon_rashi %}
+  <div style="margin-bottom: 6mm;">
+    <div class="dasha-current-card" style="background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%); margin-bottom: 3mm;">
+      <div class="period-label">{{ locale.tp_moon_title }}</div>
+      <div class="planet-name">{{ moon_rashi.sign }}</div>
+      <div class="period-dates">{{ locale.tp_moon_desc }}</div>
+    </div>
+    {% if narratives and narratives.get("pillar_moon_rashi") %}
+    <div class="report-card" style="border-left: 4px solid #1565C0; margin-top: 0;">
+      <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+        {{ narratives.get("pillar_moon_rashi") }}
+      </p>
+    </div>
+    {% else %}
+    <div class="report-card" style="border-left: 4px solid #1565C0; margin-top: 0;">
+      <table class="kv-table">
+        <tr><td>{{ locale.tp_moon_title }}</td><td>{{ moon_rashi.sign }}</td></tr>
+        <tr><td>Lord</td><td>{{ moon_rashi.lord }}</td></tr>
+        <tr><td>House</td><td>{{ moon_rashi.house }}</td></tr>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if nakshatra %}
+  <div style="margin-bottom: 6mm;">
+    <div class="dasha-current-card" style="background: linear-gradient(135deg, #6A1B9A 0%, #AB47BC 100%); margin-bottom: 3mm;">
+      <div class="period-label">{{ locale.tp_nakshatra_title }}</div>
+      <div class="planet-name">{{ nakshatra.nakshatra }}</div>
+      <div class="period-dates">{{ locale.tp_nakshatra_desc }}</div>
+    </div>
+    {% if narratives and narratives.get("pillar_nakshatra") %}
+    <div class="report-card" style="border-left: 4px solid #6A1B9A; margin-top: 0;">
+      <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+        {{ narratives.get("pillar_nakshatra") }}
+      </p>
+    </div>
+    {% else %}
+    <div class="report-card" style="border-left: 4px solid #6A1B9A; margin-top: 0;">
+      <table class="kv-table">
+        <tr><td>Nakshatra</td><td>{{ nakshatra.nakshatra }}</td></tr>
+        <tr><td>Lord</td><td>{{ nakshatra.lord }}</td></tr>
+        <tr><td>Pada</td><td>{{ nakshatra.pada }}</td></tr>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

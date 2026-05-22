@@ -1,0 +1,83 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.tatkalik_maitri_title }}</h2>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.tatkalik_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.planet_col }}</th>
+          {% for p in planet_order %}
+          <th>{{ locale.planet_names.get(p, p)[:3] }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for p1 in planet_order %}
+        <tr>
+          <td><strong>{{ locale.planet_names.get(p1, p1) }}</strong></td>
+          {% for p2 in planet_order %}
+            {% if p1 == p2 %}
+              <td>—</td>
+            {% else %}
+              {% set rel = tatkalik.get(p1, {}).get(p2, '') %}
+              <td>
+                {% if 'Friend' in rel %}
+                  <span style="color: green;">F</span>
+                {% else %}
+                  <span style="color: red;">E</span>
+                {% endif %}
+              </td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size: 0.85em; margin-top: 4px;">F = {{ locale.friendship }}, E = {{ locale.enemy }}</p>
+  </div>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.compound_friendship_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.planet_col }}</th>
+          {% for p in planet_order %}
+          <th>{{ locale.planet_names.get(p, p)[:3] }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for p1 in planet_order %}
+        <tr>
+          <td><strong>{{ locale.planet_names.get(p1, p1) }}</strong></td>
+          {% for p2 in planet_order %}
+            {% if p1 == p2 %}
+              <td>—</td>
+            {% else %}
+              {% set rel = compound.get(p1, {}).get(p2, '') %}
+              <td>
+                {% if rel == 'Best Friend' %}
+                  <span style="color: green; font-weight: bold;">BF</span>
+                {% elif rel == 'Friend' %}
+                  <span style="color: green;">F</span>
+                {% elif rel == 'Neutral' %}
+                  <span style="color: gray;">N</span>
+                {% elif rel == 'Enemy' %}
+                  <span style="color: red;">E</span>
+                {% elif rel == 'Bitter Enemy' %}
+                  <span style="color: red; font-weight: bold;">BE</span>
+                {% else %}
+                  {{ rel }}
+                {% endif %}
+              </td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size: 0.85em; margin-top: 4px;">BF = {{ locale.best_friend }}, F = {{ locale.friendship }}, N = {{ locale.neutral }}, E = {{ locale.enemy }}, BE = {{ locale.bitter_enemy }}</p>
+  </div>
+</div>

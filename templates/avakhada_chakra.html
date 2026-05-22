@@ -1,0 +1,20 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.avakhada_chakra_title }}</h2>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{{ locale.element }}</th>
+        <th>{{ locale.value }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for label, val in chakra_rows %}
+      <tr>
+        <td><strong>{{ label }}</strong></td>
+        <td>{{ val }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

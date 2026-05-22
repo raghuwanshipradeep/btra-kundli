@@ -1,0 +1,54 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.ryc_title }}</h2>
+
+  {% if count > 0 %}
+  <div class="dasha-current-card" style="background: linear-gradient(135deg, #D4AF37 0%, #F9A825 50%, #D4AF37 100%); margin-bottom: 5mm; text-align: center;">
+    <div class="planet-name" style="font-size: 16pt;">
+      {{ locale.ryc_header.replace("{count}", count | string) }}
+    </div>
+  </div>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.ryc_intro }}
+  </p>
+
+  {% set ns = namespace(count=0) %}
+  {% for yoga in raj_yogas %}
+    {% if ns.count > 0 and ns.count % 3 == 0 %}
+    </div>
+    <div class="section-page">
+      <h2 class="section-header">{{ locale.ryc_title }} (cont.)</h2>
+    {% endif %}
+
+    <div class="report-card" style="margin-bottom: 5mm; border-left: 4px solid #D4AF37;">
+      <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #8B0000; margin: 0 0 2mm 0;">
+        {{ yoga.name }}
+      </h4>
+      <table class="kv-table" style="margin-bottom: 3mm;">
+        <tr><td>{{ locale.ryc_planets_col }}</td><td>{{ yoga.planets }}</td></tr>
+        <tr><td>{{ locale.ryc_house_col }}</td><td>{{ yoga.house }}</td></tr>
+        <tr><td>{{ locale.ryc_effect_col }}</td><td>{{ yoga.effect }}</td></tr>
+      </table>
+      <p style="font-size: 10pt; color: #555; margin-bottom: 2mm;">{{ yoga.description }}</p>
+
+      {% set celeb_key = "raj_yoga_celeb_" ~ yoga.name %}
+      {% if narratives and narratives.get(celeb_key) %}
+      <div style="border-top: 1px solid #E0D8C0; padding-top: 3mm; margin-top: 2mm;">
+        <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+          {{ narratives.get(celeb_key) }}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+    {% set ns.count = ns.count + 1 %}
+  {% endfor %}
+
+  {% else %}
+  <div class="report-card" style="margin-top: 5mm; border-left: 4px solid #D4AF37;">
+    <p style="font-size: 11pt; line-height: 1.7; text-align: justify; margin: 0;">
+      {{ locale.ryc_no_yogas }}
+    </p>
+  </div>
+  {% endif %}
+</div>

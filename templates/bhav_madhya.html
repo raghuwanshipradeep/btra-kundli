@@ -1,0 +1,62 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.bhav_madhya_title }}</h2>
+
+    <table class="kv-table mb-4">
+        <tbody>
+            <tr>
+                <td>{{ locale.ascendant }}</td>
+                <td>{{ "%.4f"|format(bhav.ascendant) }}&deg;</td>
+            </tr>
+            <tr>
+                <td>{{ locale.midheaven }}</td>
+                <td>{{ "%.4f"|format(bhav.midheaven) }}&deg;</td>
+            </tr>
+            <tr>
+                <td>{{ locale.ayanamsha }}</td>
+                <td>{{ "%.6f"|format(bhav.ayanamsha) }}&deg;</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 class="section-subheader">{{ locale.bhav_madhya_subtitle }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ locale.house_label }}</th>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.degree_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in bhav.bhav_madhya %}
+            <tr>
+                <td><strong>{{ locale.house_label }} {{ entry.house }}</strong></td>
+                <td>{{ locale.sign_names.get(entry.sign, entry.sign) }}</td>
+                <td>{{ "%.4f"|format(entry.norm_degree) }}&deg;</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <h3 class="section-subheader">{{ locale.bhav_sandhi_subtitle }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ locale.house_label }}</th>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.degree_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in bhav.bhav_sandhi %}
+            <tr>
+                <td><strong>{{ locale.house_label }} {{ entry.house }}</strong></td>
+                <td>{{ locale.sign_names.get(entry.sign, entry.sign) }}</td>
+                <td>{{ "%.4f"|format(entry.norm_degree) }}&deg;</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

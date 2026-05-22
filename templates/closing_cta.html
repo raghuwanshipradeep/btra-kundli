@@ -1,0 +1,45 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.cta_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.8; text-align: center; margin-bottom: 8mm; color: #555;">
+    {{ locale.cta_intro|replace('{name}', name) }}
+  </p>
+
+  <div style="display: flex; gap: 6mm; margin-bottom: 8mm;">
+    {% if cta_consult_url %}
+    <div style="flex: 1; background: linear-gradient(135deg, #FFF8E1 0%, #FFFDF5 100%); border: 1px solid #D4AF37; border-radius: 3mm; padding: 6mm; text-align: center;">
+      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--maroon); margin-bottom: 3mm;">
+        {{ locale.cta_consult_heading }}
+      </h3>
+      <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 5mm; color: #555;">
+        {{ locale.cta_consult_desc }}
+      </p>
+      <div style="background: var(--maroon); color: white; padding: 3mm 6mm; border-radius: 2mm; display: inline-block; font-size: 10pt; font-weight: 600;">
+        {{ locale.cta_consult_button }}
+      </div>
+      <p style="font-size: 8.5pt; color: #999; margin-top: 2mm;">{{ cta_consult_url }}</p>
+    </div>
+    {% endif %}
+
+    {% if cta_pooja_url %}
+    <div style="flex: 1; background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%); border: 1px solid #81C784; border-radius: 3mm; padding: 6mm; text-align: center;">
+      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: #2E7D32; margin-bottom: 3mm;">
+        {{ locale.cta_pooja_heading }}
+      </h3>
+      <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 5mm; color: #555;">
+        {{ locale.cta_pooja_desc }}
+      </p>
+      <div style="background: #2E7D32; color: white; padding: 3mm 6mm; border-radius: 2mm; display: inline-block; font-size: 10pt; font-weight: 600;">
+        {{ locale.cta_pooja_button }}
+      </div>
+      <p style="font-size: 8.5pt; color: #999; margin-top: 2mm;">{{ cta_pooja_url }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="text-align: center; padding-top: 6mm; border-top: 1px solid #E0D5C5;">
+    <p style="font-size: 11pt; line-height: 1.8; color: #555;">
+      {{ locale.cta_signoff|replace('{name}', name) }}
+    </p>
+  </div>
+</div>

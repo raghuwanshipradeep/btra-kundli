@@ -1,0 +1,73 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.planets_title }}</h2>
+
+    <table class="planets-table">
+        <thead>
+            <tr>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.sign_lord_col }}</th>
+                <th>{{ locale.nakshatra_col }}</th>
+                <th>{{ locale.nak_lord_col }}</th>
+                <th>{{ locale.pada_col }}</th>
+                <th>{{ locale.degree_col }}</th>
+                <th>{{ locale.house_col }}</th>
+                <th>{{ locale.retro_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for planet in planets %}
+            {% set is_benefic = planet.name in ['Jupiter', 'Venus', 'Mercury', 'Moon'] %}
+            {% set is_malefic = planet.name in ['Saturn', 'Mars', 'Rahu', 'Ketu', 'Sun'] %}
+            <tr class="{% if is_benefic %}benefic{% elif is_malefic %}malefic{% endif %}">
+                <td>
+                    <strong>{{ locale.planet_names.get(planet.name, planet.name) }}</strong>
+                    {% if lang == 'hi' and planet.name in locale.planet_names_en %}
+                    <br><span style="font-size:8pt;color:#999">{{ planet.name }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ locale.sign_names.get(planet.sign, planet.sign) }}</td>
+                <td>{{ planet.signLord }}</td>
+                <td>{{ planet.nakshatra }}</td>
+                <td>{{ planet.nakshatraLord }}</td>
+                <td>{{ planet.nakshatra_pad }}</td>
+                <td>{{ "%.2f"|format(planet.normDegree) }}°</td>
+                <td>{{ planet.house }}</td>
+                <td>
+                    {% if planet.isRetro == "true" %}
+                    <span class="retro-badge">R</span>
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% set ns = namespace(narr_count=0) %}
+{% for planet in planets if planet.name != "Ascendant" %}
+{% set narr_key = "planet_" ~ planet.name %}
+{% if narratives and narratives.get(narr_key) %}
+{% if ns.narr_count % 3 == 0 %}
+<div class="section-page">
+  <h2 class="section-header">{{ locale.planets_title }} — {{ locale.get("narrative_subtitle", "Insights") }}</h2>
+{% endif %}
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #8B0000; margin: 0 0 2mm 0;">
+      {{ locale.planet_names.get(planet.name, planet.name) }} — {{ locale.sign_names.get(planet.sign, planet.sign) }} ({{ locale.house_col }} {{ planet.house }})
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ narratives.get(narr_key) }}</p>
+  </div>
+
+{% set ns.narr_count = ns.narr_count + 1 %}
+{% if ns.narr_count % 3 == 0 %}
+</div>
+{% endif %}
+{% endif %}
+{% endfor %}
+{% if ns.narr_count > 0 and ns.narr_count % 3 != 0 %}
+</div>
+{% endif %}

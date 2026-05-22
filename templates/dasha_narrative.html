@@ -1,0 +1,81 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.dn_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.dn_intro }}
+  </p>
+
+  {% if current_md_planet %}
+  <div class="dasha-current-card" style="margin-bottom: 5mm;">
+    <div class="period-label">{{ locale.dn_current_md }}</div>
+    <div class="planet-name">{{ locale.planet_names.get(current_md_planet, current_md_planet) }}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% for narr in narratives %}
+{% if loop.index % 3 == 1 %}
+<div class="section-page">
+  <h2 class="section-header">{{ locale.dn_title }} ({{ locale.dn_continued }})</h2>
+{% endif %}
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3mm;">
+      <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin: 0;">
+        {{ locale.planet_names.get(narr.md_planet, narr.md_planet) }} — {{ locale.planet_names.get(narr.ad_planet, narr.ad_planet) }}
+      </h4>
+      <span style="font-size: 9pt; color: #666;">
+        {{ narr.start }} → {{ narr.end }}
+      </span>
+    </div>
+
+    <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
+      <tr>
+        <td style="width: 25%;">{{ locale.dn_md_house }}</td>
+        <td>{{ locale.gp_house_prefix }} {{ narr.md_house }}</td>
+        <td style="width: 25%;">{{ locale.dn_ad_house }}</td>
+        <td>{{ locale.gp_house_prefix }} {{ narr.ad_house }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.dn_nature }}</td>
+        <td>
+          {% if narr.md_nature == "benefic" %}
+            <span style="color: #2E7D32;">{{ locale.dn_benefic }}</span>
+          {% elif narr.md_nature == "malefic" %}
+            <span style="color: #B71C1C;">{{ locale.dn_malefic }}</span>
+          {% else %}
+            {{ locale.dn_mixed }}
+          {% endif %}
+        </td>
+        <td>{{ locale.dn_nature }}</td>
+        <td>
+          {% if narr.ad_nature == "benefic" %}
+            <span style="color: #2E7D32;">{{ locale.dn_benefic }}</span>
+          {% elif narr.ad_nature == "malefic" %}
+            <span style="color: #B71C1C;">{{ locale.dn_malefic }}</span>
+          {% else %}
+            {{ locale.dn_mixed }}
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>{{ locale.dn_relationship }}</td>
+        <td colspan="3">
+          {% if narr.friendship == "friend" %}
+            <span style="color: #2E7D32; font-weight: 600;">{{ locale.dn_friend }}</span>
+          {% elif narr.friendship == "enemy" %}
+            <span style="color: #B71C1C; font-weight: 600;">{{ locale.dn_enemy }}</span>
+          {% else %}
+            {{ locale.dn_neutral }}
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ narr.narrative }}</p>
+  </div>
+
+{% if loop.index % 3 == 0 or loop.last %}
+</div>
+{% endif %}
+{% endfor %}

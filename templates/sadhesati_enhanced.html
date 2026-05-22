@@ -1,0 +1,135 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.ss_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.ss_intro }}
+  </p>
+
+  {% if saturn and moon %}
+  <div style="display: flex; gap: 4mm; margin-bottom: 5mm;">
+    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #37474F 0%, #546E7A 100%);">
+      <div class="period-label">{{ locale.planet_names.get("Saturn", "Saturn") }}</div>
+      <div class="planet-name">{{ locale.sign_names.get(saturn.sign, saturn.sign) }}</div>
+      <div class="period-dates">{{ locale.gp_house_prefix }} {{ saturn.house }}</div>
+    </div>
+    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%);">
+      <div class="period-label">{{ locale.planet_names.get("Moon", "Moon") }}</div>
+      <div class="planet-name">{{ locale.sign_names.get(moon.sign, moon.sign) }}</div>
+      <div class="period-dates">{{ locale.gp_house_prefix }} {{ moon.house }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_status %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.ss_current_title }}
+    </h4>
+    <table class="kv-table">
+      {% for key, val in current_status.items() %}
+        {% if val is not none and val != "" %}
+        <tr>
+          <td>{{ key | replace('_', ' ') | title }}</td>
+          <td>{{ val }}</td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if life_details %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.ss_phases_title }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 3mm;">{{ locale.ss_phases_desc }}</p>
+
+    <table class="data-table" style="font-size: 9.5pt;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{{ locale.ss_phase }}</th>
+          <th>{{ locale.ss_sign }}</th>
+          <th>{{ locale.ss_start }}</th>
+          <th>{{ locale.ss_end }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in life_details %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            {% if entry is mapping %}
+              {{ entry.get("phase", entry.get("type", "")) }}
+            {% else %}
+              {{ entry }}
+            {% endif %}
+          </td>
+          <td>
+            {% if entry is mapping %}
+              {{ entry.get("saturn_sign", entry.get("sign", "")) }}
+            {% endif %}
+          </td>
+          <td>
+            {% if entry is mapping %}
+              {{ entry.get("start", entry.get("start_date", "")) }}
+            {% endif %}
+          </td>
+          <td>
+            {% if entry is mapping %}
+              {{ entry.get("end", entry.get("end_date", "")) }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.ss_practices_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.ss_practices_intro }}
+  </p>
+
+  {% for practice in locale.ss_daily_practices %}
+  <div class="dosha-card" style="margin-bottom: 3mm;">
+    <h4>{{ practice.title }}</h4>
+    <p style="font-size: 10.5pt; line-height: 1.6;">{{ practice.desc }}</p>
+  </div>
+  {% endfor %}
+
+  {% if remedies_data %}
+  <div class="report-card" style="margin-top: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.ss_remedies_title }}
+    </h4>
+    {% if remedies_data is mapping %}
+      {% for key, val in remedies_data.items() %}
+        {% if val is not none and val != "" %}
+        <div class="dosha-card" style="margin-bottom: 2mm;">
+          <h4>{{ key | replace('_', ' ') | title }}</h4>
+          {% if val is iterable and val is not string %}
+            {% for item in val %}
+              <p style="font-size: 10pt; margin-bottom: 1mm;">{{ item }}</p>
+            {% endfor %}
+          {% else %}
+            <p style="font-size: 10pt;">{{ val }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% elif remedies_data is iterable and remedies_data is not string %}
+      {% for item in remedies_data %}
+        <p style="font-size: 10pt; margin-bottom: 2mm;">{{ item }}</p>
+      {% endfor %}
+    {% else %}
+      <p style="font-size: 10pt;">{{ remedies_data }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

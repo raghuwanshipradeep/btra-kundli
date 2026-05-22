@@ -1,0 +1,101 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.rr_title }}</h2>
+  <p class="section-desc">{{ locale.rr_desc }}</p>
+
+  {% if narrative_personal %}
+  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+      {{ narrative_personal }}
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.rr_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.rr_mukhi_col }}</th>
+          <th>{{ locale.rr_deity_col }}</th>
+          <th>{{ locale.rr_planet_col }}</th>
+          <th>{{ locale.rr_benefit_col }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rudraksha_list %}
+        <tr>
+          <td><strong>{{ r.mukhi }} {{ locale.rr_mukhi_col }}</strong></td>
+          <td>{{ r.deity }}</td>
+          <td>{{ r.planet }}</td>
+          <td>{{ r.benefit }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if puja_list %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.rr_puja_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.deity }}</th>
+          <th>{{ locale.rr_benefit_col }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for puja in puja_list %}
+        <tr>
+          <td><strong>{{ puja.puja_name }}</strong>{% if puja.deity %} ({{ puja.deity }}){% endif %}</td>
+          <td>{{ puja.benefit }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.rr_title }} (cont.)</h2>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.rr_how_to_wear_title }}</h3>
+    {% if narrative_guidance %}
+    <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+      <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+        {{ narrative_guidance }}
+      </p>
+    </div>
+    {% endif %}
+    {% for step in locale.rr_how_to_wear_steps %}
+    <div class="report-card" style="margin-bottom: 2mm;">
+      <h4 style="font-size: 10pt; color: var(--maroon); margin-bottom: 1mm;">{{ loop.index }}. {{ step.title }}</h4>
+      <p style="font-size: 9.5pt; line-height: 1.5; margin: 0;">{{ step.desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.rr_fake_detection_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 25%;">{{ locale.rr_mukhi_col if lang == 'hi' else 'Test' }}</th>
+          <th>{{ locale.details }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for test in locale.rr_fake_tests %}
+        <tr>
+          <td><strong>{{ test.test }}</strong></td>
+          <td>{{ test.desc }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "partials/remedy_disclaimer.html" %}
+</div>

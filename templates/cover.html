@@ -1,0 +1,65 @@
+<div class="cover-page">
+    <svg class="cover-mandala" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="250" cy="250" r="240" fill="none" stroke="#D4AF37" stroke-width="1"/>
+        <circle cx="250" cy="250" r="200" fill="none" stroke="#D4AF37" stroke-width="0.5"/>
+        <circle cx="250" cy="250" r="160" fill="none" stroke="#D4AF37" stroke-width="0.5"/>
+        <circle cx="250" cy="250" r="120" fill="none" stroke="#D4AF37" stroke-width="0.5"/>
+        {% for i in range(12) %}
+        <line x1="250" y1="10" x2="250" y2="490" fill="none" stroke="#D4AF37" stroke-width="0.3"
+              transform="rotate({{ i * 30 }}, 250, 250)"/>
+        {% endfor %}
+        {% for i in range(6) %}
+        <polygon points="250,50 {% for j in range(1,6) %}{{ 250 + 200 * (j/6 * 3.14159 * 2 / 6) | round(1) }},{{ 250 - 200 * (1 - j/6) | round(1) }} {% endfor %}"
+                 fill="none" stroke="#D4AF37" stroke-width="0.3"
+                 transform="rotate({{ i * 60 }}, 250, 250)"/>
+        {% endfor %}
+    </svg>
+
+    <div class="cover-content">
+        <div class="cover-om">ॐ</div>
+        <div class="cover-title">{{ locale.title }}</div>
+        <div class="cover-subtitle">{{ locale.subtitle }}</div>
+        <div class="cover-name">{{ name }}</div>
+
+        <div class="cover-details">
+            <span class="label">{{ locale.dob }}:</span> {{ request.day }}/{{ request.month }}/{{ request.year }}<br>
+            <span class="label">{{ locale.tob }}:</span> {{ "%02d"|format(request.hour) }}:{{ "%02d"|format(request.min) }}<br>
+            <span class="label">{{ locale.pob }}:</span> {% if request.place %}{{ request.place }}{% else %}{{ "%.4f"|format(request.lat) }}°N, {{ "%.4f"|format(request.lon) }}°E{% endif %}<br>
+            {% if birth and birth.sunrise %}
+            <span class="label">{{ locale.sunrise }}:</span> {{ birth.sunrise }}
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <span class="label">{{ locale.sunset }}:</span> {{ birth.sunset }}
+            {% endif %}
+        </div>
+
+        {% if planets %}
+        <div class="cover-badges">
+            {% set ascendant = planets | selectattr("name", "equalto", "Ascendant") | first %}
+            {% set sun = planets | selectattr("name", "equalto", "Sun") | first %}
+            {% set moon = planets | selectattr("name", "equalto", "Moon") | first %}
+            {% if ascendant %}
+            <span class="badge">
+                <span class="badge-label">{{ locale.ascendant }}</span>
+                {{ ascendant.sign }}
+            </span>
+            {% endif %}
+            {% if sun %}
+            <span class="badge">
+                <span class="badge-label">{{ locale.sun_sign }}</span>
+                {{ sun.sign }}
+            </span>
+            {% endif %}
+            {% if moon %}
+            <span class="badge">
+                <span class="badge-label">{{ locale.moon_sign }}</span>
+                {{ moon.sign }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="cover-footer">
+        {{ locale.generated_on }} {{ generated_date }}
+    </div>
+</div>

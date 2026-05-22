@@ -1,0 +1,185 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.dasha_title }}</h2>
+
+    {% if current_dasha %}
+    <div class="dasha-current-card">
+        <div class="period-label">{{ locale.current_mahadasha }}</div>
+        <div class="planet-name">{{ locale.planet_names.get(current_dasha.major.planet, current_dasha.major.planet) }}</div>
+        <div class="period-dates">{{ current_dasha.major.start }} → {{ current_dasha.major.end }}</div>
+    </div>
+
+    <div class="dasha-sub-cards">
+        <div class="dasha-sub-card">
+            <div class="sub-label">{{ locale.antardasha }}</div>
+            <div class="sub-planet">{{ locale.planet_names.get(current_dasha.minor.planet, current_dasha.minor.planet) }}</div>
+            <div class="sub-dates">{{ current_dasha.minor.start }} → {{ current_dasha.minor.end }}</div>
+        </div>
+        <div class="dasha-sub-card">
+            <div class="sub-label">{{ locale.pratyantar }}</div>
+            <div class="sub-planet">{{ locale.planet_names.get(current_dasha.sub_minor.planet, current_dasha.sub_minor.planet) }}</div>
+            <div class="sub-dates">{{ current_dasha.sub_minor.start }} → {{ current_dasha.sub_minor.end }}</div>
+        </div>
+    </div>
+
+    {% if timeline_pct is not none %}
+    <div class="timeline-bar">
+        <div class="timeline-fill" style="width: {{ timeline_pct }}%"></div>
+    </div>
+    <div class="timeline-label text-center">
+        {{ "%.1f"|format(timeline_pct) }}% {{ locale.of_current_mahadasha }}
+    </div>
+    {% endif %}
+
+    {% if narratives and narratives.get("current_mahadasha") %}
+    <div class="report-card" style="margin-bottom: 5mm; margin-top: 4mm;">
+      <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ narratives.get("current_mahadasha") }}</p>
+    </div>
+    {% endif %}
+
+    <hr class="divider">
+    {% endif %}
+
+    {% if major_dasha %}
+    <h3 class="section-subheader">{{ locale.all_mahadasha }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.start_date }}</th>
+                <th>{{ locale.end_date }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dasha in major_dasha %}
+            <tr class="{% if current_dasha and dasha.planet == current_dasha.major.planet %}active-dasha{% endif %}">
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ locale.planet_names.get(dasha.planet, dasha.planet) }}</strong></td>
+                <td>{{ dasha.start }}</td>
+                <td>{{ dasha.end }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% include "partials/section_disclaimer.html" %}
+</div>
+
+{% if sub_vdasha or sub_sub_vdasha %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.dasha_title }} (cont.)</h2>
+
+    {% if current_vdasha_all %}
+    <div class="dasha-current-card">
+        <div class="period-label">{{ locale.current_vdasha_all_title }}</div>
+        {% for k, v in current_vdasha_all.items() if k not in ('status',) and not k.endswith('_ms') and not k.endswith('_id') %}
+        <div class="sub-dates">{{ k | replace('_', ' ') | title }}: {{ v }}</div>
+        {% endfor %}
+    </div>
+    <hr class="divider">
+    {% endif %}
+
+    {% if sub_vdasha %}
+    <h3 class="section-subheader">{{ locale.sub_dasha_title }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.start_date }}</th>
+                <th>{{ locale.end_date }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sub_vdasha %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
+                <td>{{ item.start|default(item.get('start_date','')) }}</td>
+                <td>{{ item.end|default(item.get('end_date','')) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if sub_sub_vdasha %}
+    <h3 class="section-subheader">{{ locale.sub_sub_dasha_title }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.start_date }}</th>
+                <th>{{ locale.end_date }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sub_sub_vdasha %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
+                <td>{{ item.start|default(item.get('start_date','')) }}</td>
+                <td>{{ item.end|default(item.get('end_date','')) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if sub_sub_sub_vdasha or sub_sub_sub_sub_vdasha %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.dasha_title }} (cont.)</h2>
+
+    {% if sub_sub_sub_vdasha %}
+    <h3 class="section-subheader">{{ locale.sub_sub_sub_dasha_title }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.start_date }}</th>
+                <th>{{ locale.end_date }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sub_sub_sub_vdasha %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
+                <td>{{ item.start|default(item.get('start_date','')) }}</td>
+                <td>{{ item.end|default(item.get('end_date','')) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if sub_sub_sub_sub_vdasha %}
+    <h3 class="section-subheader">{{ locale.sub_sub_sub_sub_dasha_title }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.start_date }}</th>
+                <th>{{ locale.end_date }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sub_sub_sub_sub_vdasha %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
+                <td>{{ item.start|default(item.get('start_date','')) }}</td>
+                <td>{{ item.end|default(item.get('end_date','')) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endif %}

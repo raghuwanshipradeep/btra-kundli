@@ -1,0 +1,34 @@
+{% set theme_keys = ['career', 'finance', 'relationships', 'health', 'spiritual'] %}
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.thematic_title }}</h2>
+
+  {% for theme_key in theme_keys %}
+    {% set entries = themes.get(theme_key, []) %}
+    {% if entries %}
+    <div class="yogini-card">
+      <h3 class="sub-header">{{ locale.get('theme_' + theme_key, theme_key | title) }}</h3>
+      {% for entry in entries %}
+        <table class="kv-table" style="margin-bottom: 8px;">
+          <tr>
+            <td>{{ locale.planet_col }}</td>
+            <td><strong>{{ locale.planet_names.get(entry.planet, entry.planet) }}</strong> ({{ locale.house_label }} {{ entry.house }})</td>
+          </tr>
+          {% if entry.house_report %}
+          <tr>
+            <td>{{ locale.house_report_title }}</td>
+            <td>{{ entry.house_report }}</td>
+          </tr>
+          {% endif %}
+          {% if entry.rashi_report %}
+          <tr>
+            <td>{{ locale.rashi_report_title }}</td>
+            <td>{{ entry.rashi_report }}</td>
+          </tr>
+          {% endif %}
+        </table>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>

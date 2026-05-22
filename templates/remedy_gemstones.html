@@ -1,0 +1,50 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.rg_title }}</h2>
+  <p class="section-desc">{{ locale.rg_desc }}</p>
+
+  {% for gem in gem_cards %}
+  <div class="yogini-card" style="{% if loop.index == 1 %}border-left: 4px solid var(--gold);{% elif loop.index == 2 %}border-left: 4px solid var(--saffron);{% else %}border-left: 4px solid var(--benefic);{% endif %}">
+    <h3 class="sub-header">{{ locale[gem.label_key] }}</h3>
+    <p style="font-size: 9pt; color: #888; margin-bottom: 2mm;">{{ locale[gem.desc_key] }}</p>
+
+    <table class="kv-table">
+      <tr>
+        <td>{{ locale.rg_name_col }}</td>
+        <td><strong>{{ gem.name }}</strong>{% if gem.hindi_name %} ({{ gem.hindi_name }}){% endif %}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.rg_planet_col }}</td>
+        <td>{{ locale.planet_names.get(gem.planet, gem.planet) if locale.planet_names is defined else gem.planet }}</td>
+      </tr>
+      {% if gem.weight %}
+      <tr>
+        <td>{{ locale.rg_weight_col }}</td>
+        <td>{{ gem.weight }}</td>
+      </tr>
+      {% endif %}
+      {% if gem.metal %}
+      <tr>
+        <td>{{ locale.rg_metal_col }}</td>
+        <td>{{ gem.metal }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    {% if gem.narrative %}
+    <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-top: 3mm;">
+      <p style="font-size: 10pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+        {{ gem.narrative }}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="yogini-card" style="border-left: 4px solid var(--malefic); background: #FFF8E1;">
+    <h3 class="sub-header" style="color: #E65100;">{{ locale.rg_how_to_wear_title }}</h3>
+    <p style="font-size: 9.5pt; line-height: 1.6; margin: 0 0 3mm 0;">{{ locale.rg_how_to_wear_text }}</p>
+    <p style="font-size: 9pt; color: #B71C1C; font-weight: 600; margin: 0;">{{ locale.rg_consult_warning }}</p>
+  </div>
+
+  {% include "partials/remedy_disclaimer.html" %}
+</div>

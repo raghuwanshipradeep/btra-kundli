@@ -1,0 +1,64 @@
+{% macro render_value(val) %}
+  {% if val is mapping %}
+    <table class="kv-table">
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      <tr>
+        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% elif val is iterable and val is not string %}
+    {% for item in val %}
+      {% if item is mapping %}
+        {{ render_value(item) }}
+      {% else %}
+        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {{ val }}
+  {% endif %}
+{% endmacro %}
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.lalkitab_title }}</h2>
+
+  {% if horoscope %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.lalkitab_horoscope_title }}</h3>
+    {{ render_value(horoscope) }}
+  </div>
+  {% endif %}
+
+  {% if planets %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.lalkitab_planets_title }}</h3>
+    {{ render_value(planets) }}
+  </div>
+  {% endif %}
+
+  {% if houses %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.lalkitab_houses_title }}</h3>
+    {{ render_value(houses) }}
+  </div>
+  {% endif %}
+
+  {% if debts %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.lalkitab_debts_title }}</h3>
+    {{ render_value(debts) }}
+  </div>
+  {% endif %}
+
+  {% if remedies %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.lalkitab_remedies_title }}</h3>
+    {% for planet, remedy_data in remedies.items() %}
+      <h4>{{ planet }}</h4>
+      {{ render_value(remedy_data) }}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

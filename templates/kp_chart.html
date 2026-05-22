@@ -1,0 +1,88 @@
+{% macro render_value(val) %}
+  {% if val is mapping %}
+    <table class="kv-table">
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      <tr>
+        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% elif val is iterable and val is not string %}
+    {% for item in val %}
+      {% if item is mapping %}
+        {{ render_value(item) }}
+      {% else %}
+        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {{ val }}
+  {% endif %}
+{% endmacro %}
+
+<div class="section-page">
+    <h2 class="section-header">{{ locale.kp_title }}</h2>
+
+    {% if kp_houses %}
+    <table class="kp-table">
+        <thead>
+            <tr>
+                <th>{{ locale.house_col }}</th>
+                <th>{{ locale.signs_col }}</th>
+                <th>{{ locale.planets_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for house in kp_houses %}
+            <tr>
+                <td><strong>{{ locale.house_label }} {{ loop.index }}</strong></td>
+                <td>
+                    {% for s in house.signs %}
+                        {{ locale.sign_names_by_id.get(s, s) }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>
+                    {% if house.planets %}
+                        {{ house.planets | join(', ') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if kp_planets %}
+    <h3 class="section-subheader">{{ locale.kp_planets_title }}</h3>
+    {{ render_value(kp_planets) }}
+    {% endif %}
+
+    {% if kp_house_cusps %}
+    <h3 class="section-subheader">{{ locale.kp_house_cusps_title }}</h3>
+    {{ render_value(kp_house_cusps) }}
+    {% endif %}
+</div>
+
+{% if kp_house_significator or kp_planet_significator %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.kp_title }} (cont.)</h2>
+
+    {% if kp_house_significator %}
+    <h3 class="section-subheader">{{ locale.kp_house_significator_title }}</h3>
+    {{ render_value(kp_house_significator) }}
+    {% endif %}
+
+    {% if kp_planet_significator %}
+    <h3 class="section-subheader">{{ locale.kp_planet_significator_title }}</h3>
+    {{ render_value(kp_planet_significator) }}
+    {% endif %}
+
+    {% if kp_horoscope %}
+    <h3 class="section-subheader">{{ locale.kp_horoscope_title }}</h3>
+    {{ render_value(kp_horoscope) }}
+    {% endif %}
+</div>
+{% endif %}

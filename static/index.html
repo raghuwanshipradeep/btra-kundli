@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Kundli - Vedic Birth Chart Generator</title>
+    <link rel="stylesheet" href="/static/form.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Crimson+Pro:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="mandala-bg"></div>
+
+    <div class="container">
+        <header class="form-header">
+            <div class="om-symbol">&#x0950;</div>
+            <h1 class="main-title">Smart Kundli</h1>
+            <p class="sub-title">&#x091C;&#x0928;&#x094D;&#x092E; &#x0915;&#x0941;&#x0902;&#x0921;&#x0932;&#x0940;</p>
+            <p class="tagline">Vedic Birth Chart &amp; PDF Report Generator</p>
+        </header>
+
+        <form id="kundliForm" class="kundli-form">
+            <div class="form-section">
+                <h3 class="form-section-title">Personal Details</h3>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Enter full name" required>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Date &amp; Time of Birth</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="day">Day</label>
+                        <select id="day" name="day" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="month">Month</label>
+                        <select id="month" name="month" required>
+                            <option value="">Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="year" placeholder="e.g. 1990" min="1900" max="2100" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hour">Hour</label>
+                        <select id="hour" name="hour" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="min">Minute</label>
+                        <select id="min" name="min" required></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Place of Birth</h3>
+                <div class="form-group autocomplete-wrapper">
+                    <label for="place">Birth Place</label>
+                    <input type="text" id="place" name="place" placeholder="Start typing city name..." autocomplete="off" required>
+                    <div id="placeDropdown" class="autocomplete-dropdown"></div>
+                </div>
+                <div id="placeInfo" class="place-info" style="display:none;">
+                    <span id="placeInfoText"></span>
+                </div>
+                <input type="hidden" id="lat" name="lat">
+                <input type="hidden" id="lon" name="lon">
+                <input type="hidden" id="tzone" name="tzone" value="5.5">
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Options</h3>
+                <div class="form-group">
+                    <label for="lang">Report Language</label>
+                    <select id="lang" name="lang">
+                        <option value="en">English</option>
+                        <option value="hi">Hindi (&#x0939;&#x093F;&#x0928;&#x094D;&#x0926;&#x0940;)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span class="btn-text">Generate Kundli PDF</span>
+                <span class="btn-loader" style="display:none;"></span>
+            </button>
+        </form>
+
+        <div id="pdfResult" class="pdf-result" style="display:none;">
+            <h3 class="form-section-title">Your Kundli Report</h3>
+            <div class="pdf-actions">
+                <a id="pdfDownload" class="download-btn" download>Download PDF</a>
+                <button id="generateAnother" class="another-btn">Generate Another</button>
+            </div>
+            <div class="pdf-preview">
+                <iframe id="pdfFrame" width="100%" height="600"></iframe>
+            </div>
+        </div>
+
+        <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+        <footer class="form-footer">
+            <p>Powered by AstrologyAPI &bull; Smart Kundli</p>
+        </footer>
+    </div>
+
+    <script src="/static/form.js"></script>
+</body>
+</html>

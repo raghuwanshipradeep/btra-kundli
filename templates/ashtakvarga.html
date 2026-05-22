@@ -1,0 +1,41 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.ashtakvarga_title }}</h2>
+
+    <table class="ashtakvarga-table">
+        <thead>
+            <tr>
+                <th>{{ locale.planet_col }}</th>
+                {% for sign_name in sign_order %}
+                <th>{{ sign_name[:3] }}</th>
+                {% endfor %}
+                <th>{{ locale.total }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for planet_key, planet_label in planet_rows %}
+            <tr>
+                <td><strong>{{ planet_label }}</strong></td>
+                {% for sign_data in sarvashtak %}
+                {% set pts = sign_data[planet_key] %}
+                <td class="{% if pts <= 3 %}points-low{% elif pts == 4 %}points-mid{% else %}points-high{% endif %}">
+                    {{ pts }}
+                </td>
+                {% endfor %}
+                <td><strong>{{ planet_totals[planet_key] }}</strong></td>
+            </tr>
+            {% endfor %}
+
+            <tr class="total-row">
+                <td><strong>{{ locale.sarva_total }}</strong></td>
+                {% for sign_data in sarvashtak %}
+                <td>{{ sign_data.total_points }}</td>
+                {% endfor %}
+                <td><strong>{{ grand_total }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="note mt-4">
+        {{ locale.ashtakvarga_note }}
+    </p>
+</div>

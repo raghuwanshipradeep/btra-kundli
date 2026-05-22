@@ -1,0 +1,53 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.panchada_maitri_title }}</h2>
+
+    {% if maitri is mapping %}
+        {% set planets = maitri.keys() | list %}
+        {% if planets and maitri[planets[0]] is mapping %}
+        {# Matrix format: planet -> planet -> relationship #}
+        <table class="maitri-table">
+            <thead>
+                <tr>
+                    <th>{{ locale.planet_col }}</th>
+                    {% for p in planets %}
+                    <th>{{ planet_names.get(p, p)[:3] }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in planets %}
+                <tr>
+                    <td><strong>{{ planet_names.get(p, p) }}</strong></td>
+                    {% for q in planets %}
+                    {% set rel = maitri[p].get(q, maitri[p].get(q|lower, '')) if maitri[p] is mapping else '' %}
+                    <td class="{% if rel in ['Friend', 'Intimate Friend', 'Best Friend'] %}points-high{% elif rel in ['Enemy', 'Bitter Enemy'] %}points-low{% else %}points-mid{% endif %}">
+                        {{ rel if rel is string else rel }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        {# Simple key-value format #}
+        <table class="kv-table">
+            <tbody>
+                {% for key, value in maitri.items() %}
+                <tr>
+                    <td>{{ planet_names.get(key, key) }}</td>
+                    <td>
+                        {% if value is iterable and value is not string %}
+                            {{ value | join(', ') }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    {% else %}
+    <p class="note">{{ maitri }}</p>
+    {% endif %}
+</div>

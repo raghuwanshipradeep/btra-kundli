@@ -1,0 +1,47 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.chart_title }}</h2>
+
+    <div class="chart-container">
+        {% if chart_image %}
+            <img src="{{ chart_image }}" alt="Lagna Chart (D1)">
+        {% else %}
+            <div class="chart-placeholder">
+                <span class="chart-placeholder-text">{{ locale.chart_unavailable }}</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <p class="chart-caption">
+        {{ locale.chart_caption }}
+        {% if ascendant %}
+            — {{ locale.ascendant }}: {{ ascendant.sign }} {{ "%.2f"|format(ascendant.normDegree) }}°
+        {% endif %}
+    </p>
+
+    {% if horo_chart %}
+    <hr class="divider">
+    <h3 class="section-subheader">{{ locale.chart_data_title }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.planets_in_sign }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sign_data in horo_chart %}
+            <tr>
+                <td><strong>{{ sign_data.sign_name }}</strong></td>
+                <td>
+                    {% if sign_data.planet %}
+                        {{ sign_data.planet | join(', ') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>

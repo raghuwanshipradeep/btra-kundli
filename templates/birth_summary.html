@@ -1,0 +1,52 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.birth_summary_title }}</h2>
+
+    <table class="kv-table">
+        <tbody>
+            {% if ascendant %}
+            <tr>
+                <td>{{ locale.ascendant }}</td>
+                <td>{{ ascendant.sign }} ({{ "%.2f"|format(ascendant.normDegree) }}°)</td>
+            </tr>
+            {% endif %}
+            {% if sun %}
+            <tr>
+                <td>{{ locale.sun_sign }}</td>
+                <td>{{ sun.sign }}</td>
+            </tr>
+            {% endif %}
+            {% if moon %}
+            <tr>
+                <td>{{ locale.moon_sign }} / {{ locale.janma_rashi }}</td>
+                <td>{{ moon.sign }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.janma_nakshatra }}</td>
+                <td>{{ moon.nakshatra }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.nakshatra_pada }}</td>
+                <td>{{ moon.nakshatra_pad }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.nakshatra_lord }}</td>
+                <td>{{ moon.nakshatraLord }}</td>
+            </tr>
+            {% endif %}
+            {% if birth %}
+            <tr>
+                <td>{{ locale.ayanamsha }}</td>
+                <td>{{ "%.6f"|format(birth.ayanamsha) }}°</td>
+            </tr>
+            <tr>
+                <td>{{ locale.sunrise }}</td>
+                <td>{{ birth.sunrise }}</td>
+            </tr>
+            <tr>
+                <td>{{ locale.sunset }}</td>
+                <td>{{ birth.sunset }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

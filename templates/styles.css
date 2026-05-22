@@ -1,0 +1,940 @@
+@font-face {
+    font-family: 'Noto Sans Devanagari';
+    src: url('fonts/NotoSansDevanagari-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Noto Sans Devanagari';
+    src: url('fonts/NotoSansDevanagari-Regular.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Crimson Pro';
+    src: url('fonts/CrimsonPro-Variable.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Crimson Pro';
+    src: url('fonts/CrimsonPro-Variable.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Crimson Pro';
+    src: url('fonts/CrimsonPro-Variable.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('fonts/PlayfairDisplay-Variable.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('fonts/PlayfairDisplay-Variable.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+}
+
+:root {
+    --saffron: #FF6B2B;
+    --maroon: #8B0000;
+    --gold: #D4AF37;
+    --cream: #FFFDF5;
+    --cream-alt: #FFF5E6;
+    --charcoal: #2C2C2C;
+    --table-header-bg: #2C1A0E;
+    --table-header-text: #F5E6C8;
+    --benefic: #2E7D32;
+    --malefic: #B71C1C;
+    --kendra-gold: #F9A825;
+}
+
+@page {
+    size: A4;
+    margin: 12mm 12mm;
+    @bottom-center {
+        content: counter(page);
+        font-family: 'Crimson Pro', serif;
+        font-size: 10pt;
+        color: var(--maroon);
+    }
+}
+
+@page cover {
+    margin: 0;
+    @bottom-center { content: none; }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Crimson Pro', serif;
+    font-size: 11pt;
+    color: var(--charcoal);
+    background: var(--cream);
+    line-height: 1.5;
+}
+
+[lang="hi"] body,
+[lang="hi"] .hindi-text {
+    font-family: 'Noto Sans Devanagari', 'Crimson Pro', sans-serif;
+}
+
+/* ===== SECTION PAGES ===== */
+.section-page {
+    page-break-before: always;
+    padding: 5mm;
+    border: 2px solid var(--gold);
+    border-radius: 2mm;
+    min-height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.section-page::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+    bottom: 3px;
+    border: 1px solid var(--gold);
+    border-radius: 1.5mm;
+    pointer-events: none;
+}
+
+/* ===== COVER PAGE ===== */
+.cover-page {
+    page: cover;
+    width: 210mm;
+    height: 297mm;
+    background: linear-gradient(160deg, #1a0a00 0%, #2C1A0E 30%, #3d1a00 60%, #1a0a00 100%);
+    color: #F5E6C8;
+    display: table;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.cover-mandala {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 500px;
+    opacity: 0.06;
+}
+
+.cover-content {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 30mm 25mm;
+    position: relative;
+    z-index: 1;
+}
+
+.cover-om {
+    font-size: 48pt;
+    color: var(--gold);
+    margin-bottom: 5mm;
+    font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
+.cover-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36pt;
+    font-weight: 900;
+    color: var(--gold);
+    margin-bottom: 3mm;
+    letter-spacing: 2px;
+}
+
+.cover-subtitle {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+    font-size: 18pt;
+    color: #D4AF37;
+    margin-bottom: 15mm;
+    opacity: 0.85;
+}
+
+.cover-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 28pt;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 10mm;
+    border-bottom: 2px solid var(--gold);
+    border-top: 2px solid var(--gold);
+    padding: 5mm 0;
+    display: inline-block;
+}
+
+.cover-details {
+    font-size: 13pt;
+    line-height: 2.2;
+    color: #F5E6C8;
+}
+
+.cover-details .label {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.cover-badges {
+    margin-top: 12mm;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3mm 6mm;
+    margin: 2mm 3mm;
+    border: 1.5px solid var(--gold);
+    border-radius: 3mm;
+    font-size: 11pt;
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.badge .badge-label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    color: #C4A04E;
+}
+
+.cover-footer {
+    position: absolute;
+    bottom: 15mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9pt;
+    color: #8B7355;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 18pt;
+    font-weight: 700;
+    color: var(--maroon);
+    margin-bottom: 4mm;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid var(--gold);
+}
+
+.section-header .icon {
+    margin-right: 3mm;
+    color: var(--saffron);
+}
+
+.section-subheader {
+    font-family: 'Playfair Display', serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: var(--charcoal);
+    margin-top: 6mm;
+    margin-bottom: 3mm;
+}
+
+/* ===== TABLES ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4mm;
+    margin-bottom: 4mm;
+    font-size: 10pt;
+    table-layout: fixed;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+thead th {
+    background-color: var(--table-header-bg);
+    color: var(--table-header-text);
+    padding: 2.5mm 2mm;
+    text-align: left;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--gold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+tbody td {
+    padding: 2mm 2mm;
+    border-bottom: 0.5px solid #E0D5C5;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+tbody tr:nth-child(even) {
+    background-color: var(--cream-alt);
+}
+
+tbody tr:nth-child(odd) {
+    background-color: var(--cream);
+}
+
+/* Key-value table */
+.kv-table {
+    table-layout: auto;
+}
+
+.kv-table td:first-child {
+    font-weight: 600;
+    color: var(--maroon);
+    width: 40%;
+    white-space: nowrap;
+}
+
+/* ===== PLANET HIGHLIGHTS ===== */
+tr.benefic td:first-child {
+    color: var(--benefic);
+    font-weight: 700;
+}
+
+tr.malefic td:first-child {
+    color: var(--malefic);
+    font-weight: 700;
+}
+
+.retro-badge {
+    display: inline-block;
+    background: var(--malefic);
+    color: white;
+    font-size: 7pt;
+    padding: 0.5mm 2mm;
+    border-radius: 1mm;
+    font-weight: 700;
+}
+
+/* ===== HOUSE HIGHLIGHTS ===== */
+tr.kendra td:first-child {
+    color: var(--kendra-gold);
+    font-weight: 700;
+}
+
+tr.trikona td:first-child::after {
+    content: " \25B3";
+    color: var(--saffron);
+    font-size: 8pt;
+}
+
+/* ===== DASHA ===== */
+.dasha-current-card {
+    background: linear-gradient(135deg, #FF6B2B 0%, #FF8F5E 100%);
+    color: white;
+    padding: 6mm 8mm;
+    border-radius: 3mm;
+    margin-bottom: 5mm;
+}
+
+.dasha-current-card .planet-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22pt;
+    font-weight: 700;
+}
+
+.dasha-current-card .period-label {
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+}
+
+.dasha-current-card .period-dates {
+    font-size: 11pt;
+    margin-top: 2mm;
+}
+
+.dasha-sub-cards {
+    margin-bottom: 5mm;
+}
+
+.dasha-sub-card {
+    display: inline-block;
+    width: 48%;
+    background: var(--cream-alt);
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 3mm 5mm;
+    margin: 1mm;
+    vertical-align: top;
+}
+
+.dasha-sub-card .sub-label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    color: var(--maroon);
+    letter-spacing: 0.5px;
+}
+
+.dasha-sub-card .sub-planet {
+    font-weight: 700;
+    font-size: 13pt;
+    color: var(--charcoal);
+}
+
+.dasha-sub-card .sub-dates {
+    font-size: 9pt;
+    color: #666;
+}
+
+/* Timeline bar */
+.timeline-bar {
+    width: 100%;
+    height: 8mm;
+    background: #E0D5C5;
+    border-radius: 2mm;
+    margin: 4mm 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.timeline-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--saffron), var(--gold));
+    border-radius: 2mm;
+}
+
+.timeline-label {
+    font-size: 8pt;
+    color: #666;
+    margin-top: 1mm;
+}
+
+/* Active dasha row */
+tr.active-dasha {
+    background-color: #FFF0E0 !important;
+    font-weight: 700;
+}
+
+tr.active-dasha td {
+    border-top: 2px solid var(--saffron);
+    border-bottom: 2px solid var(--saffron);
+}
+
+/* ===== ASHTAKVARGA ===== */
+.ashtakvarga-table {
+    table-layout: fixed;
+    font-size: 8.5pt;
+}
+
+.ashtakvarga-table thead th {
+    text-align: center;
+    padding: 1.5mm 1mm;
+    font-size: 7.5pt;
+    letter-spacing: 0;
+}
+
+.ashtakvarga-table thead th:first-child {
+    text-align: left;
+    width: 14%;
+}
+
+.ashtakvarga-table td {
+    text-align: center;
+    font-size: 8.5pt;
+    padding: 1.5mm 1mm;
+}
+
+.ashtakvarga-table td:first-child {
+    text-align: left;
+    width: 14%;
+    font-size: 8pt;
+}
+
+.ashtakvarga-table td:last-child {
+    width: 8%;
+}
+
+.ashtakvarga-table td.points-low {
+    background-color: #FFEBEE;
+    color: var(--malefic);
+}
+
+.ashtakvarga-table td.points-mid {
+    background-color: var(--cream);
+}
+
+.ashtakvarga-table td.points-high {
+    background-color: #E8F5E9;
+    color: var(--benefic);
+}
+
+.ashtakvarga-table tr.total-row {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text);
+    font-weight: 700;
+}
+
+/* ===== CHART ===== */
+.chart-container {
+    text-align: center;
+    margin: 5mm 0;
+}
+
+.chart-container img {
+    max-width: 100%;
+    border: 2px solid var(--gold);
+    border-radius: 2mm;
+    padding: 3mm;
+    background: white;
+}
+
+.chart-caption {
+    font-size: 10pt;
+    color: #666;
+    margin-top: 3mm;
+    font-style: italic;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 180mm;
+    background: #F5F0E8;
+    border: 2px dashed var(--gold);
+    border-radius: 3mm;
+    display: table;
+    text-align: center;
+}
+
+.chart-placeholder-text {
+    display: table-cell;
+    vertical-align: middle;
+    color: #999;
+    font-size: 14pt;
+}
+
+/* ===== PLANETS TABLE ===== */
+.planets-table {
+    table-layout: fixed;
+    font-size: 9pt;
+}
+
+.planets-table thead th {
+    padding: 2mm 1.5mm;
+    font-size: 8pt;
+}
+
+.planets-table td {
+    padding: 2mm 1.5mm;
+    font-size: 9pt;
+}
+
+/* ===== PANCHADA MAITRI TABLE ===== */
+.maitri-table {
+    table-layout: fixed;
+    font-size: 8.5pt;
+}
+
+.maitri-table thead th {
+    text-align: center;
+    padding: 1.5mm 1mm;
+    font-size: 7.5pt;
+}
+
+.maitri-table thead th:first-child {
+    text-align: left;
+    width: 15%;
+}
+
+.maitri-table td {
+    text-align: center;
+    padding: 1.5mm 1mm;
+    font-size: 8pt;
+}
+
+.maitri-table td:first-child {
+    text-align: left;
+    width: 15%;
+}
+
+/* ===== KP TABLE ===== */
+.kp-table td {
+    font-size: 9pt;
+}
+
+/* ===== UTILITY ===== */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.mt-2 { margin-top: 2mm; }
+.mt-4 { margin-top: 4mm; }
+.mb-2 { margin-bottom: 2mm; }
+.mb-4 { margin-bottom: 4mm; }
+
+.divider {
+    border: none;
+    border-top: 1px solid var(--gold);
+    margin: 4mm 0;
+}
+
+.note {
+    font-size: 9pt;
+    color: #888;
+    font-style: italic;
+}
+
+/* ===== PLANET NATURE ===== */
+.nature-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4mm;
+    margin-top: 4mm;
+}
+
+.nature-card {
+    flex: 1 1 45%;
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 4mm 5mm;
+}
+
+.nature-card-good { border-left: 4px solid var(--benefic); }
+.nature-card-bad { border-left: 4px solid var(--malefic); }
+.nature-card-killer { border-left: 4px solid #E65100; }
+.nature-card-yogakaraka { border-left: 4px solid var(--gold); }
+
+.nature-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    margin-bottom: 2mm;
+    color: var(--charcoal);
+}
+
+.nature-planet-badge {
+    display: inline-block;
+    padding: 1mm 3mm;
+    margin: 1mm;
+    border-radius: 1mm;
+    font-size: 9.5pt;
+    font-weight: 600;
+}
+
+/* ===== DOSHA SECTION ===== */
+.dosha-card {
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin-bottom: 4mm;
+    background: var(--cream-alt);
+}
+
+.dosha-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--maroon);
+    margin-bottom: 3mm;
+}
+
+.dosha-card .kv-table {
+    width: 100%;
+}
+
+/* ===== REMEDIES SECTION ===== */
+.remedy-card {
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin-bottom: 4mm;
+    background: #FFFDE7;
+}
+
+.remedy-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--saffron);
+    margin-bottom: 3mm;
+}
+
+/* ===== LIFE REPORTS SECTION ===== */
+.report-card {
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin-bottom: 4mm;
+}
+
+.report-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--charcoal);
+    margin-bottom: 3mm;
+}
+
+/* ===== DAILY PREDICTIONS SECTION ===== */
+.prediction-card {
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin-bottom: 4mm;
+    background: var(--cream-alt);
+}
+
+.prediction-card h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--charcoal);
+    margin-bottom: 3mm;
+}
+
+.prediction-card.today {
+    border-left: 4px solid var(--saffron);
+}
+
+.prediction-card.next {
+    border-left: 4px solid var(--benefic);
+}
+
+.prediction-card.previous {
+    border-left: 4px solid var(--gold);
+}
+
+/* ===== VARSHAPHAL SECTION ===== */
+.varshaphal-section {
+    margin-bottom: 4mm;
+}
+
+.varshaphal-section h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--maroon);
+    margin-bottom: 3mm;
+}
+
+/* ===== YOGINI DASHA SECTION ===== */
+.yogini-card {
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin-bottom: 4mm;
+    overflow: hidden;
+}
+
+.yogini-card .sub-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--maroon);
+    margin-bottom: 3mm;
+}
+
+.yogini-card .kv-table {
+    table-layout: fixed;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* ===== GENERIC KV TABLE (recursive dict rendering) ===== */
+.kv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin-bottom: 2mm;
+}
+
+.kv-table td {
+    padding: 2mm 3mm;
+    border-bottom: 0.5px solid #ddd;
+    vertical-align: top;
+}
+
+.kv-table td:first-child {
+    font-weight: 600;
+    color: var(--charcoal);
+    width: 35%;
+}
+
+.kv-table .kv-table {
+    margin: 0;
+    font-size: 9.5pt;
+}
+
+.kv-table .kv-table td {
+    padding: 1mm 2mm;
+}
+
+/* ===== PANCHANG EXTENDED SECTIONS ===== */
+.panchang-card {
+    border: 1px solid var(--gold);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin-bottom: 4mm;
+    background: var(--cream-alt);
+}
+
+/* ===== SECTION DESCRIPTIONS ===== */
+.section-desc {
+    font-size: 10pt;
+    color: #5a4a2a;
+    line-height: 1.5;
+    margin: 1mm 0 3mm 0;
+    padding: 2mm 3mm;
+    background: #fdf8f0;
+    border-left: 3px solid var(--gold);
+    border-radius: 1mm;
+}
+
+/* ===== MUHURTA COLOR-CODING ===== */
+.muhurta-amrit { background-color: #E8F5E9 !important; }
+.muhurta-shubh { background-color: #E3F2FD !important; }
+.muhurta-labh { background-color: #FFF9C4 !important; }
+.muhurta-chal { background-color: #F5F5F5 !important; }
+.muhurta-kaal { background-color: #FFEBEE !important; }
+.muhurta-rog { background-color: #FFF3E0 !important; }
+.muhurta-udveg { background-color: #EFEBE9 !important; }
+
+.muhurta-legend {
+    margin: 2mm 0 3mm 0;
+}
+
+.muhurta-legend-item {
+    display: inline-block;
+    font-size: 8pt;
+    margin-right: 3mm;
+    margin-bottom: 1mm;
+}
+
+.muhurta-legend-swatch {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border: 0.5px solid #999;
+    border-radius: 1px;
+    vertical-align: middle;
+    margin-right: 1mm;
+}
+
+/* ===== DASHA FULL TIMELINE ===== */
+.dasha-full-timeline {
+    width: 100%;
+    height: 10mm;
+    border-radius: 2mm;
+    overflow: hidden;
+    margin: 3mm 0 1mm 0;
+    border: 1px solid var(--gold);
+    display: table;
+    table-layout: fixed;
+}
+
+.dasha-segment {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 7pt;
+    color: white;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.dasha-segment.active {
+    border-top: 2.5px solid #000;
+    border-bottom: 2.5px solid #000;
+}
+
+.dasha-timeline-labels {
+    width: 100%;
+    font-size: 7pt;
+    color: #888;
+    display: table;
+    table-layout: fixed;
+    margin-bottom: 3mm;
+}
+
+.dasha-timeline-labels span {
+    display: table-cell;
+    text-align: center;
+    overflow: hidden;
+}
+
+/* ===== ASHTAKAVARGA BAR CHART ===== */
+.ashtak-bar-row {
+    margin: 1mm 0;
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.ashtak-bar-label {
+    display: table-cell;
+    width: 18%;
+    text-align: right;
+    padding-right: 2mm;
+    font-weight: 600;
+    font-size: 8.5pt;
+    vertical-align: middle;
+}
+
+.ashtak-bar-track {
+    display: table-cell;
+    width: 82%;
+    height: 5mm;
+    vertical-align: middle;
+}
+
+.ashtak-bar-fill {
+    height: 5mm;
+    border-radius: 1mm;
+    color: white;
+    font-weight: 600;
+    font-size: 7.5pt;
+    padding-left: 2mm;
+    line-height: 5mm;
+}
+
+/* ===== DOSHA INTENSITY BADGE ===== */
+.dosha-badge {
+    display: inline-block;
+    padding: 1mm 3mm;
+    border-radius: 1.5mm;
+    font-size: 9pt;
+    font-weight: 700;
+}
+
+.dosha-badge-full {
+    background: #FFEBEE;
+    color: #B71C1C;
+    border: 1px solid #EF9A9A;
+}
+
+.dosha-badge-partial {
+    background: #FFF3E0;
+    color: #E65100;
+    border: 1px solid #FFB74D;
+}
+
+.dosha-badge-none {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #A5D6A7;
+}
+
+/* ===== YOGA GROUP HEADERS ===== */
+.yoga-group-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 12pt;
+    color: var(--maroon);
+    margin: 4mm 0 2mm 0;
+    padding-bottom: 1mm;
+    border-bottom: 1px solid var(--gold);
+}

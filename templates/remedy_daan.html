@@ -1,0 +1,65 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.rd_title }}</h2>
+  <p class="section-desc">{{ locale.rd_desc }}</p>
+
+  {% if narrative %}
+  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+      {{ narrative }}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if weak_planets %}
+  <div class="yogini-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.rd_planet_col }}</th>
+          <th>{{ locale.rd_dignity_col }}</th>
+          <th>{{ locale.rd_items_col }}</th>
+          <th>{{ locale.rd_day_col }}</th>
+          <th>{{ locale.rd_metal_col }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in weak_planets %}
+        <tr>
+          <td><strong>{{ locale.planet_names.get(p.name, p.name) if locale.planet_names is defined else p.name }}</strong></td>
+          <td>
+            <span class="dosha-badge dosha-badge-full" style="font-size: 8pt;">{{ p.dignity }}</span>
+            <br><span style="font-size: 8pt; color: #888;">{{ p.reason }}</span>
+          </td>
+          <td>{{ p.item }}</td>
+          <td>{{ p.day }}</td>
+          <td>{{ p.metal }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.rd_behavioral_title }}</h3>
+    {% for p in weak_planets %}
+    {% if p.behavioral %}
+    <div class="report-card" style="margin-bottom: 2mm; border-left: 3px solid var(--saffron);">
+      <h4 style="font-size: 10pt; color: var(--maroon); margin-bottom: 1mm;">
+        {{ locale.planet_names.get(p.name, p.name) if locale.planet_names is defined else p.name }}
+      </h4>
+      <p style="font-size: 9.5pt; line-height: 1.5; margin: 0;">{{ p.behavioral }}</p>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="yogini-card" style="border-left: 4px solid var(--benefic); background: #E8F5E9;">
+    <p style="font-size: 10.5pt; line-height: 1.6; margin: 0; color: var(--benefic);">
+      {{ locale.rd_no_weak }}
+    </p>
+  </div>
+  {% endif %}
+
+  {% include "partials/remedy_disclaimer.html" %}
+</div>

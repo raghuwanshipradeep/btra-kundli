@@ -1,0 +1,83 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.fm_disclaimer_title }}</h2>
+
+  <div class="report-card">
+    <p style="font-size: 11pt; line-height: 1.8; text-align: justify;">
+      {{ locale.fm_disclaimer_text }}
+    </p>
+  </div>
+
+  <div style="margin-top: 6mm;">
+    <h3 class="section-subheader">{{ locale.fm_remedies_note_title }}</h3>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">
+      {{ locale.fm_remedies_note_text }}
+    </p>
+  </div>
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.fm_reading_guide_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.fm_reading_guide_intro|replace('{name}', name) }}
+  </p>
+
+  <div class="report-card">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.fm_tip_title }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7;">
+      {{ locale.fm_tip_text }}
+    </p>
+  </div>
+
+  <div style="margin-top: 5mm;">
+    <h3 class="section-subheader">{{ locale.fm_read_times_title }}</h3>
+    <div style="margin-bottom: 3mm;">
+      <div class="report-card" style="border-left: 4px solid var(--gold); margin-bottom: 2mm;">
+        <p style="font-size: 10.5pt; line-height: 1.6; margin: 0;">
+          <strong style="color: var(--maroon);">1.</strong> {{ locale.fm_read_1st }}
+        </p>
+      </div>
+      <div class="report-card" style="border-left: 4px solid var(--saffron); margin-bottom: 2mm;">
+        <p style="font-size: 10.5pt; line-height: 1.6; margin: 0;">
+          <strong style="color: var(--maroon);">2.</strong> {{ locale.fm_read_2nd }}
+        </p>
+      </div>
+      <div class="report-card" style="border-left: 4px solid var(--benefic); margin-bottom: 2mm;">
+        <p style="font-size: 10.5pt; line-height: 1.6; margin: 0;">
+          <strong style="color: var(--maroon);">3.</strong> {{ locale.fm_read_3rd }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="report-card" style="background: #E8F5E9; border-left: 4px solid var(--benefic); margin-top: 4mm;">
+    <p style="font-size: 10.5pt; line-height: 1.7; margin: 0; color: #2E7D32;">
+      {{ locale.fm_mindset_text }}
+    </p>
+  </div>
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.fm_toc_title }}</h2>
+
+  <table class="data-table" style="font-size: 10pt;">
+    <thead>
+      <tr>
+        <th style="width: 8%;">#</th>
+        <th style="width: 35%;">{{ locale.fm_toc_section }}</th>
+        <th>{{ locale.fm_toc_description }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in locale.fm_toc_items %}
+      <tr>
+        <td style="text-align: center; font-weight: 700; color: #8B0000;">{{ loop.index }}</td>
+        <td style="font-weight: 600;">{{ item.name }}</td>
+        <td>{{ item.desc }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

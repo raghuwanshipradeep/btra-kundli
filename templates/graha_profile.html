@@ -1,0 +1,113 @@
+{% for profile in profiles %}
+<div class="section-page">
+  <h2 class="section-header">
+    {{ locale.planet_names.get(profile.name, profile.name) }}
+    {% if lang == "hi" and locale.planet_names_en.get(profile.name) %}
+      <span style="font-size: 11pt; font-weight: 400; color: #666;"> ({{ locale.planet_names_en.get(profile.name) }})</span>
+    {% endif %}
+  </h2>
+
+  <table class="kv-table" style="margin-bottom: 5mm;">
+    <tr>
+      <td>{{ locale.gp_house }}</td>
+      <td>{{ locale.gp_house_prefix }} {{ profile.house }}</td>
+    </tr>
+    <tr>
+      <td>{{ locale.gp_sign }}</td>
+      <td>{{ locale.sign_names.get(profile.sign, profile.sign) }}
+        <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ locale.planet_names.get(profile.sign_lord, profile.sign_lord) }})</span>
+      </td>
+    </tr>
+    <tr>
+      <td>{{ locale.gp_degree }}</td>
+      <td>{{ profile.degree }}°</td>
+    </tr>
+    {% if profile.nakshatra %}
+    <tr>
+      <td>{{ locale.gp_nakshatra }}</td>
+      <td>{{ profile.nakshatra }}
+        {% if profile.nakshatra_lord %}
+          <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ profile.nakshatra_lord }})</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td>{{ locale.gp_dignity }}</td>
+      <td>
+        {% if profile.dignity == "Exalted" %}
+          <span style="color: #2E7D32; font-weight: 700;">{{ locale.dignity_exalted }}</span>
+        {% elif profile.dignity == "Debilitated" %}
+          <span style="color: #B71C1C; font-weight: 700;">{{ locale.dignity_debilitated }}</span>
+        {% elif profile.dignity == "Own Sign" %}
+          <span style="color: #1a7a1a;">{{ locale.dignity_own }}</span>
+        {% elif profile.dignity == "Moolatrikona" %}
+          <span style="color: #0066cc;">{{ locale.dignity_moolatrikona }}</span>
+        {% else %}
+          {{ locale.dignity_normal }}
+        {% endif %}
+      </td>
+    </tr>
+    {% if profile.nature %}
+    <tr>
+      <td>{{ locale.gp_nature }}</td>
+      <td>{{ profile.nature }}</td>
+    </tr>
+    {% endif %}
+    {% if profile.is_retro %}
+    <tr>
+      <td>{{ locale.gp_retrograde }}</td>
+      <td><span class="retro-badge">{{ locale.gp_retro_yes }}</span></td>
+    </tr>
+    {% endif %}
+    {% if profile.karaka_role %}
+    <tr>
+      <td>{{ locale.gp_karaka }}</td>
+      <td style="font-weight: 600; color: #8B0000;">{{ locale.karaka_names.get(profile.karaka_role, profile.karaka_role) }}</td>
+    </tr>
+    {% endif %}
+  </table>
+
+  {% if profile.aspects_given %}
+  <div class="dosha-card" style="margin-bottom: 4mm;">
+    <h4>{{ locale.gp_aspects_given }}</h4>
+    <p style="font-size: 10pt;">
+      {{ locale.planet_names.get(profile.name, profile.name) }} {{ locale.gp_aspects_houses }}:
+      {% for h in profile.aspects_given %}
+        <strong>{{ locale.gp_house_prefix }} {{ h }}</strong>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if profile.aspects_received %}
+  <div class="dosha-card" style="margin-bottom: 4mm;">
+    <h4>{{ locale.gp_aspects_received }}</h4>
+    <p style="font-size: 10pt;">
+      {{ locale.gp_aspected_by }}:
+      {% for p in profile.aspects_received %}
+        <strong>{{ locale.planet_names.get(p, p) }}</strong>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if profile.house_report %}
+  <div class="report-card" style="margin-top: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.gp_house_placement }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ profile.house_report }}</p>
+  </div>
+  {% endif %}
+
+  {% if profile.rashi_report %}
+  <div class="report-card" style="margin-top: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.gp_rashi_placement }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ profile.rashi_report }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}

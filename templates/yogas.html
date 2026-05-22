@@ -1,0 +1,54 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.yogas_title }}</h2>
+  <p>{{ locale.yogas_found }}: <strong>{{ yogas | length }}</strong></p>
+
+  {% for yoga in yogas %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ yoga.name }}</h3>
+    <table class="kv-table">
+      <tr>
+        <td>{{ locale.planets_col }}</td>
+        <td>{{ yoga.planets }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.house_col }}</td>
+        <td>{{ yoga.house }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.yoga_effect }}</td>
+        <td>
+          {% if yoga.effect == "Highly Benefic" %}
+            <span style="color: green; font-weight: bold;">{{ yoga.effect }}</span>
+          {% elif yoga.effect == "Benefic" %}
+            <span style="color: green;">{{ yoga.effect }}</span>
+          {% elif yoga.effect == "Mixed" %}
+            <span style="color: orange;">{{ yoga.effect }}</span>
+          {% elif yoga.effect == "Panch Mahapurusha" %}
+            <span style="color: #0066cc; font-weight: bold;">{{ yoga.effect }}</span>
+          {% else %}
+            {{ yoga.effect }}
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>{{ locale.details }}</td>
+        <td>{{ yoga.description }}</td>
+      </tr>
+      {% set yoga_narr_key = "yoga_" ~ yoga.name %}
+      {% if narratives and narratives.get(yoga_narr_key) %}
+      <tr>
+        <td colspan="2" style="padding-top: 3mm;">
+          <div style="border-left: 3px solid #D4AF37; padding-left: 4mm;">
+            <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+              {{ narratives.get(yoga_narr_key) }}
+            </p>
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+  {% endfor %}
+
+  {% include "partials/section_disclaimer.html" %}
+</div>

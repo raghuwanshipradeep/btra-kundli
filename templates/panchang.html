@@ -1,0 +1,403 @@
+{% macro render_value(val) %}
+  {% if val is mapping %}
+    <table class="kv-table">
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      <tr>
+        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% elif val is iterable and val is not string %}
+    {% for item in val %}
+      {% if item is mapping %}
+        {{ render_value(item) }}
+      {% else %}
+        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {{ val }}
+  {% endif %}
+{% endmacro %}
+
+{% macro muhurta_table(items) %}
+  <table>
+    <thead>
+      <tr>
+        <th style="width:10%">#</th>
+        <th style="width:35%">{{ locale.timing }}</th>
+        <th style="width:25%">{{ locale.get('muhurta_col', 'Muhurta') }}</th>
+        <th style="width:30%">{{ locale.get('type_col', 'Type') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.get('time', item.get('start', '')) }}{% if item.get('end') %} — {{ item.end }}{% endif %}</td>
+        <td><strong>{{ item.get('muhurta', item.get('name', '')) }}</strong></td>
+        <td>{{ item.get('type', item.get('is_day', '')) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
+
+{% macro hora_table(items) %}
+  <table>
+    <thead>
+      <tr>
+        <th style="width:10%">#</th>
+        <th style="width:45%">{{ locale.timing }}</th>
+        <th style="width:45%">{{ locale.get('hora_lord_col', 'Hora Lord') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.get('time', item.get('start', '')) }}{% if item.get('end') %} — {{ item.end }}{% endif %}</td>
+        <td><strong>{{ item.get('hora_lord', item.get('hora', item.get('lord', ''))) }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
+
+{% macro planet_table(items) %}
+  <table>
+    <thead>
+      <tr>
+        <th>{{ locale.get('planet_col', 'Planet') }}</th>
+        <th>{{ locale.get('sign_col', 'Sign') }}</th>
+        <th>{{ locale.get('degree_col', 'Degree') }}</th>
+        <th>{{ locale.nakshatra }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td><strong>{{ item.get('planet', item.get('name', '')) }}</strong></td>
+        <td>{{ item.get('sign', item.get('rashi', '')) }}</td>
+        <td>{{ item.get('degree', item.get('norm_degree', '')) }}{% if item.get('retro') %} (R){% endif %}</td>
+        <td>{{ item.get('nakshatra', item.get('nak_name', '')) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
+
+{# ===== PAGE 1: Advanced Panchang (existing) ===== #}
+{% if panchang %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.panchang_title }}</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%">{{ locale.element }}</th>
+                <th>{{ locale.details }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>{{ locale.tithi }}</strong></td>
+                <td>
+                    {% if panchang.tithi %}
+                        {% if panchang.tithi.details %}
+                            {{ panchang.tithi.details.get('tithi_name', '') }}
+                            {% if panchang.tithi.details.get('tithi_number') %}
+                                ({{ panchang.tithi.details.get('tithi_number') }})
+                            {% endif %}
+                            {% if panchang.tithi.details.get('deity') %}
+                                — {{ locale.deity }}: {{ panchang.tithi.details.get('deity') }}
+                            {% endif %}
+                        {% else %}
+                            {{ panchang.tithi }}
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.nakshatra }}</strong></td>
+                <td>
+                    {% if panchang.nakshatra %}
+                        {% if panchang.nakshatra.details %}
+                            {{ panchang.nakshatra.details.get('nak_name', '') }}
+                            {% if panchang.nakshatra.details.get('ruler') %}
+                                — {{ locale.ruler }}: {{ panchang.nakshatra.details.get('ruler') }}
+                            {% endif %}
+                        {% else %}
+                            {{ panchang.nakshatra }}
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.yoga }}</strong></td>
+                <td>
+                    {% if panchang.yog %}
+                        {% if panchang.yog.details %}
+                            {{ panchang.yog.details.get('yog_name', '') }}
+                        {% else %}
+                            {{ panchang.yog }}
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.karana }}</strong></td>
+                <td>
+                    {% if panchang.karan %}
+                        {% if panchang.karan.details %}
+                            {{ panchang.karan.details.get('karan_name', '') }}
+                        {% else %}
+                            {{ panchang.karan }}
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.weekday }}</strong></td>
+                <td>{{ panchang.day }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.paksha }}</strong></td>
+                <td>{{ panchang.paksha }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.ritu }}</strong></td>
+                <td>{{ panchang.ritu }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:35%">{{ locale.timing }}</th>
+                <th>{{ locale.value }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>{{ locale.sunrise }}</strong></td>
+                <td>{{ panchang.sunrise }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.sunset }}</strong></td>
+                <td>{{ panchang.sunset }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.moonrise }}</strong></td>
+                <td>{{ panchang.moonrise }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.moonset }}</strong></td>
+                <td>{{ panchang.moonset }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.vedic_sunrise }}</strong></td>
+                <td>{{ panchang.vedic_sunrise }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.vedic_sunset }}</strong></td>
+                <td>{{ panchang.vedic_sunset }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.sun_sign }}</strong></td>
+                <td>{{ panchang.sun_sign }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.moon_sign }}</strong></td>
+                <td>{{ panchang.moon_sign }}</td>
+            </tr>
+            <tr>
+                <td><strong>{{ locale.ayanamsha }}</strong></td>
+                <td>{{ "%.6f"|format(panchang.ayanamsha) }}°</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ===== PAGE 2: Chaughadiya & Hora Muhurta ===== #}
+{% if chaughadiya_muhurta or hora_muhurta or hora_muhurta_dinman %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.chaughadiya_muhurta_title }}</h2>
+
+    <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
+      {{ locale.chaughadiya_desc }}
+    </p>
+
+    {% if chaughadiya_muhurta %}
+      {% set chdata = chaughadiya_muhurta.get('chaughadiya', chaughadiya_muhurta) if chaughadiya_muhurta is mapping else chaughadiya_muhurta %}
+      {% if chdata is mapping %}
+        {% for period_name, items in chdata.items() %}
+          {% if items is iterable and items is not string and items is not mapping %}
+            <h3 class="section-subheader">{{ locale.chaughadiya_muhurta_title }} — {{ period_name | title }}</h3>
+            {{ muhurta_table(items) }}
+            {% if not loop.last %}<hr class="divider">{% endif %}
+          {% endif %}
+        {% endfor %}
+      {% elif chdata is iterable and chdata is not string %}
+        <h3 class="section-subheader">{{ locale.chaughadiya_muhurta_title }}</h3>
+        {{ muhurta_table(chdata) }}
+      {% else %}
+        {{ render_value(chaughadiya_muhurta) }}
+      {% endif %}
+    {% endif %}
+</div>
+
+{% if hora_muhurta or hora_muhurta_dinman %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.hora_muhurta_title }}</h2>
+
+    <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
+      {{ locale.hora_desc }}
+    </p>
+
+    {% if hora_muhurta %}
+      {% set hdata = hora_muhurta.get('hora', hora_muhurta) if hora_muhurta is mapping else hora_muhurta %}
+      {% if hdata is iterable and hdata is not string and hdata is not mapping %}
+        {{ hora_table(hdata) }}
+      {% else %}
+        {{ render_value(hora_muhurta) }}
+      {% endif %}
+    {% endif %}
+
+    {% if hora_muhurta_dinman %}
+      <hr class="divider">
+      <h3 class="section-subheader">{{ locale.hora_muhurta_dinman_title }}</h3>
+      {% set hddata = hora_muhurta_dinman.get('hora', hora_muhurta_dinman) if hora_muhurta_dinman is mapping else hora_muhurta_dinman %}
+      {% if hddata is iterable and hddata is not string and hddata is not mapping %}
+        {{ hora_table(hddata) }}
+      {% else %}
+        {{ render_value(hora_muhurta_dinman) }}
+      {% endif %}
+    {% endif %}
+</div>
+{% endif %}
+{% endif %}
+
+{# ===== PAGE 3: Planet Panchang ===== #}
+{% if planet_panchang or planet_panchang_sunrise %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.planet_panchang_title }}</h2>
+
+    {% if planet_panchang %}
+      {% set pdata = planet_panchang.get('planets', planet_panchang) if planet_panchang is mapping else planet_panchang %}
+      {% if pdata is iterable and pdata is not string and pdata is not mapping %}
+        {{ planet_table(pdata) }}
+      {% else %}
+        {{ render_value(planet_panchang) }}
+      {% endif %}
+    {% endif %}
+
+    {% if planet_panchang_sunrise %}
+      <hr class="divider">
+      <h3 class="section-subheader">{{ locale.planet_panchang_sunrise_title }}</h3>
+      {% set psdata = planet_panchang_sunrise.get('planets', planet_panchang_sunrise) if planet_panchang_sunrise is mapping else planet_panchang_sunrise %}
+      {% if psdata is iterable and psdata is not string and psdata is not mapping %}
+        {{ planet_table(psdata) }}
+      {% else %}
+        {{ render_value(planet_panchang_sunrise) }}
+      {% endif %}
+    {% endif %}
+</div>
+{% endif %}
+
+{# ===== PAGE 4: Basic Panchang variants ===== #}
+{% if basic_panchang or basic_panchang_sunrise or advanced_panchang_sunrise %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.basic_panchang_title }}</h2>
+
+    {% if basic_panchang %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.basic_panchang_title }}</h3>
+        {{ render_value(basic_panchang) }}
+    </div>
+    {% endif %}
+
+    {% if basic_panchang_sunrise %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.basic_panchang_sunrise_title }}</h3>
+        {{ render_value(basic_panchang_sunrise) }}
+    </div>
+    {% endif %}
+
+    {% if advanced_panchang_sunrise %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.advanced_panchang_sunrise_title }}</h3>
+        {{ render_value(advanced_panchang_sunrise) }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ===== PAGE 5: Tamil Panchang & Festivals ===== #}
+{% if tamil_panchang or tamil_month_panchang or panchang_festival or panchang_chart %}
+<div class="section-page">
+    <h2 class="section-header">{{ locale.tamil_panchang_title }}</h2>
+
+    {% if tamil_panchang %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.tamil_panchang_title }}</h3>
+        {{ render_value(tamil_panchang) }}
+    </div>
+    {% endif %}
+
+    {% if tamil_month_panchang %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.tamil_month_panchang_title }}</h3>
+        {{ render_value(tamil_month_panchang) }}
+    </div>
+    {% endif %}
+
+    {% if panchang_festival %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.panchang_festival_title }}</h3>
+        {% set fdata = panchang_festival.get('festivals', panchang_festival) if panchang_festival is mapping else panchang_festival %}
+        {% if fdata is iterable and fdata is not string and fdata is not mapping %}
+          <table>
+            <thead>
+              <tr>
+                <th style="width:10%">#</th>
+                <th style="width:30%">{{ locale.get('festival_name_col', 'Festival') }}</th>
+                <th style="width:60%">{{ locale.details }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in fdata %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ f.get('name', f.get('festival_name', '')) }}</strong></td>
+                <td>{{ f.get('description', f.get('details', '')) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          {{ render_value(panchang_festival) }}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if panchang_chart %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.panchang_chart_title }}</h3>
+        {{ render_value(panchang_chart) }}
+    </div>
+    {% endif %}
+
+    {% if monthly_panchang %}
+    <div class="panchang-card">
+        <h3 class="section-subheader">{{ locale.monthly_panchang_title }}</h3>
+        {{ render_value(monthly_panchang) }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

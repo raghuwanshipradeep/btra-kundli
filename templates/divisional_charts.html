@@ -1,0 +1,38 @@
+{% for chart in charts %}
+<div class="section-page">
+    {% if loop.first %}
+    <h2 class="section-header">{{ locale.divisional_charts_title }}</h2>
+    {% endif %}
+
+    <h3 class="section-subheader">{{ chart.title }}</h3>
+
+    {% if chart.image_url %}
+    <div class="chart-container">
+        <img src="{{ chart.image_url }}" alt="{{ chart.title }}">
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.planets_in_sign }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sign_data in chart.signs %}
+            <tr>
+                <td><strong>{{ sign_data.sign_name }}</strong></td>
+                <td>
+                    {% if sign_data.planet %}
+                        {{ sign_data.planet | join(', ') }}
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endfor %}

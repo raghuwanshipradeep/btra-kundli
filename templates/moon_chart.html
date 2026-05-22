@@ -1,0 +1,31 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.moon_chart_title }}</h2>
+  <p>{{ locale.moon_chart_desc }}: <strong>{{ moon_sign }}</strong></p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{{ locale.house_col }}</th>
+        <th>{{ locale.sign_col }}</th>
+        <th>{{ locale.planets_in_sign }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in moon_chart %}
+      <tr>
+        <td><strong>{{ row.house }}</strong></td>
+        <td>{{ locale.sign_names.get(row.sign, row.sign) }}</td>
+        <td>
+          {% if row.planets %}
+            {% for p in row.planets %}
+              {{ locale.planet_names.get(p, p) }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,59 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.drishti_title }}</h2>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.graha_drishti_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.planet_col }}</th>
+          <th>{{ locale.drishti_on }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for planet, targets in graha_drishti.items() %}
+        <tr>
+          <td><strong>{{ locale.planet_names.get(planet, planet) }}</strong></td>
+          <td>
+            {% if targets %}
+              {% for t in targets %}
+                {{ locale.planet_names.get(t, t) }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.bhava_drishti_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.house_col }}</th>
+          <th>{{ locale.aspected_by }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for house_num, planets in bhava_drishti.items() %}
+        <tr>
+          <td><strong>{{ locale.house_label }} {{ house_num }}</strong></td>
+          <td>
+            {% if planets %}
+              {% for p in planets %}
+                {{ locale.planet_names.get(p, p) }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

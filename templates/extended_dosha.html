@@ -1,0 +1,25 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.extended_dosha_title }}</h2>
+
+  {% for key, dosha in doshas.items() %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.get('dosha_' + key, key | replace('_', ' ') | title) }}</h3>
+    <table class="kv-table">
+      <tr>
+        <td>{{ locale.get('status', 'Status') }}</td>
+        <td>
+          {% if dosha.present %}
+            <span style="color: red; font-weight: bold;">{{ locale.dosha_present }}</span>
+          {% else %}
+            <span style="color: green;">{{ locale.dosha_absent }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td>{{ locale.details }}</td>
+        <td>{{ dosha.description }}</td>
+      </tr>
+    </table>
+  </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,41 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.south_chart_title }}</h2>
+  <p>{{ locale.south_chart_desc }}</p>
+
+  <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #C9A84C;">
+    {% for row_num in range(4) %}
+    <tr>
+      {% for col_num in range(4) %}
+        {% set cell = namespace(found=false) %}
+        {% for c in cells %}
+          {% if c.row == row_num and c.col == col_num %}
+            <td style="border: 1.5px solid #C9A84C; padding: 6px; text-align: center; vertical-align: top; height: 80px; width: 25%;{% if c.is_lagna %} background: #FFFDF0;{% endif %}">
+              <div style="font-size: 0.7em; color: #888; text-align: left;">
+                {{ locale.sign_names.get(c.sign, c.sign_abbr) }}
+                {% if c.is_lagna %}<span style="color: #C9A84C; font-weight: bold; font-size: 1.2em;"> ▲</span>{% endif %}
+              </div>
+              <div style="font-weight: bold; margin-top: 6px; color: #C9A84C; font-size: 0.95em; line-height: 1.4;">
+                {% if c.planets %}
+                  {{ c.planets | join(' ') }}
+                {% endif %}
+              </div>
+            </td>
+            {% set cell.found = true %}
+          {% endif %}
+        {% endfor %}
+        {% if not cell.found %}
+          {% if (row_num == 1 or row_num == 2) and (col_num == 1 or col_num == 2) %}
+            {% if row_num == 1 and col_num == 1 %}
+              <td rowspan="2" colspan="2" style="border: 1.5px solid #C9A84C; text-align: center; vertical-align: middle; font-size: 1.1em; font-weight: bold; color: #C9A84C;">
+                {{ locale.south_chart_center }}
+              </td>
+            {% endif %}
+          {% else %}
+            <td style="border: 1.5px solid #C9A84C; padding: 6px; text-align: center; height: 80px; width: 25%;">—</td>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</div>

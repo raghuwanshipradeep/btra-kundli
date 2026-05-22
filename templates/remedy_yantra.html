@@ -1,0 +1,63 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.ry_title }}</h2>
+  <p class="section-desc">{{ locale.ry_desc }}</p>
+
+  <div class="yogini-card" style="border-left: 4px solid var(--gold); background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%); padding: 6mm 8mm;">
+    <h3 style="font-family: 'Playfair Display', serif; font-size: 16pt; color: var(--maroon); margin-bottom: 4mm; text-align: center;">
+      {{ yantra_name }}
+    </h3>
+
+    <table class="kv-table">
+      <tr>
+        <td>{{ locale.ry_planet_label }}</td>
+        <td><strong>{{ locale.planet_names.get(planet, planet) if locale.planet_names is defined else planet }}</strong></td>
+      </tr>
+      <tr>
+        <td>{{ locale.rd_dignity_col }}</td>
+        <td>{{ dignity }} — {{ locale.house_col }} {{ house }} ({{ sign }})</td>
+      </tr>
+      <tr>
+        <td>{{ locale.ry_reason_label }}</td>
+        <td>
+          {% if reason == 'weak' %}
+            {{ planet }} is debilitated in your chart — this yantra helps strengthen its energy
+          {% elif reason == 'afflicted' %}
+            {{ planet }} is afflicted in your chart — this yantra helps balance its influence
+          {% else %}
+            {{ planet }} is your strongest planet — this yantra amplifies its blessings
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  {% if narrative %}
+  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+      {{ narrative }}
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="yogini-card" style="border-left: 4px solid var(--benefic);">
+    <h3 class="sub-header" style="color: var(--benefic);">{{ locale.ry_dos_title }}</h3>
+    {% for item in dos %}
+    <div style="padding: 1.5mm 0; border-bottom: 0.5px solid #E0D5C5;">
+      <span style="color: var(--benefic); font-weight: 700; margin-right: 2mm;">&#10003;</span>
+      <span style="font-size: 10pt;">{{ item }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="yogini-card" style="border-left: 4px solid var(--malefic);">
+    <h3 class="sub-header" style="color: var(--malefic);">{{ locale.ry_donts_title }}</h3>
+    {% for item in donts %}
+    <div style="padding: 1.5mm 0; border-bottom: 0.5px solid #E0D5C5;">
+      <span style="color: var(--malefic); font-weight: 700; margin-right: 2mm;">&#10007;</span>
+      <span style="font-size: 10pt;">{{ item }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% include "partials/remedy_disclaimer.html" %}
+</div>

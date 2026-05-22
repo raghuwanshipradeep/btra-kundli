@@ -1,0 +1,70 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.marriage_timing_title }}</h2>
+
+  {% if narrative %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+  </div>
+  {% endif %}
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.marriage_factors_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.marriage_factor_col }}</th>
+          <th>{{ locale.value }}</th>
+          <th>{{ locale.marriage_significance }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in factors %}
+        <tr>
+          <td><strong>{{ f.factor }}</strong></td>
+          <td>{{ f.value }}</td>
+          <td>{{ f.significance }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if planets_in_7 %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.marriage_planets_in_7 }}</h3>
+    <p>
+      {% for p in planets_in_7 %}
+        {{ locale.planet_names.get(p, p) }}{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if favorable_periods %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.marriage_favorable_title }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.planet_col }}</th>
+          <th>{{ locale.start_date }}</th>
+          <th>{{ locale.end_date }}</th>
+          <th>{{ locale.marriage_reason }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in favorable_periods %}
+        <tr>
+          <td><strong>{{ locale.planet_names.get(p.planet, p.planet) }}</strong></td>
+          <td>{{ p.start }}</td>
+          <td>{{ p.end }}</td>
+          <td>{{ p.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% include "partials/section_disclaimer.html" %}
+</div>

@@ -1,0 +1,36 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.np_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.np_intro }}
+  </p>
+
+  {% for num in numbers %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 4px solid {{ num.color }};">
+    <div style="display: flex; align-items: center; margin-bottom: 3mm;">
+      <div style="width: 14mm; height: 14mm; background: {{ num.color }}; color: white; border-radius: 50%;
+                  display: flex; align-items: center; justify-content: center;
+                  font-family: 'Playfair Display', serif; font-size: 16pt; font-weight: 700;
+                  margin-right: 4mm; flex-shrink: 0;">
+        {{ num.value }}
+      </div>
+      <div>
+        <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #8B0000; margin: 0;">
+          {{ num.label }}
+        </h4>
+        <p style="font-size: 9pt; color: #777; margin: 0;">{{ num.desc }}</p>
+      </div>
+    </div>
+
+    {% if narratives and narratives.get(num.narr_key) %}
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+      {{ narratives.get(num.narr_key) }}
+    </p>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <p style="font-size: 8pt; color: #999; text-align: center; margin-top: 3mm;">
+    {{ locale.np_chaldean_note }}
+  </p>
+</div>

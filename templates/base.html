@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <style>{{ css }}</style>
+    {% if brand_footer and brand_footer.enabled %}
+    <style>
+    @page {
+        @bottom-left {
+            content: "{{ brand_footer.name }}{% if brand_footer.phone %} | {{ brand_footer.phone }}{% endif %}";
+            font-family: 'Crimson Pro', serif;
+            font-size: 7pt;
+            color: #999;
+        }
+        @bottom-right {
+            content: "{{ brand_footer.url }}";
+            font-family: 'Crimson Pro', serif;
+            font-size: 7pt;
+            color: #999;
+        }
+    }
+    @page cover {
+        @bottom-left { content: none; }
+        @bottom-right { content: none; }
+    }
+    </style>
+    {% endif %}
+</head>
+<body>
+{% for section_html in sections %}
+{{ section_html }}
+{% endfor %}
+</body>
+</html>

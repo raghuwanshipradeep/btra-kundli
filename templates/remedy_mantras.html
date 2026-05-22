@@ -1,0 +1,62 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.rm_title }}</h2>
+  <p class="section-desc">{{ locale.rm_desc }}</p>
+
+  {% if narrative %}
+  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+      {{ narrative }}
+    </p>
+  </div>
+  {% endif %}
+
+  {% if ishta_devata %}
+  <div class="yogini-card" style="border-left: 4px solid var(--gold); background: #FFFDE7;">
+    <h3 class="sub-header">{{ locale.rm_ishta_mantra_title }}</h3>
+    <table class="kv-table">
+      <tr>
+        <td>{{ locale.ri_deity_label }}</td>
+        <td><strong>{{ ishta_devata }}</strong></td>
+      </tr>
+      <tr>
+        <td>{{ locale.ri_twelfth_lord_label }}</td>
+        <td>{{ locale.planet_names.get(twelfth_lord, twelfth_lord) if locale.planet_names is defined else twelfth_lord }}</td>
+      </tr>
+      {% if ishta_shloka %}
+      <tr>
+        <td>{{ locale.ri_shloka_label }}</td>
+        <td style="font-style: italic; color: var(--maroon);">{{ ishta_shloka }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.rm_beej_title }}</h3>
+    <table class="data-table" style="font-size: 9pt;">
+      <thead>
+        <tr>
+          <th style="width: 12%;">{{ locale.planet_col }}</th>
+          <th style="width: 28%;">{{ locale.rm_sanskrit_col }}</th>
+          <th style="width: 28%;">{{ locale.rm_transliteration_col }}</th>
+          <th style="width: 10%;">{{ locale.rm_count_col }}</th>
+          <th style="width: 12%;">{{ locale.rm_deity_col }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in mantra_rows %}
+        <tr>
+          <td><strong>{{ locale.planet_names.get(m.planet, m.planet) if locale.planet_names is defined else m.planet }}</strong></td>
+          <td style="font-family: 'Noto Sans Devanagari', sans-serif; font-size: 9pt;">{{ m.devanagari }}</td>
+          <td style="font-size: 8.5pt;">{{ m.transliteration }}</td>
+          <td>{{ "{:,}".format(m.count) }}</td>
+          <td>{{ m.deity }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "partials/remedy_disclaimer.html" %}
+</div>

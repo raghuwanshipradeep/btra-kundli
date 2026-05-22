@@ -1,0 +1,82 @@
+{% macro render_value(val) %}
+  {% if val is mapping %}
+    <table class="kv-table">
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      <tr>
+        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% elif val is iterable and val is not string %}
+    {% for item in val %}
+      {% if item is mapping %}
+        {{ render_value(item) }}
+      {% else %}
+        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {{ val }}
+  {% endif %}
+{% endmacro %}
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.numerology_title }}</h2>
+
+  {% if numero_table %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_table_title }}</h3>
+    {{ render_value(numero_table) }}
+  </div>
+  {% endif %}
+
+  {% if numero_report %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_report_title }}</h3>
+    {{ render_value(numero_report) }}
+  </div>
+  {% endif %}
+
+  {% if numero_fav_time %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_fav_time_title }}</h3>
+    {{ render_value(numero_fav_time) }}
+  </div>
+  {% endif %}
+
+  {% if numero_place_vastu %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_place_vastu_title }}</h3>
+    {{ render_value(numero_place_vastu) }}
+  </div>
+  {% endif %}
+
+  {% if numero_fasts %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_fasts_title }}</h3>
+    {{ render_value(numero_fasts) }}
+  </div>
+  {% endif %}
+
+  {% if numero_fav_lord %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_fav_lord_title }}</h3>
+    {{ render_value(numero_fav_lord) }}
+  </div>
+  {% endif %}
+
+  {% if numero_fav_mantra %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_fav_mantra_title }}</h3>
+    {{ render_value(numero_fav_mantra) }}
+  </div>
+  {% endif %}
+
+  {% if numero_daily %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.numero_daily_title }}</h3>
+    {{ render_value(numero_daily) }}
+  </div>
+  {% endif %}
+</div>

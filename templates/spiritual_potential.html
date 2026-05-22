@@ -1,0 +1,189 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.sp_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.sp_intro }}
+  </p>
+
+  {% if narrative %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+  </div>
+  {% endif %}
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.sp_9th_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(ninth_sign, ninth_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(ninth_lord, ninth_lord) }}</td>
+      </tr>
+      {% if planets_in_9th %}
+      <tr>
+        <td>{{ locale.lm_planets_present }}</td>
+        <td>
+          {% for p in planets_in_9th %}
+            {{ locale.planet_names.get(p.name, p.name) }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+    <p style="font-size: 10.5pt; line-height: 1.7;">{{ locale.sp_9th_desc }}</p>
+  </div>
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.sp_12th_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(twelfth_sign, twelfth_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(twelfth_lord, twelfth_lord) }}</td>
+      </tr>
+      {% if planets_in_12th %}
+      <tr>
+        <td>{{ locale.lm_planets_present }}</td>
+        <td>
+          {% for p in planets_in_12th %}
+            {{ locale.planet_names.get(p.name, p.name) }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+    <p style="font-size: 10.5pt; line-height: 1.7;">{{ locale.sp_12th_desc }}</p>
+  </div>
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.sp_5th_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(fifth_sign, fifth_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(fifth_lord, fifth_lord) }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.sp_guides_title }}</h2>
+
+  {% if jupiter %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.sp_jupiter_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_house }}</td>
+        <td>{{ locale.gp_house_prefix }} {{ jupiter.house }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(jupiter.sign, jupiter.sign) }}</td>
+      </tr>
+    </table>
+    {% if jupiter_report %}
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ jupiter_report }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if ketu %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.sp_ketu_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_house }}</td>
+        <td>{{ locale.gp_house_prefix }} {{ ketu.house }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(ketu.sign, ketu.sign) }}</td>
+      </tr>
+    </table>
+    {% if ketu_report %}
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ketu_report }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if atmakaraka %}
+  <div class="dasha-current-card" style="margin-bottom: 5mm;">
+    <div class="period-label">{{ locale.sp_ak_label }}</div>
+    <div class="planet-name">{{ locale.planet_names.get(atmakaraka.name, atmakaraka.name) }}</div>
+    <div class="period-dates">
+      {{ locale.sign_names.get(atmakaraka.sign, atmakaraka.sign) }} — {{ locale.gp_house_prefix }} {{ atmakaraka.house }}
+    </div>
+  </div>
+  {% if ak_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.sp_ak_effect }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ak_report }}</p>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% include "partials/section_disclaimer.html" %}
+</div>
+
+{% if spiritual_yogas %}
+<div class="section-page">
+  <h2 class="section-header">{{ locale.sp_yogas_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm;">
+    {{ locale.sp_yogas_intro }}
+  </p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{{ locale.sp_yoga_name }}</th>
+        <th>{{ locale.sp_yoga_planet }}</th>
+        <th>{{ locale.gp_house }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for yoga in spiritual_yogas %}
+      <tr>
+        <td style="font-weight: 600;">{{ yoga.name }}</td>
+        <td>{{ yoga.planet }}</td>
+        <td>{% if yoga.house %}{{ locale.gp_house_prefix }} {{ yoga.house }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if d20_image %}
+<div class="section-page">
+  <h2 class="section-header">{{ locale.sp_d20_title }}</h2>
+  <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 4mm;">{{ locale.sp_d20_desc }}</p>
+  <div class="chart-container">
+    <img src="{{ d20_image }}" alt="D20 Vimsamsa Chart" style="max-width: 80%;">
+    <div class="chart-caption">{{ locale.sp_d20_caption }}</div>
+  </div>
+</div>
+{% endif %}

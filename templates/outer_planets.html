@@ -1,0 +1,63 @@
+{% for profile in profiles %}
+<div class="section-page">
+  <h2 class="section-header">
+    {{ locale.planet_names.get(profile.name, profile.name) if locale.planet_names is defined else profile.name }}
+    {% if lang == "hi" %}
+      <span style="font-size: 11pt; font-weight: 400; color: #666;"> ({{ profile.name }})</span>
+    {% endif %}
+  </h2>
+
+  <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #e0d5c5; padding: 6mm; border-radius: 3mm; margin-bottom: 5mm;">
+    <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: #D4AF37; margin-bottom: 2mm; text-align: center;">
+      {{ locale.op_deity_label }}: {{ profile.deity }}
+    </h3>
+    <p style="font-size: 10.5pt; line-height: 1.8; text-align: justify; margin: 0;">
+      {{ profile.myth }}
+    </p>
+  </div>
+
+  <table class="kv-table" style="margin-bottom: 5mm;">
+    <tr>
+      <td>{{ locale.op_house }}</td>
+      <td>{{ locale.gp_house_prefix }} {{ profile.house }}</td>
+    </tr>
+    <tr>
+      <td>{{ locale.op_sign }}</td>
+      <td>{{ locale.sign_names.get(profile.sign, profile.sign) if locale.sign_names is defined else profile.sign }}
+        <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ locale.planet_names.get(profile.sign_lord, profile.sign_lord) if locale.planet_names is defined else profile.sign_lord }})</span>
+      </td>
+    </tr>
+    <tr>
+      <td>{{ locale.op_degree }}</td>
+      <td>{{ profile.degree }}&deg;</td>
+    </tr>
+    {% if profile.nakshatra %}
+    <tr>
+      <td>{{ locale.op_nakshatra }}</td>
+      <td>{{ profile.nakshatra }}
+        {% if profile.nakshatra_lord %}
+          <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ profile.nakshatra_lord }})</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endif %}
+    {% if profile.is_retro %}
+    <tr>
+      <td>{{ locale.gp_retrograde }}</td>
+      <td><span class="retro-badge">{{ locale.gp_retro_yes }}</span></td>
+    </tr>
+    {% endif %}
+  </table>
+
+  {% if profile.narrative %}
+  <div class="report-card" style="border-left: 4px solid #0f3460;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #16213e; margin-bottom: 3mm;">
+      {{ locale.op_placement_title }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; word-break: break-word; overflow-wrap: break-word;">
+      {{ profile.narrative }}
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}

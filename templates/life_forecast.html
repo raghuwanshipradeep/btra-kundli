@@ -1,0 +1,66 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.life_forecast_title }}</h2>
+
+  {% if narrative %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+  </div>
+  {% endif %}
+
+  {% if current_levels %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.forecast_current_dasha }}</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{{ locale.forecast_level }}</th>
+          <th>{{ locale.planet_col }}</th>
+          <th>{{ locale.start_date }}</th>
+          <th>{{ locale.end_date }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for level in current_levels %}
+        <tr>
+          <td><strong>{{ level.level }}</strong></td>
+          <td>{{ locale.planet_names.get(level.planet, level.planet) }}</td>
+          <td>{{ level.start }}</td>
+          <td>{{ level.end }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if varshaphal_summary %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.forecast_annual }}</h3>
+    <table class="kv-table">
+      {% if varshaphal_summary.year %}
+      <tr><td>{{ locale.forecast_year }}</td><td>{{ varshaphal_summary.year }}</td></tr>
+      {% endif %}
+      {% if varshaphal_summary.ascendant %}
+      <tr><td>{{ locale.ascendant }}</td><td>{{ varshaphal_summary.ascendant }}</td></tr>
+      {% endif %}
+      {% if varshaphal_summary.muntha %}
+      <tr><td>{{ locale.forecast_muntha }}</td><td>{{ varshaphal_summary.muntha }}</td></tr>
+      {% endif %}
+      {% if varshaphal_summary.varshesh %}
+      <tr><td>{{ locale.forecast_varshesh }}</td><td>{{ varshaphal_summary.varshesh }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if forecast_notes %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.forecast_analysis }}</h3>
+    {% for note in forecast_notes %}
+    <p>{{ note }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% include "partials/section_disclaimer.html" %}
+</div>

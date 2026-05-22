@@ -1,0 +1,61 @@
+{% macro render_value(val) %}
+  {% if val is mapping %}
+    <table class="kv-table">
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      <tr>
+        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% elif val is iterable and val is not string %}
+    {% for item in val %}
+      {% if item is mapping %}
+        {{ render_value(item) }}
+      {% else %}
+        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {{ val }}
+  {% endif %}
+{% endmacro %}
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.char_dasha_title }}</h2>
+
+  {% if current_char %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.current_char_title }}</h3>
+    {{ render_value(current_char) }}
+  </div>
+  {% endif %}
+
+  {% if major_char %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.major_char_title }}</h3>
+    {% if major_char is iterable and major_char is not mapping %}
+      <table class="data-table">
+        {% for item in major_char %}
+          {% if item is mapping %}
+          <tr>
+            {% for k, v in item.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+            <td>{{ v }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+    {% else %}
+      {{ render_value(major_char) }}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if sub_char %}
+  <div class="yogini-card">
+    <h3 class="sub-header">{{ locale.sub_char_title }}</h3>
+    {{ render_value(sub_char) }}
+  </div>
+  {% endif %}
+</div>

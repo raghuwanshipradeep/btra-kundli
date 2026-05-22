@@ -1,0 +1,33 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.gs_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.gs_intro }}
+  </p>
+
+  {% for conj in conjunctions %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.gp_house_prefix }} {{ conj.house }} — {{ locale.sign_names.get(conj.sign, conj.sign) }}
+    </h4>
+
+    <p style="font-size: 10pt; color: #666; margin-bottom: 3mm;">
+      {{ locale.gs_planets_together }}:
+      {% for p in conj.planets %}
+        <strong style="color: #2C2C2C;">{{ locale.planet_names.get(p, p) }}</strong>{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </p>
+
+    {% for pair in conj.pairs %}
+    <div class="dosha-card" style="margin-bottom: 3mm;">
+      <h4>
+        {{ locale.planet_names.get(pair.planet1, pair.planet1) }} ☌ {{ locale.planet_names.get(pair.planet2, pair.planet2) }}
+      </h4>
+      {% if pair.effect %}
+      <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ pair.effect }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>

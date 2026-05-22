@@ -1,0 +1,190 @@
+from __future__ import annotations
+
+import logging
+import pathlib
+
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+
+from config import settings
+from models import KundliData
+from sections.ashtakvarga import render_ashtakvarga
+from sections.astro_details import render_astro_details
+from sections.bhav_madhya import render_bhav_madhya
+from sections.bhinnashtak import render_bhinnashtak
+from sections.birth_summary import render_birth_summary
+from sections.chart import render_chart
+from sections.cover import render_cover
+from sections.daily_predictions import render_daily_predictions
+from sections.dasha import render_dasha
+from sections.divisional_charts import render_divisional_charts
+from sections.dosha import render_dosha
+from sections.ghat_chakra import render_ghat_chakra
+from sections.houses import render_houses
+from sections.kp_chart import render_kp_chart
+from sections.life_reports import render_life_reports
+from sections.panchada_maitri import render_panchada_maitri
+from sections.panchang import render_panchang
+from sections.planet_nature import render_planet_nature
+from sections.planets import render_planets
+from sections.remedy_rudraksha import render_remedy_rudraksha
+from sections.remedy_gemstones import render_remedy_gemstones
+from sections.remedy_mantras import render_remedy_mantras
+from sections.remedy_ishta_devata import render_remedy_ishta_devata
+from sections.remedy_yantra import render_remedy_yantra
+from sections.remedy_daan import render_remedy_daan
+from sections.varshaphal import render_varshaphal
+from sections.yogini_dasha import render_yogini_dasha
+from sections.char_dasha import render_char_dasha
+from sections.numerology import render_numerology
+from sections.lalkitab import render_lalkitab
+from sections.biorhythm import render_biorhythm
+from sections.moon_chart import render_moon_chart
+from sections.drishti import render_drishti
+from sections.dignity import render_dignity
+from sections.chara_karaka import render_chara_karaka
+from sections.avakhada_chakra import render_avakhada_chakra
+from sections.tatkalik_maitri import render_tatkalik_maitri
+from sections.extended_dosha import render_extended_dosha
+from sections.yogas import render_yogas
+from sections.thematic_reports import render_thematic_reports
+from sections.shodashvarga_summary import render_shodashvarga_summary
+from sections.south_chart import render_south_chart
+from sections.north_chart import render_north_chart
+from sections.marriage_timing import render_marriage_timing
+from sections.life_forecast import render_life_forecast
+from sections.tarot import render_tarot
+from sections.front_matter import render_front_matter
+from sections.graha_profile import render_graha_profile
+from sections.graha_sanyog import render_graha_sanyog
+from sections.outer_planets import render_outer_planets
+from sections.authors_note import render_authors_note
+from sections.closing_cta import render_closing_cta
+from sections.dasha_narrative import render_dasha_narrative
+from sections.love_marriage import render_love_marriage
+from sections.career_path import render_career_path
+from sections.rahu_ketu_analysis import render_rahu_ketu_analysis
+from sections.spiritual_potential import render_spiritual_potential
+from sections.sadhesati_enhanced import render_sadhesati_enhanced
+from sections.three_pillars import render_three_pillars
+from sections.sade_sati_journey import render_sade_sati_journey
+from sections.raj_yoga_celebration import render_raj_yoga_celebration
+from sections.mahadasha_journey import render_mahadasha_journey
+from sections.numerology_personality import render_numerology_personality
+
+logger = logging.getLogger(__name__)
+
+TEMPLATES_DIR = pathlib.Path(__file__).parent / "templates"
+
+SECTION_RENDERERS = [
+    ("cover", render_cover),
+    ("authors_note", render_authors_note),
+    ("front_matter", render_front_matter),
+    ("birth_summary", render_birth_summary),
+    ("panchang", render_panchang),
+    ("chart", render_chart),
+    ("divisional_charts", render_divisional_charts),
+    ("life_reports", render_life_reports),
+    ("three_pillars", render_three_pillars),
+    ("graha_profile", render_graha_profile),
+    ("outer_planets", render_outer_planets),
+    ("dosha", render_dosha),
+    ("remedy_rudraksha", render_remedy_rudraksha),
+    ("remedy_gemstones", render_remedy_gemstones),
+    ("remedy_mantras", render_remedy_mantras),
+    ("remedy_ishta_devata", render_remedy_ishta_devata),
+    ("remedy_yantra", render_remedy_yantra),
+    ("remedy_daan", render_remedy_daan),
+    ("daily_predictions", render_daily_predictions),
+    ("varshaphal", render_varshaphal),
+    ("planets", render_planets),
+    ("houses", render_houses),
+    ("astro_details", render_astro_details),
+    ("ghat_chakra", render_ghat_chakra),
+    ("bhav_madhya", render_bhav_madhya),
+    ("planet_nature", render_planet_nature),
+    ("panchada_maitri", render_panchada_maitri),
+    ("dasha", render_dasha),
+    ("mahadasha_journey", render_mahadasha_journey),
+    ("dasha_narrative", render_dasha_narrative),
+    ("ashtakvarga", render_ashtakvarga),
+    ("bhinnashtak", render_bhinnashtak),
+    ("kp_chart", render_kp_chart),
+    ("yogini_dasha", render_yogini_dasha),
+    ("char_dasha", render_char_dasha),
+    ("numerology", render_numerology),
+    ("numerology_personality", render_numerology_personality),
+    ("lalkitab", render_lalkitab),
+    ("biorhythm", render_biorhythm),
+    ("moon_chart", render_moon_chart),
+    ("drishti", render_drishti),
+    ("dignity", render_dignity),
+    ("chara_karaka", render_chara_karaka),
+    ("avakhada_chakra", render_avakhada_chakra),
+    ("tatkalik_maitri", render_tatkalik_maitri),
+    ("extended_dosha", render_extended_dosha),
+    ("rahu_ketu_analysis", render_rahu_ketu_analysis),
+    ("yogas", render_yogas),
+    ("raj_yoga_celebration", render_raj_yoga_celebration),
+    ("graha_sanyog", render_graha_sanyog),
+    ("thematic_reports", render_thematic_reports),
+    ("career_path", render_career_path),
+    ("shodashvarga_summary", render_shodashvarga_summary),
+    ("south_chart", render_south_chart),
+    ("north_chart", render_north_chart),
+    ("marriage_timing", render_marriage_timing),
+    ("love_marriage", render_love_marriage),
+    ("life_forecast", render_life_forecast),
+    ("spiritual_potential", render_spiritual_potential),
+    ("sade_sati_journey", render_sade_sati_journey),
+    ("tarot", render_tarot),
+    ("closing_cta", render_closing_cta),
+]
+
+
+class PDFGenerator:
+    def __init__(self) -> None:
+        self._env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        self._base_template = self._env.get_template("base.html")
+        self._css = (TEMPLATES_DIR / "styles.css").read_text(encoding="utf-8")
+
+    def generate(
+        self,
+        data: KundliData,
+        lang: str = "en",
+        include_sections: list[str] | None = None,
+    ) -> bytes:
+        sections: list[str] = []
+        for name, renderer in SECTION_RENDERERS:
+            if include_sections and name not in include_sections:
+                continue
+            try:
+                html = renderer(data, lang)
+                if html:
+                    sections.append(html)
+                    logger.info("Section '%s' rendered", name)
+                else:
+                    logger.info("Section '%s' skipped (no data)", name)
+            except Exception:
+                logger.exception("Section '%s' failed", name)
+
+        brand_footer = None
+        if settings.brand_footer_enabled:
+            brand_footer = {
+                "enabled": True,
+                "name": settings.brand_footer_name,
+                "url": settings.brand_footer_url,
+                "phone": settings.brand_footer_phone,
+            }
+
+        full_html = self._base_template.render(
+            sections=sections,
+            lang=lang,
+            css=self._css,
+            brand_footer=brand_footer,
+        )
+
+        base_url = TEMPLATES_DIR.as_uri() + "/"
+        pdf_bytes: bytes = HTML(string=full_html, base_url=base_url).write_pdf()
+        logger.info("PDF generated: %d bytes, %d sections", len(pdf_bytes), len(sections))
+        return pdf_bytes

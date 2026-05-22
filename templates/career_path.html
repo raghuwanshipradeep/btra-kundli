@@ -1,0 +1,177 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.cp_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.cp_intro }}
+  </p>
+
+  {% if narrative %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+  </div>
+  {% endif %}
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.cp_10th_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(tenth_sign, tenth_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(tenth_lord, tenth_lord) }}
+          {% if tenth_lord_planet %}
+            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ tenth_lord_planet.house }})</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% if planets_in_10th %}
+      <tr>
+        <td>{{ locale.lm_planets_present }}</td>
+        <td>
+          {% for p in planets_in_10th %}
+            {{ locale.planet_names.get(p.name, p.name) }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ locale.cp_10th_desc }}</p>
+
+    {% for entry in tenth_reports %}
+      {% if entry.report %}
+      <div class="dosha-card" style="margin-top: 3mm;">
+        <h4>{{ locale.planet_names.get(entry.name, entry.name) }} {{ locale.cp_in_10th }}</h4>
+        <p style="font-size: 10pt; line-height: 1.6;">{{ entry.report }}</p>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.cp_6th_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(sixth_sign, sixth_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(sixth_lord, sixth_lord) }}
+          {% if sixth_lord_planet %}
+            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ sixth_lord_planet.house }})</span>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.cp_2nd_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(second_sign, second_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(second_lord, second_lord) }}
+          {% if second_lord_planet %}
+            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ second_lord_planet.house }})</span>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.cp_pillars_title }}</h2>
+
+  {% if sun %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.cp_sun_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_house }}</td>
+        <td>{{ locale.gp_house_prefix }} {{ sun.house }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(sun.sign, sun.sign) }}</td>
+      </tr>
+    </table>
+    {% if sun_report %}
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ sun_report }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if saturn %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.cp_saturn_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_house }}</td>
+        <td>{{ locale.gp_house_prefix }} {{ saturn.house }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(saturn.sign, saturn.sign) }}</td>
+      </tr>
+    </table>
+    {% if saturn_report %}
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ saturn_report }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% include "partials/section_disclaimer.html" %}
+</div>
+
+{% if amatyakaraka %}
+<div class="section-page">
+  <h2 class="section-header">{{ locale.cp_ak_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.cp_ak_intro }}
+  </p>
+
+  <div class="dasha-current-card" style="margin-bottom: 5mm;">
+    <div class="period-label">{{ locale.cp_ak_label }}</div>
+    <div class="planet-name">{{ locale.planet_names.get(amatyakaraka.name, amatyakaraka.name) }}</div>
+    <div class="period-dates">
+      {{ locale.sign_names.get(amatyakaraka.sign, amatyakaraka.sign) }} — {{ locale.gp_house_prefix }} {{ amatyakaraka.house }} — {{ amatyakaraka.degree }}°
+    </div>
+  </div>
+
+  {% if ak_house_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.cp_ak_house_effect }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ak_house_report }}</p>
+  </div>
+  {% endif %}
+
+  {% if ak_rashi_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.cp_ak_rashi_effect }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ak_rashi_report }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

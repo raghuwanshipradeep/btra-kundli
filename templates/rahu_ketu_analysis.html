@@ -1,0 +1,115 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.rk_title }}</h2>
+
+  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.rk_intro }}
+  </p>
+
+  <div style="display: flex; gap: 4mm; margin-bottom: 5mm;">
+    <div class="dasha-current-card" style="flex: 1;">
+      <div class="period-label">{{ locale.planet_names.get("Rahu", "Rahu") }}</div>
+      <div class="planet-name">{{ locale.gp_house_prefix }} {{ rahu.house }}</div>
+      <div class="period-dates">{{ locale.sign_names.get(rahu.sign, rahu.sign) }} — {{ rahu.normDegree | round(2) }}°</div>
+    </div>
+    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #5C6BC0 0%, #7986CB 100%);">
+      <div class="period-label">{{ locale.planet_names.get("Ketu", "Ketu") }}</div>
+      <div class="planet-name">{{ locale.gp_house_prefix }} {{ ketu.house }}</div>
+      <div class="period-dates">{{ locale.sign_names.get(ketu.sign, ketu.sign) }} — {{ ketu.normDegree | round(2) }}°</div>
+    </div>
+  </div>
+
+  {% if narrative %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+  </div>
+  {% endif %}
+
+  {% if axis_text %}
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.rk_axis_title }} ({{ axis_key }})
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ axis_text }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.planet_names.get("Rahu", "Rahu") }} — {{ locale.rk_rahu_subtitle }}</h2>
+
+  {% if rahu_house_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.gp_house_placement }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ rahu_house_report }}</p>
+  </div>
+  {% endif %}
+
+  {% if rahu_rashi_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.gp_rashi_placement }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ rahu_rashi_report }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="section-page">
+  <h2 class="section-header">{{ locale.planet_names.get("Ketu", "Ketu") }} — {{ locale.rk_ketu_subtitle }}</h2>
+
+  {% if ketu_house_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.gp_house_placement }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ketu_house_report }}</p>
+  </div>
+  {% endif %}
+
+  {% if ketu_rashi_report %}
+  <div class="report-card" style="margin-bottom: 4mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+      {{ locale.gp_rashi_placement }}
+    </h4>
+    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ketu_rashi_report }}</p>
+  </div>
+  {% endif %}
+
+  {% if rahu_lk_remedies or ketu_lk_remedies %}
+  <div class="report-card" style="margin-top: 5mm;">
+    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+      {{ locale.rk_remedies_title }}
+    </h4>
+    {% if rahu_lk_remedies %}
+    <div class="dosha-card" style="margin-bottom: 3mm;">
+      <h4>{{ locale.planet_names.get("Rahu", "Rahu") }} {{ locale.rk_remedy_for }}</h4>
+      {% if rahu_lk_remedies is mapping %}
+        {% for key, val in rahu_lk_remedies.items() %}
+          {% if val %}
+          <p style="font-size: 10pt; margin-bottom: 2mm;"><strong>{{ key | replace('_', ' ') | title }}:</strong> {{ val }}</p>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <p style="font-size: 10pt;">{{ rahu_lk_remedies }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if ketu_lk_remedies %}
+    <div class="dosha-card">
+      <h4>{{ locale.planet_names.get("Ketu", "Ketu") }} {{ locale.rk_remedy_for }}</h4>
+      {% if ketu_lk_remedies is mapping %}
+        {% for key, val in ketu_lk_remedies.items() %}
+          {% if val %}
+          <p style="font-size: 10pt; margin-bottom: 2mm;"><strong>{{ key | replace('_', ' ') | title }}:</strong> {{ val }}</p>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <p style="font-size: 10pt;">{{ ketu_lk_remedies }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

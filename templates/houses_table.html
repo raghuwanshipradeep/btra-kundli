@@ -1,0 +1,30 @@
+<div class="section-page">
+    <h2 class="section-header">{{ locale.houses_title }}</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>{{ locale.house_col }}</th>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.sign_lord_col }}</th>
+                <th>{{ locale.degree_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for house in houses %}
+            {% set is_kendra = house.house_id in [1, 4, 7, 10] %}
+            {% set is_trikona = house.house_id in [1, 5, 9] %}
+            <tr class="{% if is_kendra %}kendra{% endif %} {% if is_trikona %}trikona{% endif %}">
+                <td>
+                    <strong>{{ locale.house_label }} {{ house.house_id }}</strong>
+                    {% if is_kendra %}<span style="color:var(--kendra-gold); font-size:8pt"> ({{ locale.kendra }})</span>{% endif %}
+                    {% if is_trikona and house.house_id != 1 %}<span style="color:var(--saffron); font-size:8pt"> ({{ locale.trikona }})</span>{% endif %}
+                </td>
+                <td>{{ locale.sign_names.get(house.sign, house.sign) }}</td>
+                <td>{{ house.sign_lord }}</td>
+                <td>{% if house.degree %}{{ "%.2f"|format(house.degree) }}°{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
