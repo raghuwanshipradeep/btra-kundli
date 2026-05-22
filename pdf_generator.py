@@ -8,6 +8,13 @@ from weasyprint import HTML
 
 from config import settings
 from models import KundliData
+from sections import _safe_time
+
+LITE_SKIP_SECTIONS = {
+    "tamil_month_panchang", "tamil_panchang", "panchang_festival",
+    "extended_dosha", "panchada_maitri", "tatkalik_maitri",
+    "bhinnashtak", "shodashvarga_summary", "char_dasha", "yogini_dasha",
+}
 from sections.ashtakvarga import render_ashtakvarga
 from sections.astro_details import render_astro_details
 from sections.bhav_madhya import render_bhav_madhya
@@ -145,6 +152,7 @@ SECTION_RENDERERS = [
 class PDFGenerator:
     def __init__(self) -> None:
         self._env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+        self._env.filters["safe_time"] = _safe_time
         self._base_template = self._env.get_template("base.html")
         self._css = (TEMPLATES_DIR / "styles.css").read_text(encoding="utf-8")
 
@@ -153,10 +161,13 @@ class PDFGenerator:
         data: KundliData,
         lang: str = "en",
         include_sections: list[str] | None = None,
+        report_tier: str = "detailed",
     ) -> bytes:
         sections: list[str] = []
         for name, renderer in SECTION_RENDERERS:
             if include_sections and name not in include_sections:
+                continue
+            if report_tier == "lite" and name in LITE_SKIP_SECTIONS:
                 continue
             try:
                 html = renderer(data, lang)

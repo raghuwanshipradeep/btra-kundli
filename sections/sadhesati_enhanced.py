@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES, translate_keys
+from sections import LOCALES, translate_keys, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -68,7 +67,7 @@ def render_sadhesati_enhanced(data: KundliData, lang: str = "en") -> str | None:
         current_status = translate_keys(current_status, SADHESATI_KEYS_HI) or {}
         remedies_data = translate_keys(remedies_data, SADHESATI_KEYS_HI)
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("sadhesati_enhanced.html")
     return template.render(
         current_status=current_status,

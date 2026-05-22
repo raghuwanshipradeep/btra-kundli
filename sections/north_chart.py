@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
 from sections import (
     LOCALES,
@@ -13,6 +12,7 @@ from sections import (
     PLANET_SHORT_HI,
     build_sign_planet_map,
     get_north_indian_sign_for_house,
+    make_env,
 )
 
 if TYPE_CHECKING:
@@ -82,7 +82,7 @@ def render_north_chart(data: KundliData, lang: str = "en") -> str | None:
             "cy": cy,
         })
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("north_chart.html")
     return template.render(
         houses=houses,

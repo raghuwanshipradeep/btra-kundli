@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES, SIGN_NAMES_BY_ID, SIGN_NAMES_HI_BY_ID
+from sections import LOCALES, SIGN_NAMES_BY_ID, SIGN_NAMES_HI_BY_ID, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -22,7 +21,7 @@ def render_kp_chart(data: KundliData, lang: str = "en") -> str | None:
         return None
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("kp_chart.html")
 
     sign_map = SIGN_NAMES_HI_BY_ID if lang == "hi" else SIGN_NAMES_BY_ID

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -73,7 +72,7 @@ def render_tatkalik_maitri(data: KundliData, lang: str = "en") -> str | None:
     planet_order = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("tatkalik_maitri.html")
     return template.render(
         tatkalik=tatkalik,

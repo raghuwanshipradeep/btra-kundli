@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.remedy_constants import (
     PLANET_MANTRAS,
     PLANET_MANTRAS_DEVANAGARI,
@@ -59,7 +58,7 @@ def render_remedy_mantras(data: KundliData, lang: str = "en") -> str | None:
     ishta_shloka = ishta_info.get("shloka", "")
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("remedy_mantras.html")
     return template.render(
         mantra_rows=mantra_rows,

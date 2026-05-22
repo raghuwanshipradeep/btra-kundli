@@ -3,9 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -35,12 +34,44 @@ def _calc_timeline_pct(start_str: str, end_str: str) -> float | None:
     return (elapsed / total) * 100
 
 
+def _flatten_current_vdasha_all(raw: dict | None) -> list[dict] | None:
+    if not raw:
+        return None
+    levels = []
+    for level_name, level_data in raw.items():
+        if not isinstance(level_data, dict):
+            continue
+        periods = level_data.get("dasha_period", [])
+        if isinstance(periods, list) and periods:
+            levels.append({
+                "level": level_name.replace("_", " ").title(),
+                "current": (level_data.get("planet") or "").strip(),
+                "periods": [
+                    {
+                        "planet": (p.get("planet") or "").strip(),
+                        "start": p.get("start", ""),
+                        "end": p.get("end", ""),
+                    }
+                    for p in periods if isinstance(p, dict)
+                ][:10],
+            })
+        elif "planet" in level_data:
+            levels.append({
+                "level": level_name.replace("_", " ").title(),
+                "current": (level_data.get("planet") or "").strip(),
+                "start": level_data.get("start", ""),
+                "end": level_data.get("end", ""),
+                "periods": [],
+            })
+    return levels or None
+
+
 def render_dasha(data: KundliData, lang: str = "en") -> str | None:
     if not data.major_vdasha and not data.current_vdasha:
         return None
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("dasha_timeline.html")
 
     timeline_pct = None
@@ -55,6 +86,7 @@ def render_dasha(data: KundliData, lang: str = "en") -> str | None:
         major_dasha=data.major_vdasha,
         timeline_pct=timeline_pct,
         current_vdasha_all=data.current_vdasha_all,
+        current_vdasha_all_levels=_flatten_current_vdasha_all(data.current_vdasha_all),
         sub_vdasha=data.sub_vdasha,
         sub_sub_vdasha=data.sub_sub_vdasha,
         sub_sub_sub_vdasha=data.sub_sub_sub_vdasha,

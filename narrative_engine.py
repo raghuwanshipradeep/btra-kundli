@@ -42,6 +42,7 @@ Tone: warm, relatable, like a best friend who knows astrology. Never preachy, ne
 
 FORBIDDEN: predictions of death, exact dates of bad events, anything that could scare a vulnerable reader.
 You MUST reference the actual astrological data provided (sign, house, planet, nakshatra, dates). Never invent data.
+End every response with a complete sentence ending in a period. If running out of space, wrap up the current thought cleanly rather than starting a new one.
 Output ONLY the narrative text. No headings, no markdown, no bullet points, no asterisks."""
 
 _SYSTEM_PROMPT_HI = """\
@@ -61,6 +62,7 @@ _SYSTEM_PROMPT_HI = """\
 
 वर्जित: मृत्यु की भविष्यवाणी, बुरी घटनाओं की सटीक तिथियां, कोई भी बात जो पाठक को डराए।
 आपको दिए गए वास्तविक ज्योतिषीय आंकड़ों का उपयोग करना अनिवार्य है (राशि, भाव, ग्रह, नक्षत्र, तिथियां)। कोई आंकड़ा गढ़ें नहीं।
+प्रत्येक उत्तर को पूर्ण वाक्य के साथ समाप्त करें जो '।' पर समाप्त हो। यदि स्थान कम हो रहा हो तो वर्तमान विचार को साफ़-सुथरे ढंग से समाप्त करें, नया विचार शुरू न करें।
 केवल विवरण लिखें। कोई शीर्षक नहीं, कोई मार्कडाउन नहीं, कोई बुलेट पॉइंट नहीं, कोई तारांकन नहीं।"""
 
 _SYSTEM_PROMPT_MAHADASHA_EN = """\
@@ -418,10 +420,10 @@ async def narrate(
 
     if section_type == "mahadasha_journey":
         system_prompt = _SYSTEM_PROMPT_MAHADASHA_HI if lang == "hi" else _SYSTEM_PROMPT_MAHADASHA_EN
-        max_tokens = 600
+        max_tokens = 800
     else:
         system_prompt = _SYSTEM_PROMPT_HI if lang == "hi" else _SYSTEM_PROMPT_EN
-        max_tokens = 400
+        max_tokens = 600
     user_prompt = _build_user_prompt(section_type, data, lang)
 
     try:
@@ -441,6 +443,14 @@ async def narrate(
                 timeout=CALL_TIMEOUT,
             )
         narrative = response.content[0].text.strip()
+
+        if response.stop_reason == "max_tokens":
+            logger.warning("Narrative '%s' hit max_tokens, trimming to last sentence", section_type)
+            for terminator in ("।", ".", "!", "?"):
+                idx = narrative.rfind(terminator)
+                if idx > len(narrative) * 0.5:
+                    narrative = narrative[:idx + 1]
+                    break
 
         try:
             await _set_cached(key, narrative)

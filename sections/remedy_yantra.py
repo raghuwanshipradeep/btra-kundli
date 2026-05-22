@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.dignity import DEBILITATION, OWN_SIGNS, EXALTATION, MOOLATRIKONA
 from sections.remedy_constants import PLANET_YANTRAS, YANTRA_DOS, YANTRA_DONTS
 
@@ -73,7 +72,7 @@ def render_remedy_yantra(data: KundliData, lang: str = "en") -> str | None:
     yantra_name = PLANET_YANTRAS.get(target.name, "")
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("remedy_yantra.html")
     return template.render(
         yantra_name=yantra_name,

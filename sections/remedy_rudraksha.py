@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.remedy_constants import RUDRAKSHA_MEANINGS
 
 if TYPE_CHECKING:
@@ -45,7 +44,7 @@ def render_remedy_rudraksha(data: KundliData, lang: str = "en") -> str | None:
         puja_list = data.puja_suggestion.get("puja_list", [])
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("remedy_rudraksha.html")
     return template.render(
         rudraksha_list=rudraksha_list,

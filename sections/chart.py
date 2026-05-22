@@ -3,9 +3,8 @@ from __future__ import annotations
 import base64
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -16,7 +15,7 @@ def render_chart(data: KundliData, lang: str = "en") -> str | None:
         return None
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("chart.html")
 
     chart_image: str | None = None

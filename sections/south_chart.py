@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
 from sections import (
     LOCALES,
     PLANET_SHORT_EN,
     PLANET_SHORT_HI,
     build_sign_planet_map,
+    make_env,
 )
 
 if TYPE_CHECKING:
@@ -68,7 +68,7 @@ def render_south_chart(data: KundliData, lang: str = "en") -> str | None:
             "is_lagna": sign_name == lagna_sign,
         })
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("south_chart.html")
     return template.render(
         cells=cells,

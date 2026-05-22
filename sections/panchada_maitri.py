@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -22,7 +21,7 @@ def render_panchada_maitri(data: KundliData, lang: str = "en") -> str | None:
     planet_names = locale.get("planet_names", {})
     maitri = data.panchada_maitri
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("panchada_maitri.html")
     return template.render(
         maitri=maitri,

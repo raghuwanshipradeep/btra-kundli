@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.drishti import SPECIAL_ASPECTS, DEFAULT_ASPECT
 from sections.dignity import _get_dignity
 
@@ -135,7 +134,7 @@ def render_graha_profile(data: KundliData, lang: str = "en") -> str | None:
         return None
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("graha_profile.html")
     return template.render(
         profiles=profiles,

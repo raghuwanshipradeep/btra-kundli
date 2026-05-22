@@ -17,6 +17,7 @@ class KundliRequest(BaseModel):
     tzone: float
     lang: str = "en"
     place: str = ""
+    report_tier: str = "detailed"
 
 
 class BirthDetails(BaseModel):

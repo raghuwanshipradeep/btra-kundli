@@ -1060,7 +1060,7 @@ class AstrologyAPIClient:
             self.get_houses(payload),                       # 3
             self.get_horo_chart_d1(payload),                # 4
             self.get_natal_wheel_chart(payload),            # 5
-            self.get_panchang(payload),                     # 6
+            self.get_panchang(payload_with_ayan),              # 6
             self.get_current_vdasha(payload),               # 7
             self.get_major_vdasha(payload),                 # 8
             self.get_kp_birth_chart(payload),               # 9

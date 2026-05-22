@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -137,7 +136,7 @@ def render_dasha_narrative(data: KundliData, lang: str = "en") -> str | None:
         return None
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("dasha_narrative.html")
     return template.render(
         narratives=narratives,

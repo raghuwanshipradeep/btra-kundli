@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.dignity import DEBILITATION, OWN_SIGNS, EXALTATION, MOOLATRIKONA
 from sections.remedy_constants import PLANET_DONATIONS, BEHAVIORAL_REMEDIES
 
@@ -153,7 +152,7 @@ def render_remedy_daan(data: KundliData, lang: str = "en") -> str | None:
         })
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("remedy_daan.html")
     return template.render(
         weak_planets=weak_planets,

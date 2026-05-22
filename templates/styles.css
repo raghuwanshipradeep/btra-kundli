@@ -104,7 +104,7 @@ body {
     border-radius: 2mm;
     min-height: 100%;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .section-page::before {
@@ -265,6 +265,12 @@ table {
     table-layout: fixed;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    page-break-inside: auto;
+}
+
+tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
 }
 
 thead th {

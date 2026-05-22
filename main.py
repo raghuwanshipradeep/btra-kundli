@@ -95,7 +95,8 @@ async def generate_kundli(request: KundliRequest) -> StreamingResponse:
 
     try:
         pdf_bytes = await asyncio.to_thread(
-            pdf_gen.generate, kundli_data, request.lang
+            pdf_gen.generate, kundli_data, request.lang,
+            report_tier=request.report_tier,
         )
     except Exception:
         logger.exception("PDF generation failed")

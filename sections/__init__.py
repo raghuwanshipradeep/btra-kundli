@@ -1,5 +1,31 @@
 from __future__ import annotations
 
+from jinja2 import Environment, FileSystemLoader
+
+
+def _safe_time(value) -> str:
+    if value is None or value == "" or str(value).lower() == "nan":
+        return "—"
+    s = str(value).strip()
+    if "nan" in s.lower():
+        return "—"
+    if ":" in s:
+        parts = s.split(":")
+        try:
+            return ":".join(f"{int(p):02d}" for p in parts)
+        except ValueError:
+            return s
+    return s
+
+
+def make_env() -> Environment:
+    env = Environment(loader=FileSystemLoader("templates"))
+    env.filters["safe_time"] = _safe_time
+    env.filters["to_hi"] = to_hi
+    env.filters["indian_date"] = format_indian_datetime
+    return env
+
+
 SIGN_NAMES_BY_ID: dict[int, str] = {
     1: "Aries", 2: "Taurus", 3: "Gemini", 4: "Cancer",
     5: "Leo", 6: "Virgo", 7: "Libra", 8: "Scorpio",
@@ -63,10 +89,84 @@ def translate_keys(data: dict | list | None, key_map: dict[str, str]) -> dict | 
     return data
 
 
+TAMIL_TRANSLIT_TO_HI: dict[str, str] = {
+    "Mesham": "मेष", "Rishabam": "वृषभ", "Midhunam": "मिथुन",
+    "Kadagam": "कर्क", "Simmam": "सिंह", "Kanni": "कन्या",
+    "Thulam": "तुला", "Vrischikam": "वृश्चिक", "Vrischika": "वृश्चिक",
+    "Dhanusu": "धनु", "Makaram": "मकर", "Kumbam": "कुम्भ", "Meenam": "मीन",
+    "Aries": "मेष", "Taurus": "वृषभ", "Gemini": "मिथुन",
+    "Cancer": "कर्क", "Leo": "सिंह", "Virgo": "कन्या",
+    "Libra": "तुला", "Scorpio": "वृश्चिक", "Sagittarius": "धनु",
+    "Capricorn": "मकर", "Aquarius": "कुम्भ", "Pisces": "मीन",
+    "Kanya": "कन्या", "Hastham": "हस्त", "Saubhgya": "सौभाग्य",
+    "Egadashi": "एकादशी", "Pirathamai": "प्रतिपदा",
+    "Ashwini": "अश्विनी", "Bharani": "भरणी", "Krittika": "कृत्तिका",
+    "Rohini": "रोहिणी", "Mrigashira": "मृगशिरा", "Ardra": "आर्द्रा",
+    "Punarvasu": "पुनर्वसु", "Pushya": "पुष्य", "Ashlesha": "आश्लेषा",
+    "Magha": "मघा", "Purva Phalguni": "पूर्वा फाल्गुनी",
+    "Uttara Phalguni": "उत्तरा फाल्गुनी", "Hasta": "हस्त",
+    "Chitra": "चित्रा", "Swati": "स्वाति", "Vishakha": "विशाखा",
+    "Anuradha": "अनुराधा", "Jyeshtha": "ज्येष्ठा",
+    "Mula": "मूल", "Purva Ashadha": "पूर्वाषाढ़ा",
+    "Uttara Ashadha": "उत्तराषाढ़ा", "Shravana": "श्रवण",
+    "Dhanishta": "धनिष्ठा", "Shatabhisha": "शतभिषा",
+    "Purva Bhadrapada": "पूर्वा भाद्रपद", "Uttara Bhadrapada": "उत्तरा भाद्रपद",
+    "Revati": "रेवती",
+    "Sunday": "रविवार", "Monday": "सोमवार", "Tuesday": "मंगलवार",
+    "Wednesday": "बुधवार", "Thursday": "गुरुवार", "Friday": "शुक्रवार",
+    "Saturday": "शनिवार",
+    "Sun": "सूर्य", "Moon": "चंद्र", "Mars": "मंगल", "Mercury": "बुध",
+    "Jupiter": "गुरु", "Venus": "शुक्र", "Saturn": "शनि",
+    "Rahu": "राहु", "Ketu": "केतु",
+}
+
+
+def to_hi(value: str) -> str:
+    if not value or not isinstance(value, str):
+        return value or ""
+    return TAMIL_TRANSLIT_TO_HI.get(value.strip(), value)
+
+
+_MONTH_NAMES_HI = {
+    1: "जनवरी", 2: "फरवरी", 3: "मार्च", 4: "अप्रैल",
+    5: "मई", 6: "जून", 7: "जुलाई", 8: "अगस्त",
+    9: "सितंबर", 10: "अक्टूबर", 11: "नवंबर", 12: "दिसंबर",
+}
+
+_MONTH_NAMES_EN = {
+    1: "January", 2: "February", 3: "March", 4: "April",
+    5: "May", 6: "June", 7: "July", 8: "August",
+    9: "September", 10: "October", 11: "November", 12: "December",
+}
+
+
+def format_indian_datetime(value: str, lang: str = "en") -> str:
+    if not value or not isinstance(value, str):
+        return value or ""
+    import re
+    m = re.match(r"(\d{1,2})-(\d{1,2})-(\d{4})\s*(\d{1,2}:\d{2})?", value.strip())
+    if not m:
+        return value
+    day, month, year = int(m.group(1)), int(m.group(2)), m.group(3)
+    time_part = m.group(4)
+    months = _MONTH_NAMES_HI if lang == "hi" else _MONTH_NAMES_EN
+    month_name = months.get(month, str(month))
+    result = f"{day:02d} {month_name} {year}"
+    if time_part:
+        h, mi = time_part.split(":")
+        h_int = int(h)
+        suffix = "PM" if h_int >= 12 else "AM"
+        h_12 = h_int % 12 or 12
+        result += f", {h_12}:{mi} {suffix}"
+    return result
+
+
 LOCALES: dict[str, dict] = {
     "en": {
         "title": "Kundli Report",
         "subtitle": "जन्म कुंडली",
+        "yes": "Yes",
+        "no": "No",
         "dob": "Date of Birth",
         "tob": "Time of Birth",
         "pob": "Place of Birth",
@@ -127,7 +227,7 @@ LOCALES: dict[str, dict] = {
         "chart_title": "Lagna Chart (D1)",
         "chart_desc": "The birth chart (Lagna Kundli) is a snapshot of the sky at your birth moment. It reveals your personality, health tendencies, career path, and life direction.",
         "chart_unavailable": "Chart image unavailable",
-        "chart_caption": "Lagna Chart — North Indian Style",
+        "chart_caption": "Lagna Chart — Natal Wheel",
         "chart_data_title": "Planets in Signs",
         "sign_col": "Sign",
         "planets_in_sign": "Planets",
@@ -823,6 +923,8 @@ LOCALES: dict[str, dict] = {
     "hi": {
         "title": "कुंडली रिपोर्ट",
         "subtitle": "Kundli Report",
+        "yes": "हाँ",
+        "no": "नहीं",
         "dob": "जन्म तिथि",
         "tob": "जन्म समय",
         "pob": "जन्म स्थान",
@@ -883,7 +985,7 @@ LOCALES: dict[str, dict] = {
         "chart_title": "लग्न कुंडली (D1)",
         "chart_desc": "लग्न कुंडली आपके जन्म के समय का आकाशीय मानचित्र है। यह आपके व्यक्तित्व, स्वास्थ्य, करियर और जीवन की समग्र दिशा को दर्शाती है।",
         "chart_unavailable": "चार्ट उपलब्ध नहीं",
-        "chart_caption": "लग्न कुंडली — उत्तर भारतीय शैली",
+        "chart_caption": "लग्न कुंडली — नैटल व्हील",
         "chart_data_title": "राशि में ग्रह",
         "sign_col": "राशि",
         "planets_in_sign": "ग्रह",

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -64,7 +63,7 @@ def render_marriage_timing(data: KundliData, lang: str = "en") -> str | None:
     planets_in_7 = [p.name for p in data.planets if p.house == 7 and p.name != "Ascendant"]
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("marriage_timing.html")
     return template.render(
         factors=factors,

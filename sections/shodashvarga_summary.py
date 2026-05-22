@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.dignity import EXALTATION, OWN_SIGNS, MOOLATRIKONA, DEBILITATION
 
 if TYPE_CHECKING:
@@ -65,7 +64,7 @@ def render_shodashvarga_summary(data: KundliData, lang: str = "en") -> str | Non
         })
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("shodashvarga_summary.html")
     return template.render(
         summary_rows=rows,

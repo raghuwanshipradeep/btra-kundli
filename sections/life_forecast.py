@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -72,7 +71,7 @@ def render_life_forecast(data: KundliData, lang: str = "en") -> str | None:
             forecast_notes.append(muntha["report"])
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("life_forecast.html")
     return template.render(
         current_levels=current_levels,

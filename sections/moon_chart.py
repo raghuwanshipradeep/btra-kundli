@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES, SIGN_ORDER_EN
+from sections import LOCALES, SIGN_ORDER_EN, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -47,7 +46,7 @@ def render_moon_chart(data: KundliData, lang: str = "en") -> str | None:
             rotated.append({"house": i + 1, "sign": sign_name, "planets": []})
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("moon_chart.html")
     return template.render(
         moon_chart=rotated,

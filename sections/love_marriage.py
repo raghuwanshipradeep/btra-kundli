@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.graha_profile import SIGN_LORDS
 
 if TYPE_CHECKING:
@@ -104,7 +103,7 @@ def render_love_marriage(data: KundliData, lang: str = "en") -> str | None:
             "report": _get_report(data.general_house_reports, p.name),
         })
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("love_marriage.html")
     return template.render(
         fifth_house_sign=fifth_house_sign,

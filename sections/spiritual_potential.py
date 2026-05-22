@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.graha_profile import SIGN_LORDS
 
 if TYPE_CHECKING:
@@ -126,7 +125,7 @@ def render_spiritual_potential(data: KundliData, lang: str = "en") -> str | None
     if data.horo_chart_images:
         d20_image = data.horo_chart_images.get("D20")
 
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("spiritual_potential.html")
     return template.render(
         ninth_sign=ninth_sign,

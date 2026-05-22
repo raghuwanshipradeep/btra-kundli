@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES
+from sections import LOCALES, make_env
 from sections.yogas import _detect_yogas
 
 if TYPE_CHECKING:
@@ -23,7 +22,7 @@ def render_raj_yoga_celebration(data: KundliData, lang: str = "en") -> str | Non
                  and y.get("name") != "No Major Yoga Detected"]
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("raj_yoga_celebration.html")
     return template.render(
         raj_yogas=raj_yogas,

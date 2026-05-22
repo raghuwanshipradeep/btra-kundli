@@ -1,7 +1,7 @@
 {% macro render_value(val) %}
   {% if val is mapping %}
     <table class="kv-table">
-      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
       <tr>
         <td>{{ k | replace('_', ' ') | title }}</td>
         <td>{{ render_value(v) }}</td>
@@ -16,8 +16,14 @@
         <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
       {% endif %}
     {% endfor %}
+  {% elif val is sameas true %}
+    {{ locale.get('yes', 'Yes') }}
+  {% elif val is sameas false %}
+    {{ locale.get('no', 'No') }}
+  {% elif val is number and val is not sameas true and val is not sameas false and val % 1 != 0 %}
+    {{ "%.2f"|format(val) }}
   {% else %}
-    {{ val }}
+    {% if lang == "hi" %}{{ val | to_hi }}{% else %}{{ val }}{% endif %}
   {% endif %}
 {% endmacro %}
 
@@ -35,7 +41,7 @@
       {% for item in items %}
       <tr>
         <td>{{ loop.index }}</td>
-        <td>{{ item.get('time', item.get('start', '')) }}{% if item.get('end') %} — {{ item.end }}{% endif %}</td>
+        <td>{{ item.get('time', item.get('start', '')) | safe_time }}{% if item.get('end') %} — {{ item.end | safe_time }}{% endif %}</td>
         <td><strong>{{ item.get('muhurta', item.get('name', '')) }}</strong></td>
         <td>{{ item.get('type', item.get('is_day', '')) }}</td>
       </tr>
@@ -57,7 +63,7 @@
       {% for item in items %}
       <tr>
         <td>{{ loop.index }}</td>
-        <td>{{ item.get('time', item.get('start', '')) }}{% if item.get('end') %} — {{ item.end }}{% endif %}</td>
+        <td>{{ item.get('time', item.get('start', '')) | safe_time }}{% if item.get('end') %} — {{ item.end | safe_time }}{% endif %}</td>
         <td><strong>{{ item.get('hora_lord', item.get('hora', item.get('lord', ''))) }}</strong></td>
       </tr>
       {% endfor %}
@@ -185,27 +191,27 @@
         <tbody>
             <tr>
                 <td><strong>{{ locale.sunrise }}</strong></td>
-                <td>{{ panchang.sunrise }}</td>
+                <td>{{ panchang.sunrise | safe_time }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.sunset }}</strong></td>
-                <td>{{ panchang.sunset }}</td>
+                <td>{{ panchang.sunset | safe_time }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.moonrise }}</strong></td>
-                <td>{{ panchang.moonrise }}</td>
+                <td>{{ panchang.moonrise | safe_time }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.moonset }}</strong></td>
-                <td>{{ panchang.moonset }}</td>
+                <td>{{ panchang.moonset | safe_time }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.vedic_sunrise }}</strong></td>
-                <td>{{ panchang.vedic_sunrise }}</td>
+                <td>{{ panchang.vedic_sunrise | safe_time }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.vedic_sunset }}</strong></td>
-                <td>{{ panchang.vedic_sunset }}</td>
+                <td>{{ panchang.vedic_sunset | safe_time }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.sun_sign }}</strong></td>

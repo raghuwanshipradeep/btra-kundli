@@ -40,11 +40,11 @@
             </tr>
             <tr>
                 <td>{{ locale.sunrise }}</td>
-                <td>{{ birth.sunrise }}</td>
+                <td>{{ birth.sunrise | safe_time }}</td>
             </tr>
             <tr>
                 <td>{{ locale.sunset }}</td>
-                <td>{{ birth.sunset }}</td>
+                <td>{{ birth.sunset | safe_time }}</td>
             </tr>
             {% endif %}
         </tbody>

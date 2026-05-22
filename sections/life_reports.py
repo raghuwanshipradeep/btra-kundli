@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES, translate_keys
+from sections import LOCALES, translate_keys, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -35,7 +34,7 @@ def render_life_reports(data: KundliData, lang: str = "en") -> str | None:
         nakshatra_report = translate_keys(nakshatra_report, NAKSHATRA_KEYS_HI)
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("life_reports.html")
     return template.render(
         ascendant_report=ascendant_report,

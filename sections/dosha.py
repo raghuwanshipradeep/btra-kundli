@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from jinja2 import Environment, FileSystemLoader
 
-from sections import LOCALES, translate_keys
+from sections import LOCALES, translate_keys, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -81,7 +80,7 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
         pitra_dosha = translate_keys(pitra_dosha, DOSHA_KEYS_HI)
 
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = Environment(loader=FileSystemLoader("templates"))
+    env = make_env()
     template = env.get_template("dosha.html")
     return template.render(
         simple_manglik=simple_manglik,
