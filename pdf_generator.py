@@ -8,7 +8,7 @@ from weasyprint import HTML
 
 from config import settings
 from models import KundliData
-from sections import _safe_time
+from sections import _safe_time, humanize_key, to_hindi_value
 
 LITE_SKIP_SECTIONS = {
     "tamil_month_panchang", "tamil_panchang", "panchang_festival",
@@ -153,6 +153,8 @@ class PDFGenerator:
     def __init__(self) -> None:
         self._env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
         self._env.filters["safe_time"] = _safe_time
+        self._env.filters["humanize_key"] = humanize_key
+        self._env.filters["to_hindi_value"] = to_hindi_value
         self._base_template = self._env.get_template("base.html")
         self._css = (TEMPLATES_DIR / "styles.css").read_text(encoding="utf-8")
 

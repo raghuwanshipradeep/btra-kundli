@@ -1,9 +1,11 @@
 {% macro render_value(val) %}
-  {% if val is mapping %}
+  {% if val is none or val == "" %}
+    —
+  {% elif val is mapping %}
     <table class="kv-table">
-      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') %}
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
       <tr>
-        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ k | humanize_key(lang) }}</td>
         <td>{{ render_value(v) }}</td>
       </tr>
       {% endfor %}
@@ -13,11 +15,17 @@
       {% if item is mapping %}
         {{ render_value(item) }}
       {% else %}
-        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+        <span>{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}</span>{% if not loop.last %}, {% endif %}
       {% endif %}
     {% endfor %}
+  {% elif val is sameas true %}
+    {{ locale.get('yes', 'Yes') }}
+  {% elif val is sameas false %}
+    {{ locale.get('no', 'No') }}
+  {% elif val is number and val is not sameas true and val is not sameas false and val % 1 != 0 %}
+    {{ "%.2f"|format(val) }}
   {% else %}
-    {{ val }}
+    {% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | safe_time }}{% endif %}
   {% endif %}
 {% endmacro %}
 

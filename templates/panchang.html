@@ -1,9 +1,11 @@
 {% macro render_value(val) %}
-  {% if val is mapping %}
+  {% if val is none or val == "" %}
+    —
+  {% elif val is mapping %}
     <table class="kv-table">
       {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
       <tr>
-        <td>{{ k | replace('_', ' ') | title }}</td>
+        <td>{{ k | humanize_key(lang) }}</td>
         <td>{{ render_value(v) }}</td>
       </tr>
       {% endfor %}
@@ -13,7 +15,7 @@
       {% if item is mapping %}
         {{ render_value(item) }}
       {% else %}
-        <span>{{ item }}</span>{% if not loop.last %}, {% endif %}
+        <span>{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}</span>{% if not loop.last %}, {% endif %}
       {% endif %}
     {% endfor %}
   {% elif val is sameas true %}
@@ -23,7 +25,7 @@
   {% elif val is number and val is not sameas true and val is not sameas false and val % 1 != 0 %}
     {{ "%.2f"|format(val) }}
   {% else %}
-    {% if lang == "hi" %}{{ val | to_hi }}{% else %}{{ val }}{% endif %}
+    {% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | safe_time }}{% endif %}
   {% endif %}
 {% endmacro %}
 
@@ -231,7 +233,7 @@
 {% endif %}
 
 {# ===== PAGE 2: Chaughadiya & Hora Muhurta ===== #}
-{% if chaughadiya_muhurta or hora_muhurta or hora_muhurta_dinman %}
+{% if (chaughadiya_muhurta and chaughadiya_muhurta|length > 0) or (hora_muhurta and hora_muhurta|length > 0) or (hora_muhurta_dinman and hora_muhurta_dinman|length > 0) %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.chaughadiya_muhurta_title }}</h2>
 
@@ -258,7 +260,7 @@
     {% endif %}
 </div>
 
-{% if hora_muhurta or hora_muhurta_dinman %}
+{% if (hora_muhurta and hora_muhurta|length > 0) or (hora_muhurta_dinman and hora_muhurta_dinman|length > 0) %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.hora_muhurta_title }}</h2>
 
@@ -275,7 +277,7 @@
       {% endif %}
     {% endif %}
 
-    {% if hora_muhurta_dinman %}
+    {% if hora_muhurta_dinman and hora_muhurta_dinman|length > 0 %}
       <hr class="divider">
       <h3 class="section-subheader">{{ locale.hora_muhurta_dinman_title }}</h3>
       {% set hddata = hora_muhurta_dinman.get('hora', hora_muhurta_dinman) if hora_muhurta_dinman is mapping else hora_muhurta_dinman %}
@@ -290,7 +292,7 @@
 {% endif %}
 
 {# ===== PAGE 3: Planet Panchang ===== #}
-{% if planet_panchang or planet_panchang_sunrise %}
+{% if (planet_panchang and planet_panchang|length > 0) or (planet_panchang_sunrise and planet_panchang_sunrise|length > 0) %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.planet_panchang_title }}</h2>
 
@@ -317,7 +319,7 @@
 {% endif %}
 
 {# ===== PAGE 4: Basic Panchang variants ===== #}
-{% if basic_panchang or basic_panchang_sunrise or advanced_panchang_sunrise %}
+{% if (basic_panchang and basic_panchang|length > 0) or (basic_panchang_sunrise and basic_panchang_sunrise|length > 0) or (advanced_panchang_sunrise and advanced_panchang_sunrise|length > 0) %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.basic_panchang_title }}</h2>
 
@@ -345,7 +347,7 @@
 {% endif %}
 
 {# ===== PAGE 5: Tamil Panchang & Festivals ===== #}
-{% if tamil_panchang or tamil_month_panchang or panchang_festival or panchang_chart %}
+{% if (tamil_panchang and tamil_panchang|length > 0) or (tamil_month_panchang and tamil_month_panchang|length > 0) or (panchang_festival and panchang_festival|length > 0) or (panchang_chart and panchang_chart|length > 0) %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.tamil_panchang_title }}</h2>
 

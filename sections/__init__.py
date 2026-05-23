@@ -23,6 +23,8 @@ def make_env() -> Environment:
     env.filters["safe_time"] = _safe_time
     env.filters["to_hi"] = to_hi
     env.filters["indian_date"] = format_indian_datetime
+    env.filters["humanize_key"] = humanize_key
+    env.filters["to_hindi_value"] = to_hindi_value
     return env
 
 
@@ -125,6 +127,185 @@ def to_hi(value: str) -> str:
     if not value or not isinstance(value, str):
         return value or ""
     return TAMIL_TRANSLIT_TO_HI.get(value.strip(), value)
+
+
+HUMAN_LABELS: dict[str, dict[str, str]] = {
+    "hi": {
+        "day": "वार",
+        "sunrise": "सूर्योदय",
+        "sunset": "सूर्यास्त",
+        "moonrise": "चंद्रोदय",
+        "moonset": "चंद्रास्त",
+        "tithi": "तिथि",
+        "nakshatra": "नक्षत्र",
+        "yog": "योग",
+        "yoga": "योग",
+        "karan": "करण",
+        "karana": "करण",
+        "hindu_month": "हिंदू मास",
+        "tamil_month": "तमिल मास",
+        "paksha": "पक्ष",
+        "ritu": "ऋतु",
+        "sun_sign": "सूर्य राशि",
+        "moon_sign": "चंद्र राशि",
+        "adhik_status": "अधिक मास",
+        "purnimanta": "पूर्णिमांत",
+        "amanta": "अमांत",
+        "month_name": "मास का नाम",
+        "id": "क्रमांक",
+        "details": "विवरण",
+        "end_time": "समाप्ति समय",
+        "start_time": "प्रारंभ समय",
+        "start": "प्रारंभ",
+        "end": "समाप्ति",
+        "sub_lord": "उप स्वामी",
+        "sub_sub_lord": "उप-उप स्वामी",
+        "planet_name": "ग्रह",
+        "is_retro": "वक्री",
+        "degree": "अंश",
+        "formatted_degree": "अंश (प्रारूपित)",
+        "norm_degree": "सामान्यीकृत अंश",
+        "formatted_norm_degree": "सामान्यीकृत अंश (प्रारूपित)",
+        "house": "भाव",
+        "sign": "राशि",
+        "sign_name": "राशि का नाम",
+        "sign_lord": "राशि स्वामी",
+        "nakshatra_lord": "नक्षत्र स्वामी",
+        "charan": "चरण",
+        "cusp_full_degree": "कुस्प पूर्ण अंश",
+        "planet": "ग्रह",
+        "planet_degree": "ग्रह अंश",
+        "varna": "वर्ण",
+        "vashya": "वश्य",
+        "yoni": "योनि",
+        "gan": "गण",
+        "gana": "गण",
+        "nadi": "नाड़ी",
+        "yunja": "युंजा",
+        "tatva": "तत्व",
+        "name_alphabet": "नाम का अक्षर",
+        "paya": "पाया",
+        "ascendant": "लग्न",
+        "ascendant_lord": "लग्न स्वामी",
+        "ayanamsha": "अयनांश",
+        "year": "वर्ष",
+        "month": "मास",
+        "date": "तिथि",
+        "status": "स्थिति",
+        "festivals": "त्योहार",
+        "name": "नाम",
+        "type": "प्रकार",
+        "description": "विवरण",
+        "retro": "वक्री",
+        "full_degree": "पूर्ण अंश",
+        "local_degree": "स्थानीय अंश",
+        "speed": "गति",
+        "house_no": "भाव संख्या",
+        "current_sign": "वर्तमान राशि",
+        "is_planet_set": "ग्रह अस्त",
+        "is_combust": "अस्त",
+        "house_significator": "भाव कारक",
+        "planet_significator": "ग्रह कारक",
+    },
+    "en": {
+        "is_retro": "Retrograde",
+        "sub_lord": "Sub Lord",
+        "sub_sub_lord": "Sub-Sub Lord",
+        "norm_degree": "Normalized Degree",
+        "formatted_degree": "Formatted Degree",
+        "formatted_norm_degree": "Formatted Norm. Degree",
+        "cusp_full_degree": "Cusp Full Degree",
+        "planet_name": "Planet Name",
+        "sign_name": "Sign Name",
+        "planet_degree": "Planet Degree",
+        "end_time": "End Time",
+        "start_time": "Start Time",
+        "sun_sign": "Sun Sign",
+        "moon_sign": "Moon Sign",
+        "adhik_status": "Adhik Status",
+        "hindu_month": "Hindu Month",
+        "tamil_month": "Tamil Month",
+        "month_name": "Month Name",
+        "name_alphabet": "Name Alphabet",
+        "sign_lord": "Sign Lord",
+        "nakshatra_lord": "Nakshatra Lord",
+        "ascendant_lord": "Ascendant Lord",
+        "full_degree": "Full Degree",
+        "local_degree": "Local Degree",
+        "house_no": "House No.",
+        "current_sign": "Current Sign",
+        "is_planet_set": "Planet Set",
+        "is_combust": "Combust",
+        "house_significator": "House Significator",
+        "planet_significator": "Planet Significator",
+    },
+}
+
+VALUE_TRANSLATIONS_HI: dict[str, str] = {
+    "Prathama": "प्रथमा", "Dwitiya": "द्वितीया", "Tritiya": "तृतीया",
+    "Chaturthi": "चतुर्थी", "Panchami": "पंचमी", "Shashthi": "षष्ठी",
+    "Saptami": "सप्तमी", "Ashtami": "अष्टमी", "Navami": "नवमी",
+    "Dashami": "दशमी", "Egadashi": "एकादशी", "Ekadashi": "एकादशी",
+    "Dwadashi": "द्वादशी", "Trayodashi": "त्रयोदशी", "Chaturdashi": "चतुर्दशी",
+    "Pournami": "पूर्णिमा", "Poornima": "पूर्णिमा", "Amavasya": "अमावस्या",
+    "Krishna": "कृष्ण", "Shukla": "शुक्ल",
+    "Hastham": "हस्त", "Hasta": "हस्त", "Aswini": "अश्विनी", "Ashwini": "अश्विनी",
+    "Bharani": "भरणी", "Karthigai": "कृत्तिका", "Krittika": "कृत्तिका",
+    "Rohini": "रोहिणी", "Mrigashira": "मृगशिरा", "Ardra": "आर्द्रा",
+    "Punarvasu": "पुनर्वसु", "Pushya": "पुष्य", "Ashlesha": "आश्लेषा",
+    "Magha": "मघा", "Purva Phalguni": "पूर्वा फाल्गुनी",
+    "Uttara Phalguni": "उत्तरा फाल्गुनी",
+    "Chitra": "चित्रा", "Swati": "स्वाति", "Vishakha": "विशाखा",
+    "Anuradha": "अनुराधा", "Jyeshtha": "ज्येष्ठा",
+    "Mula": "मूल", "Purva Ashadha": "पूर्वाषाढ़ा",
+    "Uttara Ashadha": "उत्तराषाढ़ा", "Shravana": "श्रवण",
+    "Dhanishta": "धनिष्ठा", "Shatabhisha": "शतभिषा",
+    "Purva Bhadrapada": "पूर्वा भाद्रपद", "Uttara Bhadrapada": "उत्तरा भाद्रपद",
+    "Revati": "रेवती",
+    "Vrischika": "वृश्चिक", "Kanya": "कन्या", "Tula": "तुला",
+    "Mesham": "मेष", "Rishabam": "वृषभ", "Midhunam": "मिथुन",
+    "Kadagam": "कर्क", "Simmam": "सिंह", "Kanni": "कन्या",
+    "Thulam": "तुला", "Vrischikam": "वृश्चिक", "Dhanusu": "धनु",
+    "Makaram": "मकर", "Kumbam": "कुम्भ", "Meenam": "मीन",
+    "Aries": "मेष", "Taurus": "वृषभ", "Gemini": "मिथुन",
+    "Cancer": "कर्क", "Leo": "सिंह", "Virgo": "कन्या",
+    "Libra": "तुला", "Scorpio": "वृश्चिक", "Sagittarius": "धनु",
+    "Capricorn": "मकर", "Aquarius": "कुम्भ", "Pisces": "मीन",
+    "Karthikai": "कार्तिक", "Margazhi": "मार्गशीर्ष",
+    "Saubhgya": "सौभाग्य", "Saubhagya": "सौभाग्य",
+    "Gara": "गर", "Bava": "बव", "Balava": "बालव",
+    "Kaulava": "कौलव", "Taitila": "तैतिल", "Vanij": "वणिज",
+    "Vishti": "विष्टि", "Shakuni": "शकुनि",
+    "Sunday": "रविवार", "Monday": "सोमवार", "Tuesday": "मंगलवार",
+    "Wednesday": "बुधवार", "Thursday": "गुरुवार", "Friday": "शुक्रवार",
+    "Saturday": "शनिवार",
+    "Sun": "सूर्य", "Moon": "चंद्र", "Mars": "मंगल", "Mercury": "बुध",
+    "Jupiter": "गुरु", "Venus": "शुक्र", "Saturn": "शनि",
+    "Rahu": "राहु", "Ketu": "केतु",
+    "true": "हाँ", "false": "नहीं", "True": "हाँ", "False": "नहीं",
+    "Yes": "हाँ", "No": "नहीं",
+}
+
+
+def humanize_key(key: str, lang: str = "en") -> str:
+    """Convert a snake_case API key to a human label in the given language."""
+    if not key:
+        return ""
+    table = HUMAN_LABELS.get(lang, HUMAN_LABELS.get("en", {}))
+    if key in table:
+        return table[key]
+    return key.replace("_", " ").title()
+
+
+def to_hindi_value(value, lang: str = "en"):
+    """Translate common English values to Hindi when lang is 'hi'."""
+    if lang != "hi" or not isinstance(value, str):
+        return value
+    v = value.strip()
+    translated = VALUE_TRANSLATIONS_HI.get(v)
+    if translated:
+        return translated
+    return TAMIL_TRANSLIT_TO_HI.get(v, value)
 
 
 _MONTH_NAMES_HI = {

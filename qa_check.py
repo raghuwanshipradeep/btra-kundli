@@ -63,6 +63,28 @@ def check_no_internal_values(text: str) -> list[str]:
     return errors
 
 
+def check_no_raw_json(text: str) -> list[str]:
+    errors = []
+    if '{ "experience":' in text or '{"experience":' in text:
+        errors.append("P0-7 FAIL: Raw JSON block leaked in mahadasha journey")
+    return errors
+
+
+def check_no_english_labels_in_hindi(text: str) -> list[str]:
+    errors = []
+    hindi_indicators = ["सूर्योदय", "सूर्यास्त", "अयनांश", "तिथि"]
+    is_hindi = any(ind in text for ind in hindi_indicators)
+    if not is_hindi:
+        return []
+    en_labels = ["Sub Lord", "Sub Sub Lord", "Planet Name", "Is Retro",
+                 "Formatted Degree", "Norm Degree", "Cusp Full Degree",
+                 "Adhik Status", "Hindu Month", "Tamil Month"]
+    for label in en_labels:
+        if label in text:
+            errors.append(f"P1-8 FAIL: English label '{label}' in Hindi PDF")
+    return errors
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print("Usage: python qa_check.py <pdf_file>")
@@ -83,6 +105,8 @@ def main() -> None:
     all_errors.extend(check_time_format(text))
     all_errors.extend(check_chart_caption(text))
     all_errors.extend(check_no_internal_values(text))
+    all_errors.extend(check_no_raw_json(text))
+    all_errors.extend(check_no_english_labels_in_hindi(text))
 
     if all_errors:
         print(f"\nFAILED — {len(all_errors)} issue(s):")

@@ -420,10 +420,10 @@ async def narrate(
 
     if section_type == "mahadasha_journey":
         system_prompt = _SYSTEM_PROMPT_MAHADASHA_HI if lang == "hi" else _SYSTEM_PROMPT_MAHADASHA_EN
-        max_tokens = 800
+        max_tokens = 1024
     else:
         system_prompt = _SYSTEM_PROMPT_HI if lang == "hi" else _SYSTEM_PROMPT_EN
-        max_tokens = 600
+        max_tokens = 700
     user_prompt = _build_user_prompt(section_type, data, lang)
 
     try:
@@ -446,7 +446,7 @@ async def narrate(
 
         if response.stop_reason == "max_tokens":
             logger.warning("Narrative '%s' hit max_tokens, trimming to last sentence", section_type)
-            for terminator in ("।", ".", "!", "?"):
+            for terminator in ("।", ".", "!", "?", "\"", "}"):
                 idx = narrative.rfind(terminator)
                 if idx > len(narrative) * 0.5:
                     narrative = narrative[:idx + 1]

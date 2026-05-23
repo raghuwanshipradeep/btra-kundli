@@ -26,9 +26,9 @@
             <span class="label">{{ locale.tob }}:</span> {{ "%02d"|format(request.hour) }}:{{ "%02d"|format(request.min) }}<br>
             <span class="label">{{ locale.pob }}:</span> {% if request.place %}{{ request.place }}{% else %}{{ "%.4f"|format(request.lat) }}°N, {{ "%.4f"|format(request.lon) }}°E{% endif %}<br>
             {% if birth and birth.sunrise %}
-            <span class="label">{{ locale.sunrise }}:</span> {{ birth.sunrise }}
+            <span class="label">{{ locale.sunrise }}:</span> {{ birth.sunrise | safe_time }}
             &nbsp;&nbsp;|&nbsp;&nbsp;
-            <span class="label">{{ locale.sunset }}:</span> {{ birth.sunset }}
+            <span class="label">{{ locale.sunset }}:</span> {{ birth.sunset | safe_time }}
             {% endif %}
         </div>
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 
@@ -7,6 +8,48 @@ from sections import LOCALES, make_env
 
 if TYPE_CHECKING:
     from models import KundliData
+
+
+def _sanitize_nan(obj):
+    """Recursively replace NaN-like strings and values with None."""
+    if isinstance(obj, dict):
+        return {k: _sanitize_nan(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_nan(v) for v in obj]
+    if isinstance(obj, float) and math.isnan(obj):
+        return None
+    if isinstance(obj, str) and "nan" in obj.lower():
+        return None
+    return obj
+
+
+def _hours_to_hms(hours):
+    """Convert decimal hours (e.g. 6.50) to HH:MM format."""
+    if hours is None or not isinstance(hours, (int, float)):
+        return "—"
+    if isinstance(hours, float) and math.isnan(hours):
+        return "—"
+    total_minutes = round(hours * 60)
+    h = total_minutes // 60
+    m = total_minutes % 60
+    return f"{h:02d}:{m:02d}"
+
+
+def _sanitize_monthly_panchang(data):
+    """Convert decimal-hour time fields in monthly panchang to HH:MM."""
+    if not data:
+        return data
+    if isinstance(data, list):
+        return [_sanitize_monthly_panchang(item) for item in data]
+    if isinstance(data, dict):
+        result = {}
+        for k, v in data.items():
+            if k in ("sunrise", "sunset", "moonrise", "moonset") and isinstance(v, (int, float)):
+                result[k] = _hours_to_hms(v)
+            else:
+                result[k] = _sanitize_monthly_panchang(v)
+        return result
+    return data
 
 
 def render_panchang(data: KundliData, lang: str = "en") -> str | None:
@@ -34,19 +77,19 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
     template = env.get_template("panchang.html")
     return template.render(
         panchang=data.panchang,
-        basic_panchang=data.basic_panchang,
-        basic_panchang_sunrise=data.basic_panchang_sunrise,
-        advanced_panchang_sunrise=data.advanced_panchang_sunrise,
+        basic_panchang=_sanitize_nan(data.basic_panchang),
+        basic_panchang_sunrise=_sanitize_nan(data.basic_panchang_sunrise),
+        advanced_panchang_sunrise=_sanitize_nan(data.advanced_panchang_sunrise),
         planet_panchang=data.planet_panchang,
         planet_panchang_sunrise=data.planet_panchang_sunrise,
-        chaughadiya_muhurta=data.chaughadiya_muhurta,
-        hora_muhurta=data.hora_muhurta,
-        hora_muhurta_dinman=data.hora_muhurta_dinman,
+        chaughadiya_muhurta=_sanitize_nan(data.chaughadiya_muhurta),
+        hora_muhurta=_sanitize_nan(data.hora_muhurta),
+        hora_muhurta_dinman=_sanitize_nan(data.hora_muhurta_dinman),
         panchang_chart=data.panchang_chart,
-        tamil_month_panchang=data.tamil_month_panchang,
-        tamil_panchang=data.tamil_panchang,
+        tamil_month_panchang=_sanitize_monthly_panchang(_sanitize_nan(data.tamil_month_panchang)),
+        tamil_panchang=_sanitize_nan(data.tamil_panchang),
         panchang_festival=data.panchang_festival,
-        monthly_panchang=data.monthly_panchang,
+        monthly_panchang=_sanitize_monthly_panchang(_sanitize_nan(data.monthly_panchang)),
         locale=locale,
         lang=lang,
     )

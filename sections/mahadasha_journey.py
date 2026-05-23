@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import TYPE_CHECKING
 
 
@@ -14,18 +15,56 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_journey_narrative(raw: str) -> dict:
-    """Parse JSON narrative into {experience: [...], avoid: [...]}. Falls back on failure."""
+    """Parse JSON narrative into {experience: [...], avoid: [...]}. Multi-strategy with fallback."""
     if not raw:
         return {}
+
+    text = raw.strip()
+
+    # Strategy 1: direct JSON
     try:
-        text = raw.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         parsed = json.loads(text)
         if isinstance(parsed, dict) and ("experience" in parsed or "avoid" in parsed):
             return parsed
     except (json.JSONDecodeError, ValueError):
-        logger.debug("Mahadasha journey narrative was not valid JSON, using fallback")
+        pass
+
+    # Strategy 2: extract JSON from markdown fences
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if match:
+        try:
+            parsed = json.loads(match.group(1))
+            if isinstance(parsed, dict) and ("experience" in parsed or "avoid" in parsed):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Strategy 3: find outermost {...} block
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        try:
+            parsed = json.loads(match.group(0))
+            if isinstance(parsed, dict) and ("experience" in parsed or "avoid" in parsed):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Strategy 4: regex-extract arrays manually
+    exp_match = re.search(r'"experience"\s*:\s*\[(.*?)\]', text, re.DOTALL)
+    avoid_match = re.search(r'"avoid"\s*:\s*\[(.*?)\]', text, re.DOTALL)
+    if exp_match or avoid_match:
+        def _extract_strings(s: str) -> list[str]:
+            return [m.group(1) for m in re.finditer(r'"([^"]+)"', s or "")]
+        result = {
+            "experience": _extract_strings(exp_match.group(1) if exp_match else ""),
+            "avoid": _extract_strings(avoid_match.group(1) if avoid_match else ""),
+        }
+        if result["experience"] or result["avoid"]:
+            return result
+
+    logger.debug("Mahadasha journey narrative was not valid JSON, using fallback")
+    if "{" in text and "experience" in text:
+        return {"fallback_text": ""}
     return {"fallback_text": raw}
 
 
