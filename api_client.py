@@ -226,7 +226,10 @@ class AstrologyAPIClient:
     async def get_horo_chart_d1(self, payload: dict) -> list[HoroChartSign] | None:
         try:
             raw = await self._post("/horo_chart/D1", payload)
-            return [HoroChartSign.model_validate(s) for s in raw]
+            signs = [HoroChartSign.model_validate(s) for s in raw]
+            for s in signs:
+                s.planet = [p.strip().title() for p in s.planet]
+            return signs
         except Exception as e:
             logger.warning("horo_chart/D1 failed: %s", e)
             return None
@@ -470,7 +473,10 @@ class AstrologyAPIClient:
     async def get_horo_chart(self, payload: dict, chart_id: str) -> list[HoroChartSign] | None:
         try:
             raw = await self._post(f"/horo_chart/{chart_id}", payload)
-            return [HoroChartSign.model_validate(s) for s in raw]
+            signs = [HoroChartSign.model_validate(s) for s in raw]
+            for s in signs:
+                s.planet = [p.strip().title() for p in s.planet]
+            return signs
         except Exception as e:
             logger.warning("horo_chart/%s failed: %s", chart_id, e)
             return None
@@ -1173,6 +1179,12 @@ class AstrologyAPIClient:
             if val is not None:
                 horo_charts[cid] = val
 
+        charts_ok = [c for c in chart_ids if c in horo_charts]
+        charts_fail = [c for c in chart_ids if c not in horo_charts]
+        logger.info("horo_charts: %d/%d succeeded: %s", len(charts_ok), len(chart_ids), charts_ok)
+        if charts_fail:
+            logger.warning("horo_charts missing: %s", charts_fail)
+
         phase2b = await asyncio.gather(
             *[self.get_horo_chart_image(payload_with_ayan, c) for c in chart_ids],
             *[self.get_general_house_report(payload_with_ayan, p) for p in report_planets],
@@ -1190,6 +1202,12 @@ class AstrologyAPIClient:
                 elif raw_svg and raw_svg.strip().startswith("<"):
                     b64 = base64.b64encode(raw_svg.encode("utf-8")).decode("ascii")
                     horo_chart_images[cid] = f"data:image/svg+xml;base64,{b64}"
+
+        imgs_ok = [c for c in chart_ids if c in horo_chart_images]
+        imgs_fail = [c for c in chart_ids if c not in horo_chart_images]
+        logger.info("horo_chart_images: %d/%d succeeded: %s", len(imgs_ok), len(chart_ids), imgs_ok)
+        if imgs_fail:
+            logger.warning("horo_chart_images missing: %s", imgs_fail)
 
         general_house_reports: dict = {}
         for i, pname in enumerate(report_planets):

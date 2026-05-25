@@ -95,7 +95,7 @@
             {% for a in ayanamsha_list %}
             <tr>
                 <td><strong>{{ a.type }}</strong></td>
-                <td>{{ "%.6f"|format(a.degree) }}&deg;</td>
+                <td>{{ a.degree|format_degree }}&deg;</td>
                 <td>{{ a.formatted }}</td>
             </tr>
             {% endfor %}

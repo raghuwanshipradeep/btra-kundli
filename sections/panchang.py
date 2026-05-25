@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import math
 from typing import TYPE_CHECKING
 
 
 from sections import LOCALES, make_env
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -33,6 +36,15 @@ def _hours_to_hms(hours):
     h = total_minutes // 60
     m = total_minutes % 60
     return f"{h:02d}:{m:02d}"
+
+
+def _empty_to_none(obj):
+    """Convert empty dicts/lists to None so Jinja truthiness skips them."""
+    if isinstance(obj, dict) and len(obj) == 0:
+        return None
+    if isinstance(obj, list) and len(obj) == 0:
+        return None
+    return obj
 
 
 def _sanitize_monthly_panchang(data):
@@ -72,6 +84,13 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
     if not has_any:
         return None
 
+    logger.info(
+        "Panchang data: chaughadiya=%s hora=%s hora_dinman=%s",
+        type(data.chaughadiya_muhurta).__name__ if data.chaughadiya_muhurta else None,
+        type(data.hora_muhurta).__name__ if data.hora_muhurta else None,
+        type(data.hora_muhurta_dinman).__name__ if data.hora_muhurta_dinman else None,
+    )
+
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()
     template = env.get_template("panchang.html")
@@ -82,9 +101,9 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         advanced_panchang_sunrise=_sanitize_nan(data.advanced_panchang_sunrise),
         planet_panchang=data.planet_panchang,
         planet_panchang_sunrise=data.planet_panchang_sunrise,
-        chaughadiya_muhurta=_sanitize_nan(data.chaughadiya_muhurta),
-        hora_muhurta=_sanitize_nan(data.hora_muhurta),
-        hora_muhurta_dinman=_sanitize_nan(data.hora_muhurta_dinman),
+        chaughadiya_muhurta=_empty_to_none(_sanitize_nan(data.chaughadiya_muhurta)),
+        hora_muhurta=_empty_to_none(_sanitize_nan(data.hora_muhurta)),
+        hora_muhurta_dinman=_empty_to_none(_sanitize_nan(data.hora_muhurta_dinman)),
         panchang_chart=data.panchang_chart,
         tamil_month_panchang=_sanitize_monthly_panchang(_sanitize_nan(data.tamil_month_panchang)),
         tamil_panchang=_sanitize_nan(data.tamil_panchang),

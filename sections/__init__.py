@@ -3,6 +3,13 @@ from __future__ import annotations
 from jinja2 import Environment, FileSystemLoader
 
 
+def _format_degree(value) -> str:
+    try:
+        return f"{float(value):.4f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def _safe_time(value) -> str:
     if value is None or value == "" or str(value).lower() == "nan":
         return "—"
@@ -25,6 +32,7 @@ def make_env() -> Environment:
     env.filters["indian_date"] = format_indian_datetime
     env.filters["humanize_key"] = humanize_key
     env.filters["to_hindi_value"] = to_hindi_value
+    env.filters["format_degree"] = _format_degree
     return env
 
 
@@ -400,6 +408,16 @@ LOCALES: dict[str, dict] = {
         "tamil_month_panchang_title": "Tamil Month Panchang",
         "tamil_panchang_title": "Tamil Panchang",
         "panchang_festival_title": "Panchang Festival",
+        "dur_muhurtha": "Dur Muhurtha",
+        "amrit_kaal": "Amrit Kaal",
+        "varjyam": "Varjyam",
+        "anandadi_yog": "Anandadi Yog",
+        "end_time_col": "End Time",
+        "start_col": "Start",
+        "end_col": "End",
+        "date_col": "Date",
+        "yog_name_col": "Yog Name",
+        "month_year_label": "Month / Year",
         "muhurta_col": "Muhurta",
         "type_col": "Type",
         "hora_lord_col": "Hora Lord",
@@ -499,27 +517,44 @@ LOCALES: dict[str, dict] = {
         "bhinnashtak_desc": "Bhinnashtak Varga shows individual planet contributions (0 or 1 point) to each sign, revealing planet-by-planet strength distribution.",
         "bhinnashtak_note": "Bhinnashtak Varga shows individual planet contributions (0/1) to each sign. Higher total = stronger support.",
 
-        "divisional_charts_title": "Divisional Charts",
+        "divisional_charts_title": "Divisional Charts (Varga Kundli)",
         "divisional_charts_desc": "Divisional charts (Varga Kundli) divide each sign into smaller parts to reveal specific life areas in greater detail.",
+        "d1_title": "Lagna / Rashi (D1)",
+        "d1_desc": "The birth chart — foundation of all predictions. Shows personality, health, and overall life direction.",
         "d2_title": "Hora (D2)",
+        "d2_desc": "Wealth and financial prospects. Sun's hora = self-earned; Moon's hora = inherited or easy gains.",
         "d3_title": "Drekkana (D3)",
+        "d3_desc": "Siblings, courage, and short journeys. Also used for longevity analysis.",
         "d4_title": "Chaturthamsa (D4)",
+        "d4_desc": "Property, vehicles, fixed assets, and domestic happiness.",
         "d5_title": "Panchamsa (D5)",
+        "d5_desc": "Spiritual merit (Poorva Punya), mantras, and innate talents from past lives.",
         "d7_title": "Saptamsa (D7)",
+        "d7_desc": "Children, progeny, and creative potential.",
         "d8_title": "Ashtamsa (D8)",
+        "d8_desc": "Sudden events, accidents, and vulnerability analysis.",
         "d9_title": "Navamsa (D9)",
-        "d9_desc": "Navamsa (D9) is the most important divisional chart — used to analyze marriage, dharma, and deeper soul qualities. A planet strong here gives results even if weak in the birth chart.",
+        "d9_desc": "The most important divisional chart — marriage, dharma, and deeper soul qualities. A planet strong here gives results even if weak in the birth chart.",
         "d10_title": "Dasamsa (D10)",
-        "d10_desc": "Dashamsa (D10) analyzes career, profession, and social status. The 10th house lord and its placement here indicate career direction and professional success.",
+        "d10_desc": "Career, profession, and social status. The 10th house lord placement here indicates career direction.",
         "d12_title": "Dwadasamsa (D12)",
+        "d12_desc": "Parents, lineage, and ancestral karma.",
         "d16_title": "Shodasamsa (D16)",
+        "d16_desc": "Vehicles, comforts, luxury, and mental peace.",
         "d20_title": "Vimsamsa (D20)",
+        "d20_desc": "Spiritual pursuits, worship patterns, and connection with the divine.",
         "d24_title": "Chaturvimsamsa (D24)",
+        "d24_desc": "Education, learning, and academic achievements.",
         "d27_title": "Bhamsa (D27)",
+        "d27_desc": "Physical strength, stamina, and overall vitality.",
         "d30_title": "Trimsamsa (D30)",
+        "d30_desc": "Misfortunes, diseases, and karmic challenges.",
         "d40_title": "Khavedamsa (D40)",
+        "d40_desc": "Auspicious and inauspicious effects, maternal legacy.",
         "d45_title": "Akshavedamsa (D45)",
+        "d45_desc": "General well-being and paternal legacy.",
         "d60_title": "Shashtiamsa (D60)",
+        "d60_desc": "The finest divisional chart — past life karma and its present-life manifestation.",
         "chart_image_unavailable": "Chart image unavailable",
 
         "panchada_maitri_title": "Planetary Friendship (Panchada Maitri)",
@@ -1158,6 +1193,16 @@ LOCALES: dict[str, dict] = {
         "tamil_month_panchang_title": "तमिल मासिक पंचांग",
         "tamil_panchang_title": "तमिल पंचांग",
         "panchang_festival_title": "पंचांग त्योहार",
+        "dur_muhurtha": "दुर्मुहूर्त",
+        "amrit_kaal": "अमृत काल",
+        "varjyam": "वर्ज्यम",
+        "anandadi_yog": "आनन्दादि योग",
+        "end_time_col": "समाप्ति समय",
+        "start_col": "प्रारंभ",
+        "end_col": "समाप्ति",
+        "date_col": "दिनांक",
+        "yog_name_col": "योग नाम",
+        "month_year_label": "मास / वर्ष",
         "muhurta_col": "मुहूर्त",
         "type_col": "प्रकार",
         "hora_lord_col": "होरा स्वामी",
@@ -1259,25 +1304,42 @@ LOCALES: dict[str, dict] = {
 
         "divisional_charts_title": "वर्ग कुंडलियाँ",
         "divisional_charts_desc": "वर्ग कुंडलियाँ प्रत्येक राशि को छोटे भागों में विभाजित कर जीवन के विशिष्ट क्षेत्रों को अधिक विस्तार से दर्शाती हैं।",
+        "d1_title": "लग्न / राशि (D1)",
+        "d1_desc": "जन्म कुंडली — सभी भविष्यवाणियों का आधार। व्यक्तित्व, स्वास्थ्य और जीवन की दिशा दर्शाती है।",
         "d2_title": "होरा (D2)",
+        "d2_desc": "धन और वित्तीय संभावनाएँ। सूर्य की होरा = स्वअर्जित; चंद्र की होरा = विरासत।",
         "d3_title": "द्रेक्काण (D3)",
+        "d3_desc": "भाई-बहन, साहस और छोटी यात्राएँ। दीर्घायु विश्लेषण में भी प्रयुक्त।",
         "d4_title": "चतुर्थांश (D4)",
+        "d4_desc": "संपत्ति, वाहन, स्थायी संपत्ति और गृह सुख।",
         "d5_title": "पंचमांश (D5)",
+        "d5_desc": "पूर्व पुण्य, मंत्र और पूर्वजन्म की प्रतिभाएँ।",
         "d7_title": "सप्तांश (D7)",
+        "d7_desc": "संतान, वंश और सृजनात्मक क्षमता।",
         "d8_title": "अष्टमांश (D8)",
+        "d8_desc": "आकस्मिक घटनाएँ, दुर्घटनाएँ और संवेदनशीलता विश्लेषण।",
         "d9_title": "नवांश (D9)",
-        "d9_desc": "नवांश कुंडली विवाह, धर्म और आत्मा के गुणों को दर्शाती है। यह सबसे महत्वपूर्ण वर्ग कुंडली है — यहाँ बलवान ग्रह लग्न कुंडली में कमज़ोर होने पर भी फल देता है।",
+        "d9_desc": "सबसे महत्वपूर्ण वर्ग कुंडली — विवाह, धर्म और आत्मा के गुण। यहाँ बलवान ग्रह लग्न में कमज़ोर होने पर भी फल देता है।",
         "d10_title": "दशांश (D10)",
-        "d10_desc": "दशमांश कुंडली करियर, व्यवसाय और सामाजिक प्रतिष्ठा का विश्लेषण करती है। दसवें भाव और उसके स्वामी की स्थिति यहाँ सबसे महत्वपूर्ण है।",
+        "d10_desc": "करियर, व्यवसाय और सामाजिक प्रतिष्ठा। दसवें भाव के स्वामी की स्थिति यहाँ सबसे महत्वपूर्ण है।",
         "d12_title": "द्वादशांश (D12)",
+        "d12_desc": "माता-पिता, वंश और पैतृक कर्म।",
         "d16_title": "षोडशांश (D16)",
+        "d16_desc": "वाहन, सुख-सुविधा और मानसिक शांति।",
         "d20_title": "विंशांश (D20)",
+        "d20_desc": "आध्यात्मिक साधना, पूजा पद्धति और दैवी संबंध।",
         "d24_title": "चतुर्विंशांश (D24)",
+        "d24_desc": "शिक्षा, विद्या और शैक्षणिक उपलब्धियाँ।",
         "d27_title": "भांश (D27)",
+        "d27_desc": "शारीरिक बल, सहनशक्ति और समग्र जीवनशक्ति।",
         "d30_title": "त्रिंशांश (D30)",
+        "d30_desc": "दुर्भाग्य, रोग और कार्मिक चुनौतियाँ।",
         "d40_title": "खवेदांश (D40)",
+        "d40_desc": "शुभ-अशुभ प्रभाव और मातृ विरासत।",
         "d45_title": "अक्षवेदांश (D45)",
+        "d45_desc": "समग्र कल्याण और पितृ विरासत।",
         "d60_title": "षष्ट्यंश (D60)",
+        "d60_desc": "सूक्ष्मतम वर्ग कुंडली — पूर्वजन्म कर्म और उसका वर्तमान जीवन में प्रकटीकरण।",
         "chart_image_unavailable": "चार्ट चित्र उपलब्ध नहीं",
 
         "panchada_maitri_title": "ग्रह मैत्री (पंचदा मैत्री)",

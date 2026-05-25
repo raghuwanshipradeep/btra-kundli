@@ -34,6 +34,14 @@ def _calc_timeline_pct(start_str: str, end_str: str) -> float | None:
     return (elapsed / total) * 100
 
 
+def _extract_planet_name(val) -> str:
+    if isinstance(val, dict):
+        return (val.get("planet") or val.get("name") or "").strip()
+    if isinstance(val, str):
+        return val.strip()
+    return ""
+
+
 def _flatten_current_vdasha_all(raw: dict | None) -> list[dict] | None:
     if not raw:
         return None
@@ -45,10 +53,10 @@ def _flatten_current_vdasha_all(raw: dict | None) -> list[dict] | None:
         if isinstance(periods, list) and periods:
             levels.append({
                 "level": level_name.replace("_", " ").title(),
-                "current": (level_data.get("planet") or "").strip(),
+                "current": _extract_planet_name(level_data.get("planet")),
                 "periods": [
                     {
-                        "planet": (p.get("planet") or "").strip(),
+                        "planet": _extract_planet_name(p.get("planet")),
                         "start": p.get("start", ""),
                         "end": p.get("end", ""),
                     }
@@ -58,7 +66,7 @@ def _flatten_current_vdasha_all(raw: dict | None) -> list[dict] | None:
         elif "planet" in level_data:
             levels.append({
                 "level": level_name.replace("_", " ").title(),
-                "current": (level_data.get("planet") or "").strip(),
+                "current": _extract_planet_name(level_data.get("planet")),
                 "start": level_data.get("start", ""),
                 "end": level_data.get("end", ""),
                 "periods": [],

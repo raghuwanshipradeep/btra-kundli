@@ -36,7 +36,7 @@
             {% if birth %}
             <tr>
                 <td>{{ locale.ayanamsha }}</td>
-                <td>{{ "%.6f"|format(birth.ayanamsha) }}°</td>
+                <td>{{ birth.ayanamsha|format_degree }}°</td>
             </tr>
             <tr>
                 <td>{{ locale.sunrise }}</td>

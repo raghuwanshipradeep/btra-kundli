@@ -2,30 +2,42 @@
 <div class="section-page">
     {% if loop.first %}
     <h2 class="section-header">{{ locale.divisional_charts_title }}</h2>
+    <p class="section-desc">{{ locale.divisional_charts_desc }}</p>
     {% endif %}
 
     <h3 class="section-subheader">{{ chart.title }}</h3>
+    {% if chart.desc %}
+    <p style="font-size: 10pt; color: #555; margin-bottom: 4mm; line-height: 1.6;">{{ chart.desc }}</p>
+    {% endif %}
 
     {% if chart.image_url %}
-    <div class="chart-container">
-        <img src="{{ chart.image_url }}" alt="{{ chart.title }}">
+    <div style="text-align: center; margin-bottom: 5mm;">
+        <img src="{{ chart.image_url }}" alt="{{ chart.title }}" style="max-width: 100%; max-height: 180mm;">
     </div>
     {% endif %}
 
     <table>
         <thead>
             <tr>
-                <th>{{ locale.sign_col }}</th>
-                <th>{{ locale.planets_in_sign }}</th>
+                <th style="width: 40%;">{{ locale.sign_col }}</th>
+                <th style="width: 60%;">{{ locale.planets_in_sign }}</th>
             </tr>
         </thead>
         <tbody>
             {% for sign_data in chart.signs %}
             <tr>
-                <td><strong>{{ sign_data.sign_name }}</strong></td>
+                <td><strong>{% if lang == "hi" %}{{ sign_names_hi.get(sign_data.sign, sign_data.sign_name) }}{% else %}{{ sign_data.sign_name }}{% endif %}</strong></td>
                 <td>
                     {% if sign_data.planet %}
-                        {{ sign_data.planet | join(', ') }}
+                        {% set planet_parts = [] %}
+                        {% for p in sign_data.planet %}
+                            {% if lang == "hi" %}
+                                {% set _ = planet_parts.append(p | to_hindi_value(lang)) %}
+                            {% else %}
+                                {% set _ = planet_parts.append(p) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ planet_parts | join(', ') }}
                     {% else %}
                         &mdash;
                     {% endif %}
