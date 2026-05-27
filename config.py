@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     astro_api_base_url: str = "https://json.astrologyapi.com/v1"
     astro_api_key: str
     astro_api_timeout: int = 30
-    astro_api_max_retries: int = 3
+    astro_api_max_retries: int = 5
     anthropic_api_key: str = ""
     default_lang: str = "hi"
     log_level: str = "INFO"

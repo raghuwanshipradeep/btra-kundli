@@ -465,6 +465,102 @@ async def narrate(
         return ""
 
 
+async def _batch_narrate(
+    items: dict[str, tuple[str, dict]],
+    lang: str,
+    client: AsyncAnthropic,
+    semaphore: asyncio.Semaphore,
+    use_mahadasha_prompt: bool = False,
+) -> dict[str, str]:
+    if not items:
+        return {}
+
+    results: dict[str, str] = {}
+    uncached: dict[str, tuple[str, dict]] = {}
+
+    for key, (sec_type, data) in items.items():
+        ck = _cache_key(sec_type, data, lang)
+        try:
+            cached = await _get_cached(ck)
+            if cached:
+                results[key] = cached
+                continue
+        except Exception:
+            pass
+        uncached[key] = (sec_type, data)
+
+    if not uncached:
+        logger.info("Batch narrate: all %d items cached", len(items))
+        return results
+
+    if use_mahadasha_prompt:
+        system_prompt = _SYSTEM_PROMPT_MAHADASHA_HI if lang == "hi" else _SYSTEM_PROMPT_MAHADASHA_EN
+    else:
+        system_prompt = _SYSTEM_PROMPT_HI if lang == "hi" else _SYSTEM_PROMPT_EN
+
+    parts = []
+    for key, (sec_type, data) in uncached.items():
+        item_prompt = _build_user_prompt(sec_type, data, lang)
+        parts.append(f'=== "{key}" ===\n{item_prompt}')
+
+    if use_mahadasha_prompt:
+        instruction = (
+            "Generate responses for each section below. "
+            'Return ONLY a valid JSON object: {"key": {"experience": [...], "avoid": [...]}, ...}\n\n'
+        )
+    else:
+        instruction = (
+            "Generate a narrative for each section below (3 paragraphs, 120-180 words each). "
+            'Return ONLY a valid JSON object: {"key": "narrative text...", ...}\n\n'
+        )
+
+    batch_prompt = instruction + "\n\n".join(parts)
+    max_tokens = min(len(uncached) * 600, 8000)
+
+    try:
+        async with semaphore:
+            response = await asyncio.wait_for(
+                client.messages.create(
+                    model=MODEL,
+                    max_tokens=max_tokens,
+                    temperature=0.7,
+                    system=[{
+                        "type": "text",
+                        "text": system_prompt,
+                        "cache_control": {"type": "ephemeral"},
+                    }],
+                    messages=[{"role": "user", "content": batch_prompt}],
+                ),
+                timeout=120.0,
+            )
+
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+        batch_results = json.loads(raw)
+
+        for key, narrative in batch_results.items():
+            if key in uncached:
+                sec_type, data = uncached[key]
+                text = narrative if isinstance(narrative, str) else json.dumps(narrative, ensure_ascii=False)
+                try:
+                    await _set_cached(_cache_key(sec_type, data, lang), text)
+                except Exception:
+                    pass
+                results[key] = text
+
+        logger.info(
+            "Batch narrate: %d/%d generated, %d cached",
+            len(batch_results), len(uncached), len(items) - len(uncached),
+        )
+
+    except Exception:
+        logger.warning("Batch narrate failed (%d items)", len(uncached), exc_info=True)
+
+    return results
+
+
 async def generate_narratives(
     kundli_data: KundliData,
     lang: str,
@@ -475,13 +571,21 @@ async def generate_narratives(
 
     client = AsyncAnthropic(api_key=settings.anthropic_api_key)
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
-    tasks: list[tuple[str, asyncio.Task]] = []
 
+    planets_batch: dict[str, tuple[str, dict]] = {}
+    misc_batch: dict[str, tuple[str, dict]] = {}
+    md_journey_batch: dict[str, tuple[str, dict]] = {}
+    yoga_batch: dict[str, tuple[str, dict]] = {}
+    numerology_batch: dict[str, tuple[str, dict]] = {}
+    remedy_batch: dict[str, tuple[str, dict]] = {}
+    thematic_batch: dict[str, tuple[str, dict]] = {}
+
+    # --- Planet placements ---
     if kundli_data.planets:
         for planet in kundli_data.planets:
             if planet.name == "Ascendant":
                 continue
-            planet_data = {
+            planets_batch[f"planet_{planet.name}"] = ("planet_placement", {
                 "name": planet.name,
                 "sign": planet.sign,
                 "signLord": planet.signLord,
@@ -491,15 +595,9 @@ async def generate_narratives(
                 "pada": planet.nakshatra_pad,
                 "degree": round(planet.normDegree, 2),
                 "isRetro": planet.isRetro,
-            }
-            task_key = f"planet_{planet.name}"
-            tasks.append((
-                task_key,
-                asyncio.create_task(
-                    narrate("planet_placement", planet_data, lang, client, semaphore)
-                ),
-            ))
+            })
 
+    # --- Outer planets ---
     OUTER_PLANET_DEITIES = {
         "Uranus": "Arun Dev",
         "Neptune": "Varun Dev",
@@ -509,7 +607,7 @@ async def generate_narratives(
     if outer_source:
         for planet in outer_source:
             if planet.name in OUTER_PLANET_DEITIES:
-                outer_data = {
+                misc_batch[f"outer_{planet.name}"] = ("outer_planet", {
                     "name": planet.name,
                     "sign": planet.sign,
                     "signLord": planet.signLord,
@@ -517,14 +615,9 @@ async def generate_narratives(
                     "nakshatra": planet.nakshatra,
                     "isRetro": planet.isRetro,
                     "deity": OUTER_PLANET_DEITIES[planet.name],
-                }
-                tasks.append((
-                    f"outer_{planet.name}",
-                    asyncio.create_task(
-                        narrate("outer_planet", outer_data, lang, client, semaphore)
-                    ),
-                ))
+                })
 
+    # --- Current Mahadasha ---
     if kundli_data.current_vdasha and kundli_data.current_vdasha.major:
         major = kundli_data.current_vdasha.major
         md_sign = ""
@@ -538,21 +631,16 @@ async def generate_narratives(
         minor_planet = ""
         if kundli_data.current_vdasha.minor:
             minor_planet = kundli_data.current_vdasha.minor.planet
-        dasha_data = {
+        thematic_batch["current_mahadasha"] = ("mahadasha_period", {
             "major_planet": major.planet,
             "sign": md_sign,
             "house": md_house,
             "start": major.start,
             "end": major.end,
             "minor_planet": minor_planet,
-        }
-        tasks.append((
-            "current_mahadasha",
-            asyncio.create_task(
-                narrate("mahadasha_period", dasha_data, lang, client, semaphore)
-            ),
-        ))
+        })
 
+    # --- Raj Yogas ---
     if kundli_data.planets:
         from sections.yogas import _detect_yogas
         yogas = _detect_yogas(kundli_data.planets, kundli_data.houses)
@@ -566,67 +654,37 @@ async def generate_narratives(
                 "effect": yoga["effect"],
                 "description": yoga["description"],
             }
-            task_key = f"yoga_{yoga['name']}"
-            tasks.append((
-                task_key,
-                asyncio.create_task(
-                    narrate("raj_yoga", yoga_data, lang, client, semaphore)
-                ),
-            ))
+            yoga_batch[f"yoga_{yoga['name']}"] = ("raj_yoga", yoga_data)
             if yoga["effect"] in ("Benefic", "Highly Benefic", "Panch Mahapurusha"):
-                celeb_key = f"raj_yoga_celeb_{yoga['name']}"
-                tasks.append((
-                    celeb_key,
-                    asyncio.create_task(
-                        narrate("raj_yoga_celebration", yoga_data, lang, client, semaphore)
-                    ),
-                ))
+                yoga_batch[f"raj_yoga_celeb_{yoga['name']}"] = ("raj_yoga_celebration", yoga_data)
 
-    # Three Pillars of Self
+    # --- Three Pillars of Self ---
     if kundli_data.planets:
         ascendant = next((p for p in kundli_data.planets if p.name == "Ascendant"), None)
         moon = next((p for p in kundli_data.planets if p.name == "Moon"), None)
         if ascendant:
-            lagna_data = {
+            misc_batch["pillar_lagna"] = ("lagna_pillar", {
                 "sign": ascendant.sign,
                 "lord": ascendant.signLord,
                 "nakshatra": ascendant.nakshatra,
                 "nakshatraLord": ascendant.nakshatraLord,
                 "degree": round(ascendant.normDegree, 2),
-            }
-            tasks.append((
-                "pillar_lagna",
-                asyncio.create_task(
-                    narrate("lagna_pillar", lagna_data, lang, client, semaphore)
-                ),
-            ))
+            })
         if moon:
-            moon_data = {
+            misc_batch["pillar_moon_rashi"] = ("moon_rashi_pillar", {
                 "sign": moon.sign,
                 "signLord": moon.signLord,
                 "house": moon.house,
                 "nakshatra": moon.nakshatra,
-            }
-            tasks.append((
-                "pillar_moon_rashi",
-                asyncio.create_task(
-                    narrate("moon_rashi_pillar", moon_data, lang, client, semaphore)
-                ),
-            ))
-            nak_data = {
+            })
+            misc_batch["pillar_nakshatra"] = ("nakshatra_pillar", {
                 "nakshatra": moon.nakshatra,
                 "lord": moon.nakshatraLord,
                 "pada": moon.nakshatra_pad,
                 "sign": moon.sign,
-            }
-            tasks.append((
-                "pillar_nakshatra",
-                asyncio.create_task(
-                    narrate("nakshatra_pillar", nak_data, lang, client, semaphore)
-                ),
-            ))
+            })
 
-    # Sade Sati phase narratives
+    # --- Sade Sati ---
     if kundli_data.sadhesati_life_details:
         details = kundli_data.sadhesati_life_details
         if isinstance(details, dict):
@@ -640,7 +698,7 @@ async def generate_narratives(
             for i, phase in enumerate(details):
                 if not isinstance(phase, dict):
                     continue
-                phase_data = {
+                misc_batch[f"sade_sati_phase_{i}"] = ("sade_sati_phase", {
                     "phase": phase.get("phase", phase.get("type", "Unknown")),
                     "saturn_sign": phase.get("saturn_sign", phase.get("sign", "")),
                     "start": phase.get("start", phase.get("start_date", "")),
@@ -651,20 +709,14 @@ async def generate_narratives(
                         and isinstance(kundli_data.sadhesati_current_status, dict)
                         and kundli_data.sadhesati_current_status.get("is_undergoing_sadhesati")
                     ),
-                }
-                tasks.append((
-                    f"sade_sati_phase_{i}",
-                    asyncio.create_task(
-                        narrate("sade_sati_phase", phase_data, lang, client, semaphore)
-                    ),
-                ))
+                })
 
-    # Mahadasha Journey narratives
+    # --- Mahadasha Journey (uses different system prompt) ---
     if kundli_data.major_vdasha and kundli_data.planets:
         planet_map = {p.name: p for p in kundli_data.planets if p.name != "Ascendant"}
         for dasha in kundli_data.major_vdasha:
             p = planet_map.get(dasha.planet)
-            md_data = {
+            md_journey_batch[f"mahadasha_journey_{dasha.planet}"] = ("mahadasha_journey", {
                 "planet": dasha.planet,
                 "sign": p.sign if p else "Unknown",
                 "house": p.house if p else "Unknown",
@@ -672,89 +724,59 @@ async def generate_narratives(
                 "start": dasha.start,
                 "end": dasha.end,
                 "isRetro": p.isRetro if p else "false",
-            }
-            tasks.append((
-                f"mahadasha_journey_{dasha.planet}",
-                asyncio.create_task(
-                    narrate("mahadasha_journey", md_data, lang, client, semaphore)
-                ),
-            ))
+            })
 
-    # Numerology Personality narratives
+    # --- Numerology ---
     if kundli_data.numero_table and isinstance(kundli_data.numero_table, dict):
         req = kundli_data.request
         base_info = {"name": req.name, "day": req.day, "month": req.month, "year": req.year}
 
         radical = kundli_data.numero_table.get("radical_number")
         if radical is not None:
-            tasks.append((
-                "numero_personality_moolank",
-                asyncio.create_task(narrate(
-                    "numerology_personality",
-                    {**base_info, "number_type": "Moolank (Radical Number)", "value": radical},
-                    lang, client, semaphore,
-                )),
-            ))
+            numerology_batch["numero_personality_moolank"] = (
+                "numerology_personality",
+                {**base_info, "number_type": "Moolank (Radical Number)", "value": radical},
+            )
 
         destiny = kundli_data.numero_table.get("destiny_number")
         if destiny is not None:
-            tasks.append((
-                "numero_personality_bhagyank",
-                asyncio.create_task(narrate(
-                    "numerology_personality",
-                    {**base_info, "number_type": "Bhagyank (Life Path Number)", "value": destiny},
-                    lang, client, semaphore,
-                )),
-            ))
+            numerology_batch["numero_personality_bhagyank"] = (
+                "numerology_personality",
+                {**base_info, "number_type": "Bhagyank (Life Path Number)", "value": destiny},
+            )
 
         from sections.numerology_personality import chaldean_name_number, connection_number
         success = chaldean_name_number(req.name)
-        tasks.append((
-            "numero_personality_success",
-            asyncio.create_task(narrate(
-                "numerology_personality",
-                {**base_info, "number_type": "Success Number (Chaldean Name)", "value": success},
-                lang, client, semaphore,
-            )),
-        ))
-
+        numerology_batch["numero_personality_success"] = (
+            "numerology_personality",
+            {**base_info, "number_type": "Success Number (Chaldean Name)", "value": success},
+        )
         conn = connection_number(req.day, req.month)
-        tasks.append((
-            "numero_personality_connection",
-            asyncio.create_task(narrate(
-                "numerology_personality",
-                {**base_info, "number_type": "Connection Number", "value": conn},
-                lang, client, semaphore,
-            )),
-        ))
+        numerology_batch["numero_personality_connection"] = (
+            "numerology_personality",
+            {**base_info, "number_type": "Connection Number", "value": conn},
+        )
 
-    # Remedies Journey narratives
+    # --- Remedies ---
     if kundli_data.rudraksha_suggestion:
         raw = kundli_data.rudraksha_suggestion
         suggestions = raw.get("rudraksha_suggestion", raw) if isinstance(raw, dict) else raw
         if isinstance(suggestions, list):
             mukhi_list = [int(s.get("mukhi", 0)) for s in suggestions if isinstance(s, dict) and s.get("mukhi")]
             if mukhi_list:
-                tasks.append((
-                    "rudraksha_guidance",
-                    asyncio.create_task(narrate(
-                        "rudraksha_guidance", {"mukhi_list": mukhi_list}, lang, client, semaphore,
-                    )),
-                ))
+                remedy_batch["rudraksha_guidance"] = (
+                    "rudraksha_guidance", {"mukhi_list": mukhi_list},
+                )
                 planet_str = ", ".join(s.get("planet", "") for s in suggestions if isinstance(s, dict))
                 nak = ""
                 if kundli_data.planets:
                     m = next((p for p in kundli_data.planets if p.name == "Moon"), None)
                     if m:
                         nak = m.nakshatra
-                tasks.append((
+                remedy_batch["rudraksha_personal"] = (
                     "rudraksha_personal",
-                    asyncio.create_task(narrate(
-                        "rudraksha_personal",
-                        {"mukhi_list": mukhi_list, "planets": planet_str, "nakshatra": nak},
-                        lang, client, semaphore,
-                    )),
-                ))
+                    {"mukhi_list": mukhi_list, "planets": planet_str, "nakshatra": nak},
+                )
 
     if kundli_data.basic_gem_suggestion and kundli_data.houses:
         from sections.remedy_constants import SIGN_LORDS as _SL
@@ -770,19 +792,12 @@ async def generate_narratives(
         for stone_type in ("life_stone", "lucky_stone", "fortune_stone"):
             stone = gems.get(stone_type, {})
             if stone and isinstance(stone, dict):
-                tasks.append((
-                    f"gemstone_{stone_type}",
-                    asyncio.create_task(narrate(
-                        "gemstone_benefit",
-                        {
-                            "gem_name": stone.get("name", ""),
-                            "planet": stone.get("planet", ""),
-                            "type": stone_type.replace("_", " ").title(),
-                            "lagna": lagna_sign,
-                        },
-                        lang, client, semaphore,
-                    )),
-                ))
+                remedy_batch[f"gemstone_{stone_type}"] = ("gemstone_benefit", {
+                    "gem_name": stone.get("name", ""),
+                    "planet": stone.get("planet", ""),
+                    "type": stone_type.replace("_", " ").title(),
+                    "lagna": lagna_sign,
+                })
 
     if kundli_data.planets and kundli_data.houses:
         from sections.remedy_constants import (
@@ -807,19 +822,12 @@ async def generate_narratives(
         if twelfth_lord:
             ishta_info = _TLI.get(twelfth_lord, {})
             moon = next((p for p in kundli_data.planets if p.name == "Moon"), None)
-            tasks.append((
-                "ishta_devata",
-                asyncio.create_task(narrate(
-                    "ishta_devata",
-                    {
-                        "deity": ishta_info.get("deity", ""),
-                        "twelfth_lord": twelfth_lord,
-                        "twelfth_sign": twelfth_sign,
-                        "moon_sign": moon.sign if moon else "",
-                    },
-                    lang, client, semaphore,
-                )),
-            ))
+            remedy_batch["ishta_devata"] = ("ishta_devata", {
+                "deity": ishta_info.get("deity", ""),
+                "twelfth_lord": twelfth_lord,
+                "twelfth_sign": twelfth_sign,
+                "moon_sign": moon.sign if moon else "",
+            })
 
         weak_planets = []
         weakest_score = 0
@@ -842,44 +850,27 @@ async def generate_narratives(
                 weakest_planet = p
 
         weak_names = [wp["name"] for wp in weak_planets]
-        tasks.append((
-            "mantra_guidance",
-            asyncio.create_task(narrate(
-                "mantra_guidance",
-                {"weak_planets": weak_names, "ishta_devata": ishta_info.get("deity", "") if twelfth_lord else ""},
-                lang, client, semaphore,
-            )),
-        ))
+        remedy_batch["mantra_guidance"] = ("mantra_guidance", {
+            "weak_planets": weak_names,
+            "ishta_devata": ishta_info.get("deity", "") if twelfth_lord else "",
+        })
 
         if weakest_planet:
-            from sections.dignity import EXALTATION as _EX, OWN_SIGNS as _OS, MOOLATRIKONA as _MT
             dignity = "Debilitated" if _DEB.get(weakest_planet.name) == weakest_planet.sign else "Afflicted"
-            tasks.append((
-                "yantra_guidance",
-                asyncio.create_task(narrate(
-                    "yantra_guidance",
-                    {
-                        "yantra": _PY.get(weakest_planet.name, ""),
-                        "planet": weakest_planet.name,
-                        "dignity": dignity,
-                        "house": weakest_planet.house,
-                        "sign": weakest_planet.sign,
-                    },
-                    lang, client, semaphore,
-                )),
-            ))
+            remedy_batch["yantra_guidance"] = ("yantra_guidance", {
+                "yantra": _PY.get(weakest_planet.name, ""),
+                "planet": weakest_planet.name,
+                "dignity": dignity,
+                "house": weakest_planet.house,
+                "sign": weakest_planet.sign,
+            })
 
         if weak_planets:
-            tasks.append((
-                "daan_guidance",
-                asyncio.create_task(narrate(
-                    "daan_guidance",
-                    {"weak_planets": weak_planets},
-                    lang, client, semaphore,
-                )),
-            ))
+            remedy_batch["daan_guidance"] = ("daan_guidance", {
+                "weak_planets": weak_planets,
+            })
 
-    # Marriage Timing narrative
+    # --- Thematic: Marriage, Career, Love, Spiritual, Rahu-Ketu ---
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL3
         h7_sign = ""
@@ -894,7 +885,7 @@ async def generate_narratives(
         venus = next((p for p in kundli_data.planets if p.name == "Venus"), None)
         h7_lord_p = next((p for p in kundli_data.planets if p.name == h7_lord), None)
         p_in_7 = [p.name for p in kundli_data.planets if p.house == 7 and p.name != "Ascendant"]
-        mt_data = {
+        thematic_batch["marriage_timing"] = ("marriage_timing", {
             "seventh_sign": h7_sign,
             "seventh_lord": h7_lord,
             "seventh_lord_house": h7_lord_p.house if h7_lord_p else "",
@@ -902,13 +893,8 @@ async def generate_narratives(
             "venus_house": venus.house if venus else "",
             "venus_sign": venus.sign if venus else "",
             "planets_in_7": ", ".join(p_in_7) if p_in_7 else "None",
-        }
-        tasks.append((
-            "marriage_timing",
-            asyncio.create_task(narrate("marriage_timing", mt_data, lang, client, semaphore)),
-        ))
+        })
 
-    # Life Forecast narrative
     if kundli_data.current_vdasha and kundli_data.varshaphal_details:
         lf_data: dict[str, Any] = {}
         if kundli_data.current_vdasha.major:
@@ -921,12 +907,8 @@ async def generate_narratives(
         lf_data["varshaphal_year"] = vd.get("year", "")
         lf_data["muntha"] = vd.get("muntha_sign", "")
         lf_data["varshesh"] = vd.get("varshesh", "")
-        tasks.append((
-            "life_forecast",
-            asyncio.create_task(narrate("life_forecast", lf_data, lang, client, semaphore)),
-        ))
+        thematic_batch["life_forecast"] = ("life_forecast", lf_data)
 
-    # Career Path narrative
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL4
         h10_sign = ""
@@ -955,12 +937,8 @@ async def generate_narratives(
         ak = _compute_amatyakaraka(kundli_data.planets)
         if ak:
             cp_data["amatyakaraka"] = f"{ak['name']} in {ak['sign']} (House {ak['house']})"
-        tasks.append((
-            "career_path",
-            asyncio.create_task(narrate("career_path", cp_data, lang, client, semaphore)),
-        ))
+        thematic_batch["career_path"] = ("career_path", cp_data)
 
-    # Love & Marriage narrative
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL5
         h5_sign = ""
@@ -976,7 +954,7 @@ async def generate_narratives(
         venus_lm = next((p for p in kundli_data.planets if p.name == "Venus"), None)
         from sections.love_marriage import _compute_darakaraka
         dk = _compute_darakaraka(kundli_data.planets)
-        lm_data = {
+        thematic_batch["love_marriage"] = ("love_marriage", {
             "fifth_sign": h5_sign,
             "fifth_lord": _SL5.get(h5_sign, ""),
             "seventh_sign": h7_sign_lm,
@@ -984,13 +962,8 @@ async def generate_narratives(
             "venus_house": venus_lm.house if venus_lm else "",
             "venus_sign": venus_lm.sign if venus_lm else "",
             "darakaraka": f"{dk['name']} in {dk['sign']} (House {dk['house']})" if dk else "Not computed",
-        }
-        tasks.append((
-            "love_marriage",
-            asyncio.create_task(narrate("love_marriage", lm_data, lang, client, semaphore)),
-        ))
+        })
 
-    # Spiritual Potential narrative
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL6
         h9_sign = ""
@@ -1007,7 +980,7 @@ async def generate_narratives(
         ket = next((p for p in kundli_data.planets if p.name == "Ketu"), None)
         from sections.spiritual_potential import _compute_atmakaraka
         atma = _compute_atmakaraka(kundli_data.planets)
-        sp_data = {
+        thematic_batch["spiritual_potential"] = ("spiritual_potential", {
             "ninth_sign": h9_sign,
             "ninth_lord": _SL6.get(h9_sign, ""),
             "twelfth_sign": h12_sign_sp,
@@ -1017,19 +990,14 @@ async def generate_narratives(
             "ketu_house": ket.house if ket else "",
             "ketu_sign": ket.sign if ket else "",
             "atmakaraka": f"{atma['name']} in {atma['sign']} (House {atma['house']})" if atma else "Not computed",
-        }
-        tasks.append((
-            "spiritual_potential",
-            asyncio.create_task(narrate("spiritual_potential", sp_data, lang, client, semaphore)),
-        ))
+        })
 
-    # Rahu-Ketu Analysis narrative
     if kundli_data.planets:
         rahu_p = next((p for p in kundli_data.planets if p.name == "Rahu"), None)
         ketu_p = next((p for p in kundli_data.planets if p.name == "Ketu"), None)
         if rahu_p and ketu_p:
             from sections.rahu_ketu_analysis import _get_axis_key
-            rk_data = {
+            thematic_batch["rahu_ketu_analysis"] = ("rahu_ketu_analysis", {
                 "rahu_house": rahu_p.house,
                 "rahu_sign": rahu_p.sign,
                 "rahu_nakshatra": rahu_p.nakshatra,
@@ -1037,28 +1005,42 @@ async def generate_narratives(
                 "ketu_sign": ketu_p.sign,
                 "ketu_nakshatra": ketu_p.nakshatra,
                 "axis": _get_axis_key(rahu_p.house, ketu_p.house),
-            }
-            tasks.append((
-                "rahu_ketu_analysis",
-                asyncio.create_task(narrate("rahu_ketu_analysis", rk_data, lang, client, semaphore)),
-            ))
+            })
 
-    if not tasks:
+    # --- Fire all batches in parallel ---
+    batch_coros = []
+    if planets_batch:
+        batch_coros.append(_batch_narrate(planets_batch, lang, client, semaphore))
+    if misc_batch:
+        batch_coros.append(_batch_narrate(misc_batch, lang, client, semaphore))
+    if md_journey_batch:
+        batch_coros.append(_batch_narrate(md_journey_batch, lang, client, semaphore, use_mahadasha_prompt=True))
+    if yoga_batch:
+        batch_coros.append(_batch_narrate(yoga_batch, lang, client, semaphore))
+    if numerology_batch:
+        batch_coros.append(_batch_narrate(numerology_batch, lang, client, semaphore))
+    if remedy_batch:
+        batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore))
+    if thematic_batch:
+        batch_coros.append(_batch_narrate(thematic_batch, lang, client, semaphore))
+
+    if not batch_coros:
         return {}
 
+    gathered = await asyncio.gather(*batch_coros, return_exceptions=True)
+
     results: dict[str, str] = {}
-    task_objects = [t for _, t in tasks]
-    task_keys = [k for k, _ in tasks]
+    for result in gathered:
+        if isinstance(result, dict):
+            results.update(result)
+        elif isinstance(result, Exception):
+            logger.warning("Batch failed: %s", result)
 
-    gathered = await asyncio.gather(*task_objects, return_exceptions=True)
-
-    for key, result in zip(task_keys, gathered):
-        if isinstance(result, Exception):
-            logger.warning("Narrative task '%s' failed: %s", key, result)
-        elif result:
-            results[key] = result
-
-    logger.info("Narratives generated: %d/%d successful", len(results), len(tasks))
+    total_items = sum(len(b) for b in [
+        planets_batch, misc_batch, md_journey_batch, yoga_batch,
+        numerology_batch, remedy_batch, thematic_batch,
+    ])
+    logger.info("Narratives generated: %d/%d successful (%d batches)", len(results), total_items, len(batch_coros))
     return results
 
 

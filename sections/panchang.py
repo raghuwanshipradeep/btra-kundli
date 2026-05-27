@@ -94,8 +94,13 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()
     template = env.get_template("panchang.html")
+    birth_ayan = 0.0
+    if data.birth_details:
+        birth_ayan = data.birth_details.ayanamsha
+
     return template.render(
         panchang=data.panchang,
+        birth_ayanamsha=birth_ayan,
         basic_panchang=_sanitize_nan(data.basic_panchang),
         basic_panchang_sunrise=_sanitize_nan(data.basic_panchang_sunrise),
         advanced_panchang_sunrise=_sanitize_nan(data.advanced_panchang_sunrise),

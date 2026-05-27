@@ -282,16 +282,12 @@ thead th {
     font-size: 9pt;
     letter-spacing: 0.3px;
     border-bottom: 2px solid var(--gold);
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 tbody td {
     padding: 2mm 2mm;
     border-bottom: 0.5px solid #E0D5C5;
     vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 tbody tr:nth-child(even) {
@@ -311,7 +307,6 @@ tbody tr:nth-child(odd) {
     font-weight: 600;
     color: var(--maroon);
     width: 40%;
-    white-space: nowrap;
 }
 
 /* ===== PLANET HIGHLIGHTS ===== */
@@ -735,7 +730,7 @@ tr.active-dasha td {
     border-radius: 2mm;
     padding: 5mm 6mm;
     margin-bottom: 4mm;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .yogini-card .sub-header {

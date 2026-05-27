@@ -12,6 +12,7 @@ from tenacity import (
     retry_if_exception,
     stop_after_attempt,
     wait_exponential,
+    wait_random,
 )
 
 from config import settings
@@ -47,7 +48,7 @@ _api_semaphore: asyncio.Semaphore | None = None
 def _get_semaphore() -> asyncio.Semaphore:
     global _api_semaphore
     if _api_semaphore is None:
-        _api_semaphore = asyncio.Semaphore(10)
+        _api_semaphore = asyncio.Semaphore(3)
     return _api_semaphore
 
 
@@ -134,16 +135,16 @@ class AstrologyAPIClient:
         if self._client:
             await self._client.aclose()
 
+    @retry(
+        stop=stop_after_attempt(settings.astro_api_max_retries),
+        wait=wait_exponential(multiplier=1, min=2, max=60) + wait_random(0, 3),
+        retry=retry_if_exception(_should_retry),
+        reraise=True,
+    )
     async def _post(self, endpoint: str, payload: dict) -> Any:
         async with _get_semaphore():
             return await self._post_inner(endpoint, payload)
 
-    @retry(
-        stop=stop_after_attempt(settings.astro_api_max_retries),
-        wait=wait_exponential(multiplier=1, min=2, max=30),
-        retry=retry_if_exception(_should_retry),
-        reraise=True,
-    )
     async def _post_inner(self, endpoint: str, payload: dict) -> Any:
         assert self._client is not None
         start = time.monotonic()
@@ -1060,7 +1061,7 @@ class AstrologyAPIClient:
 
         # Phase 1: all independent parallel calls
         results = await asyncio.gather(
-            self.get_birth_details(payload),              # 0
+            self.get_birth_details(payload_with_ayan),    # 0
             self.get_planets(payload),                     # 1
             self.get_planets_extended(payload),             # 2
             self.get_houses(payload),                       # 3
@@ -1161,6 +1162,7 @@ class AstrologyAPIClient:
             "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60",
         ]
 
+        await asyncio.sleep(5)
         phase2a = await asyncio.gather(
             *[self.get_planet_ashtak(payload_with_ayan, p) for p in planet_names],
             *[self.get_horo_chart(payload_with_ayan, c) for c in chart_ids],
@@ -1185,6 +1187,7 @@ class AstrologyAPIClient:
         if charts_fail:
             logger.warning("horo_charts missing: %s", charts_fail)
 
+        await asyncio.sleep(5)
         phase2b = await asyncio.gather(
             *[self.get_horo_chart_image(payload_with_ayan, c) for c in chart_ids],
             *[self.get_general_house_report(payload_with_ayan, p) for p in report_planets],
@@ -1215,6 +1218,7 @@ class AstrologyAPIClient:
             if val is not None:
                 general_house_reports[pname] = val
 
+        await asyncio.sleep(5)
         phase2c = await asyncio.gather(
             *[self.get_general_rashi_report(payload_with_ayan, p) for p in report_planets],
             *[self.get_lalkitab_remedies(payload_with_ayan, p) for p in report_planets],

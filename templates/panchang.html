@@ -225,7 +225,7 @@
             </tr>
             <tr>
                 <td><strong>{{ locale.ayanamsha }}</strong></td>
-                <td>{{ panchang.ayanamsha|format_degree }}°</td>
+                <td>{{ (panchang.ayanamsha if panchang.ayanamsha else birth_ayanamsha)|format_degree }}°</td>
             </tr>
         </tbody>
     </table>
@@ -813,7 +813,7 @@
     </div>
     {% endif %}
 
-    {% if monthly_panchang %}
+    {% if monthly_panchang and not tamil_month_panchang %}
     <div class="panchang-card">
         <h3 class="section-subheader">{{ locale.monthly_panchang_title }}</h3>
         {{ render_value(monthly_panchang) }}
