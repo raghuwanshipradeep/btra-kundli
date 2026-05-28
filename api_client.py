@@ -484,7 +484,8 @@ class AstrologyAPIClient:
 
     async def get_horo_chart_image(self, payload: dict, chart_id: str) -> dict | None:
         try:
-            raw = await self._post(f"/horo_chart_image/{chart_id}", payload)
+            p = {**payload, "image_type": "svg"}
+            raw = await self._post(f"/horo_chart_image/{chart_id}", p)
             return raw
         except Exception as e:
             logger.warning("horo_chart_image/%s failed: %s", chart_id, e)
