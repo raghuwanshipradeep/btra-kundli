@@ -11,6 +11,7 @@
   </div>
   {% endif %}
 
+  {% if ninth_sign or ninth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
     <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
       {{ locale.sp_9th_title }}
@@ -37,7 +38,9 @@
     </table>
     <p style="font-size: 10.5pt; line-height: 1.7;">{{ locale.sp_9th_desc }}</p>
   </div>
+  {% endif %}
 
+  {% if twelfth_sign or twelfth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
     <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
       {{ locale.sp_12th_title }}
@@ -64,7 +67,9 @@
     </table>
     <p style="font-size: 10.5pt; line-height: 1.7;">{{ locale.sp_12th_desc }}</p>
   </div>
+  {% endif %}
 
+  {% if fifth_sign or fifth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
     <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
       {{ locale.sp_5th_title }}
@@ -80,6 +85,7 @@
       </tr>
     </table>
   </div>
+  {% endif %}
 </div>
 
 <div class="section-page">
