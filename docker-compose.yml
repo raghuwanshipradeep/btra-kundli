@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - narrative_cache:/app/narrative_cache.db
+    restart: unless-stopped
+
+volumes:
+  narrative_cache:

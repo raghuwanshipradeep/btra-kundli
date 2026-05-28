@@ -1,0 +1,14 @@
+.git
+__pycache__
+.pytest_cache
+*.pyc
+.env
+*.db
+tests/
+.claude/
+.vscode/
+start.bat
+demo.pdf
+demo_test.pdf
+test_alignment.pdf
+qa_check.py
