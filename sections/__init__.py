@@ -561,6 +561,9 @@ LOCALES: dict[str, dict] = {
         "degree_col": "Degree",
         "house_col": "House",
         "retro_col": "Retro",
+        "star_lord_col": "Star Lord",
+        "sub_lord_col": "Sub Lord",
+        "significators_col": "Significators",
 
         "houses_title": "House Positions (Bhava)",
         "houses_desc": "The twelve houses represent different areas of life — personality, wealth, siblings, property, children, health, marriage, longevity, fortune, career, gains, and liberation.",
@@ -834,7 +837,7 @@ LOCALES: dict[str, dict] = {
         "dosha_absent": "Not Present",
         "status": "Status",
 
-        "narrative_subtitle": "AI Insights",
+        "narrative_subtitle": "Insights",
 
         "yogas_title": "Yoga Analysis",
         "yogas_desc": "Yogas are special planetary combinations that produce specific life results. Rajayoga grants power and wealth, Dhana yoga brings prosperity, while challenging yogas indicate obstacles.",
@@ -1346,6 +1349,9 @@ LOCALES: dict[str, dict] = {
         "degree_col": "अंश",
         "house_col": "भाव",
         "retro_col": "वक्री",
+        "star_lord_col": "नक्ष. स्वामी",
+        "sub_lord_col": "उप स्वामी",
+        "significators_col": "कारक",
 
         "houses_title": "भाव स्थिति",
         "houses_desc": "बारह भाव जीवन के विभिन्न क्षेत्रों का प्रतिनिधित्व करते हैं — व्यक्तित्व, धन, भाई-बहन, संपत्ति, संतान, स्वास्थ्य, विवाह, आयु, भाग्य, करियर, लाभ और मोक्ष।",
@@ -1619,7 +1625,7 @@ LOCALES: dict[str, dict] = {
         "dosha_absent": "अनुपस्थित",
         "status": "स्थिति",
 
-        "narrative_subtitle": "AI विश्लेषण",
+        "narrative_subtitle": "विश्लेषण",
 
         "yogas_title": "योग विश्लेषण",
         "yogas_desc": "योग विशेष ग्रह संयोजन हैं जो जीवन में विशिष्ट फल देते हैं। राजयोग धन-पद देता है, धनयोग समृद्धि और चुनौतीपूर्ण योग बाधाओं का संकेत करते हैं।",

@@ -65,12 +65,58 @@
 
     {% if kp_planets %}
     <h3 class="section-subheader">{{ locale.kp_planets_title }}</h3>
-    {{ render_value(kp_planets) }}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.sign_lord_col }}</th>
+                <th>{{ locale.star_lord_col }}</th>
+                <th>{{ locale.sub_lord_col }}</th>
+                <th>{{ locale.degree_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in kp_planets %}
+            <tr>
+                <td style="font-weight: 600;">{% if lang == "hi" %}{{ p.planet_name | to_hindi_value(lang) }}{% else %}{{ p.planet_name }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ p.sign | to_hindi_value(lang) }}{% else %}{{ p.sign }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ p.sign_lord | to_hindi_value(lang) }}{% else %}{{ p.sign_lord }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ p.star_lord | to_hindi_value(lang) }}{% else %}{{ p.star_lord }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ p.sub_lord | to_hindi_value(lang) }}{% else %}{{ p.sub_lord }}{% endif %}</td>
+                <td>{{ "%.2f"|format(p.degree) if p.degree is number else p.degree }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 
     {% if kp_house_cusps %}
     <h3 class="section-subheader">{{ locale.kp_house_cusps_title }}</h3>
-    {{ render_value(kp_house_cusps) }}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{ locale.house_col }}</th>
+                <th>{{ locale.sign_col }}</th>
+                <th>{{ locale.sign_lord_col }}</th>
+                <th>{{ locale.star_lord_col }}</th>
+                <th>{{ locale.sub_lord_col }}</th>
+                <th>{{ locale.degree_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in kp_house_cusps %}
+            <tr>
+                <td style="font-weight: 600;">{{ locale.house_label }} {{ c.house }}</td>
+                <td>{% if lang == "hi" %}{{ c.sign | to_hindi_value(lang) }}{% else %}{{ c.sign }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ c.sign_lord | to_hindi_value(lang) }}{% else %}{{ c.sign_lord }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ c.star_lord | to_hindi_value(lang) }}{% else %}{{ c.star_lord }}{% endif %}</td>
+                <td>{% if lang == "hi" %}{{ c.sub_lord | to_hindi_value(lang) }}{% else %}{{ c.sub_lord }}{% endif %}</td>
+                <td>{{ "%.2f"|format(c.degree) if c.degree is number else c.degree }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 </div>
 
@@ -80,12 +126,46 @@
 
     {% if kp_house_significator %}
     <h3 class="section-subheader">{{ locale.kp_house_significator_title }}</h3>
-    {{ render_value(kp_house_significator) }}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{ locale.house_col }}</th>
+                <th>{{ locale.significators_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in kp_house_significator %}
+            <tr>
+                <td style="font-weight: 600;">{{ locale.house_label }} {{ h.house_id }}</td>
+                <td>
+                    {% for s in h.significators %}
+                        {% if lang == "hi" %}{{ s | to_hindi_value(lang) }}{% else %}{{ s }}{% endif %}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 
     {% if kp_planet_significator %}
     <h3 class="section-subheader">{{ locale.kp_planet_significator_title }}</h3>
-    {{ render_value(kp_planet_significator) }}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{ locale.planet_col }}</th>
+                <th>{{ locale.significators_col }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in kp_planet_significator %}
+            <tr>
+                <td style="font-weight: 600;">{% if lang == "hi" %}{{ p.planet | to_hindi_value(lang) }}{% else %}{{ p.planet }}{% endif %}</td>
+                <td>{{ p.significators | join(', ') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 
     {% if kp_horoscope %}
