@@ -102,6 +102,20 @@ _SYSTEM_PROMPT_MAHADASHA_HI = """\
 केवल JSON लिखें। कोई मार्कडाउन नहीं, कोई व्याख्या नहीं।"""
 
 
+def _salvage_truncated_json(raw: str) -> str:
+    """Best-effort repair of JSON truncated by max_tokens."""
+    last_complete = max(
+        raw.rfind('",'),
+        raw.rfind('"}'),
+    )
+    if last_complete == -1:
+        return "{}"
+    salvaged = raw[: last_complete + 1]
+    if not salvaged.rstrip().endswith("}"):
+        salvaged = salvaged.rstrip().rstrip(",") + "}"
+    return salvaged
+
+
 def _cache_key(section_type: str, data: dict, lang: str) -> str:
     raw = f"{section_type}:{lang}:{json.dumps(data, sort_keys=True, default=str)}"
     return hashlib.sha256(raw.encode()).hexdigest()
@@ -515,7 +529,8 @@ async def _batch_narrate(
         )
 
     batch_prompt = instruction + "\n\n".join(parts)
-    max_tokens = min(len(uncached) * 600, 8000)
+    per_item = 1100 if lang == "hi" else 700
+    max_tokens = min(len(uncached) * per_item, 16000)
 
     try:
         async with semaphore:
@@ -537,6 +552,13 @@ async def _batch_narrate(
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+        if response.stop_reason == "max_tokens":
+            logger.warning(
+                "Batch narrate hit max_tokens (%d items, budget=%d); attempting salvage",
+                len(uncached), max_tokens,
+            )
+            raw = _salvage_truncated_json(raw)
 
         batch_results = json.loads(raw)
 
