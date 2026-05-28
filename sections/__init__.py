@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
+
 from jinja2 import Environment, FileSystemLoader
+
+logger = logging.getLogger(__name__)
 
 
 def _format_degree(value) -> str:
@@ -266,6 +270,20 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "lunar_physical": "चंद्र शारीरिक",
         "lunar_emotional": "चंद्र भावनात्मक",
         "lunar_intellectual": "चंद्र बौद्धिक",
+        "considered_date": "विचारित तिथि",
+        "sub_sub_sub_lord": "उप-उप-उप स्वामी",
+        "house_lord": "भाव स्वामी",
+        "nakshatra_name": "नक्षत्र का नाम",
+        "nakshatra_charan": "नक्षत्र चरण",
+        "natal_planet": "नैटल ग्रह",
+        "natal_house": "नैटल भाव",
+        "orb": "दृष्टि कक्षा",
+        "diff": "अंश अंतर",
+        "aspect": "दृष्टि",
+        "nak": "नक्षत्र",
+        "based_on_aspect": "दृष्टि के आधार पर",
+        "is_mars_manglik_cancelled": "क्या मंगल मांगलिक रद्द है",
+        "manglik_status": "मांगलिक स्थिति",
     },
     "en": {
         "is_retro": "Retrograde",
@@ -388,6 +406,10 @@ VALUE_TRANSLATIONS_HI: dict[str, str] = {
     "Rahu": "राहु", "Ketu": "केतु",
     "true": "हाँ", "false": "नहीं", "True": "हाँ", "False": "नहीं",
     "Yes": "हाँ", "No": "नहीं",
+    "Conjunction": "युति", "Opposition": "प्रतियुति",
+    "Square": "चतुर्थांश", "Trine": "त्रिकोण",
+    "Sextile": "षष्ठांश", "Semi Sextile": "अर्ध षष्ठांश",
+    "Quincunx": "क्विनकंक्स",
 }
 
 
@@ -398,6 +420,8 @@ def humanize_key(key: str, lang: str = "en") -> str:
     table = HUMAN_LABELS.get(lang, HUMAN_LABELS.get("en", {}))
     if key in table:
         return table[key]
+    if lang == "hi":
+        logger.warning("humanize_key: unmapped Hindi key %r (falling back to title-case)", key)
     return key.replace("_", " ").title()
 
 
