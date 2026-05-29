@@ -1,9 +1,29 @@
-document.addEventListener('DOMContentLoaded', () => {
+let _paymentEnabled = false;
+let _priceDisplay = '';
+
+document.addEventListener('DOMContentLoaded', async () => {
     populateSelects();
     setupAutocomplete();
+    await loadPaymentConfig();
     setupFormSubmit();
     setupGenerateAnother();
 });
+
+async function loadPaymentConfig() {
+    try {
+        const resp = await fetch('/api/payment-config');
+        const cfg = await resp.json();
+        _paymentEnabled = cfg.enabled;
+        if (_paymentEnabled) {
+            const rupees = (cfg.amount / 100).toFixed(0);
+            _priceDisplay = `₹${rupees}`;
+            const btnText = document.querySelector('#submitBtn .btn-text');
+            btnText.textContent = `Pay ${_priceDisplay} & Generate Kundli`;
+        }
+    } catch (err) {
+        console.warn('Could not load payment config, falling back to free mode');
+    }
+}
 
 function populateSelects() {
     const daySelect = document.getElementById('day');
@@ -127,7 +147,6 @@ async function resolveTimezone(lat, lon, tzId) {
             infoText.textContent = `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}, Timezone: ${data.timezone}`;
         }
     } catch (err) {
-        // Fall back to mapping common timezone IDs
         const tzMap = {
             'Asia/Kolkata': 5.5, 'Asia/Colombo': 5.5,
             'Asia/Kathmandu': 5.75, 'Asia/Dhaka': 6,
@@ -159,9 +178,8 @@ function setupFormSubmit() {
         const submitBtn = document.getElementById('submitBtn');
         const btnText = submitBtn.querySelector('.btn-text');
         const btnLoader = submitBtn.querySelector('.btn-loader');
-
         submitBtn.disabled = true;
-        btnText.textContent = 'Generating...';
+        btnText.textContent = 'Processing...';
         btnLoader.style.display = 'inline-block';
         hideError();
 
@@ -179,36 +197,121 @@ function setupFormSubmit() {
             place: document.getElementById('place').value,
         };
 
-        try {
-            const resp = await fetch('/generate-kundli', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            if (!resp.ok) {
-                const errData = await resp.json().catch(() => ({}));
-                throw new Error(errData.detail || `Server error: ${resp.status}`);
-            }
-
-            const blob = await resp.blob();
-            const url = URL.createObjectURL(blob);
-
-            document.getElementById('pdfFrame').src = url;
-            const downloadLink = document.getElementById('pdfDownload');
-            downloadLink.href = url;
-            downloadLink.download = `kundli_${payload.name.replace(/[^a-zA-Z0-9 _-]/g, '')}_${payload.year}.pdf`;
-
-            document.getElementById('pdfResult').style.display = 'block';
-            document.getElementById('pdfResult').scrollIntoView({ behavior: 'smooth' });
-        } catch (err) {
-            showError(err.message || 'Failed to generate Kundli. Please try again.');
-        } finally {
-            submitBtn.disabled = false;
-            btnText.textContent = 'Generate Kundli PDF';
-            btnLoader.style.display = 'none';
+        if (_paymentEnabled) {
+            await handlePaidFlow(payload);
+        } else {
+            await handleFreeFlow(payload);
         }
     });
+}
+
+async function handleFreeFlow(payload) {
+    try {
+        const resp = await fetch('/generate-kundli', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.detail || `Server error: ${resp.status}`);
+        }
+
+        const blob = await resp.blob();
+        showPdfResult(blob, payload.name, payload.year);
+    } catch (err) {
+        showError(err.message || 'Failed to generate Kundli. Please try again.');
+    } finally {
+        resetSubmitButton();
+    }
+}
+
+async function handlePaidFlow(payload) {
+    try {
+        const orderResp = await fetch('/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!orderResp.ok) {
+            const err = await orderResp.json().catch(() => ({}));
+            throw new Error(err.detail || 'Could not start payment');
+        }
+        const order = await orderResp.json();
+
+        const options = {
+            key: order.key_id,
+            amount: order.amount,
+            currency: order.currency,
+            name: 'Bloomx Kundli',
+            description: 'Personalized Kundli Report',
+            order_id: order.order_id,
+            prefill: { name: order.name },
+            theme: { color: '#b8860b' },
+            handler: async function (response) {
+                await verifyAndGenerate(response, payload.name, payload.year);
+            },
+            modal: {
+                ondismiss: function () {
+                    resetSubmitButton();
+                },
+            },
+        };
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+            showError('Payment failed: ' + (resp.error?.description || 'unknown error'));
+            resetSubmitButton();
+        });
+        rzp.open();
+    } catch (err) {
+        showError(err.message || 'Something went wrong. Please try again.');
+        resetSubmitButton();
+    }
+}
+
+async function verifyAndGenerate(rzpResponse, name, year) {
+    const btnText = document.querySelector('#submitBtn .btn-text');
+    btnText.textContent = 'Generating your Kundli...';
+    try {
+        const resp = await fetch('/verify-and-generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                razorpay_order_id: rzpResponse.razorpay_order_id,
+                razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                razorpay_signature: rzpResponse.razorpay_signature,
+            }),
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Server error: ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        showPdfResult(blob, name, year);
+    } catch (err) {
+        showError(err.message || 'Payment succeeded but generation failed. Contact support with your payment ID.');
+    } finally {
+        resetSubmitButton();
+    }
+}
+
+function showPdfResult(blob, name, year) {
+    const url = URL.createObjectURL(blob);
+    document.getElementById('pdfFrame').src = url;
+    const dl = document.getElementById('pdfDownload');
+    dl.href = url;
+    dl.download = `kundli_${name.replace(/[^a-zA-Z0-9 _-]/g, '')}_${year}.pdf`;
+    document.getElementById('pdfResult').style.display = 'block';
+    document.getElementById('pdfResult').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetSubmitButton() {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = false;
+    const label = _paymentEnabled ? `Pay ${_priceDisplay} & Generate Kundli` : 'Generate Kundli PDF';
+    submitBtn.querySelector('.btn-text').textContent = label;
+    submitBtn.querySelector('.btn-loader').style.display = 'none';
 }
 
 function setupGenerateAnother() {
