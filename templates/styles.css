@@ -364,6 +364,15 @@ tr.trikona td:first-child::after {
     opacity: 0.85;
 }
 
+.dasha-current-card table td,
+.dasha-current-card table th {
+    color: var(--charcoal);
+}
+
+.dasha-current-card .section-subheader {
+    color: white;
+}
+
 .dasha-current-card .period-dates {
     font-size: 11pt;
     margin-top: 2mm;

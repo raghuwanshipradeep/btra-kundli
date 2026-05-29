@@ -42,17 +42,30 @@ def _extract_planet_name(val) -> str:
     return ""
 
 
-def _flatten_current_vdasha_all(raw: dict | None) -> list[dict] | None:
+_LEVEL_NAMES_HI = {
+    "major": "महादशा",
+    "sub": "अंतर्दशा",
+    "sub_sub": "प्रत्यंतर दशा",
+    "sub_sub_sub": "सूक्ष्म दशा",
+    "sub_sub_sub_sub": "प्राण दशा",
+}
+
+
+def _flatten_current_vdasha_all(raw: dict | None, lang: str = "en") -> list[dict] | None:
     if not raw:
         return None
     levels = []
     for level_name, level_data in raw.items():
         if not isinstance(level_data, dict):
             continue
+        if lang == "hi":
+            display_name = _LEVEL_NAMES_HI.get(level_name, level_name.replace("_", " ").title())
+        else:
+            display_name = level_name.replace("_", " ").title()
         periods = level_data.get("dasha_period", [])
         if isinstance(periods, list) and periods:
             levels.append({
-                "level": level_name.replace("_", " ").title(),
+                "level": display_name,
                 "current": _extract_planet_name(level_data.get("planet")),
                 "periods": [
                     {
@@ -65,7 +78,7 @@ def _flatten_current_vdasha_all(raw: dict | None) -> list[dict] | None:
             })
         elif "planet" in level_data:
             levels.append({
-                "level": level_name.replace("_", " ").title(),
+                "level": display_name,
                 "current": _extract_planet_name(level_data.get("planet")),
                 "start": level_data.get("start", ""),
                 "end": level_data.get("end", ""),
@@ -94,7 +107,7 @@ def render_dasha(data: KundliData, lang: str = "en") -> str | None:
         major_dasha=data.major_vdasha,
         timeline_pct=timeline_pct,
         current_vdasha_all=data.current_vdasha_all,
-        current_vdasha_all_levels=_flatten_current_vdasha_all(data.current_vdasha_all),
+        current_vdasha_all_levels=_flatten_current_vdasha_all(data.current_vdasha_all, lang),
         sub_vdasha=data.sub_vdasha,
         sub_sub_vdasha=data.sub_sub_vdasha,
         sub_sub_sub_vdasha=data.sub_sub_sub_vdasha,
