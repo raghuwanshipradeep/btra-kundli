@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DB_PATH = pathlib.Path(__file__).parent / "narrative_cache.db"
-MODEL = "claude-sonnet-4-20250514"
+NARRATIVE_MODEL = "claude-sonnet-4-20250514"
+TRANSLATION_MODEL = "claude-haiku-4-5-20251001"
+MODEL = NARRATIVE_MODEL
 MAX_CONCURRENT = 5
 CALL_TIMEOUT = 30.0
 
@@ -116,8 +118,15 @@ def _salvage_truncated_json(raw: str) -> str:
     return salvaged
 
 
+_REMEDY_CACHE_V2 = frozenset({
+    "rudraksha_guidance", "rudraksha_personal", "gemstone_benefit",
+    "ishta_devata", "mantra_guidance", "yantra_guidance", "daan_guidance",
+})
+
+
 def _cache_key(section_type: str, data: dict, lang: str) -> str:
-    raw = f"{section_type}:{lang}:{json.dumps(data, sort_keys=True, default=str)}"
+    version_suffix = ":v2" if section_type in _REMEDY_CACHE_V2 else ""
+    raw = f"{section_type}{version_suffix}:{lang}:{json.dumps(data, sort_keys=True, default=str)}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -485,6 +494,7 @@ async def _batch_narrate(
     client: AsyncAnthropic,
     semaphore: asyncio.Semaphore,
     use_mahadasha_prompt: bool = False,
+    batch_kind: str = "generic",
 ) -> dict[str, str]:
     if not items:
         return {}
@@ -522,15 +532,34 @@ async def _batch_narrate(
             "Generate responses for each section below. "
             'Return ONLY a valid JSON object: {"key": {"experience": [...], "avoid": [...]}, ...}\n\n'
         )
+        per_item_tokens = 1100 if lang == "hi" else 700
+    elif batch_kind == "remedy":
+        if lang == "hi":
+            instruction = (
+                "नीचे दिए गए प्रत्येक उपाय के लिए एक संक्षिप्त वर्णन लिखें (2 अनुच्छेद, 90-120 शब्द प्रत्येक)। "
+                "ये सभी उपाय एक ही व्यक्ति के लिए एक एकीकृत उपचार योजना हैं — जहां प्राकृतिक हो, "
+                "एक दूसरे को संदर्भित करें (जैसे, यदि रत्न शुक्र के लिए है, मंत्र भी शुक्र-केंद्रित हो सकता है)। "
+                "प्रत्येक उपाय इस व्यक्ति के ग्रहों की विशिष्ट कमजोरियों के लिए विशिष्ट होना चाहिए, सामान्य नहीं। "
+                'केवल वैध JSON लौटाएं: {"key": "narrative...", ...}\n\n'
+            )
+        else:
+            instruction = (
+                "Generate a brief narrative for each remedy below (2 paragraphs, 90-120 words each). "
+                "These remedies form ONE integrated plan for the same person — cross-reference where natural "
+                "(e.g., if the gemstone is for Venus, the mantra section can also be Venus-focused). "
+                "Each remedy should be specific to this person's actual planetary weaknesses, not generic. "
+                'Return ONLY valid JSON: {"key": "narrative...", ...}\n\n'
+            )
+        per_item_tokens = 500 if lang == "hi" else 350
     else:
         instruction = (
             "Generate a narrative for each section below (3 paragraphs, 120-180 words each). "
             'Return ONLY a valid JSON object: {"key": "narrative text...", ...}\n\n'
         )
+        per_item_tokens = 700 if lang == "hi" else 500
 
     batch_prompt = instruction + "\n\n".join(parts)
-    per_item = 1100 if lang == "hi" else 700
-    max_tokens = min(len(uncached) * per_item, 16000)
+    max_tokens = min(len(uncached) * per_item_tokens, 16000)
 
     try:
         async with semaphore:
@@ -1042,7 +1071,7 @@ async def generate_narratives(
     if numerology_batch:
         batch_coros.append(_batch_narrate(numerology_batch, lang, client, semaphore))
     if remedy_batch:
-        batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore))
+        batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore, batch_kind="remedy"))
     if thematic_batch:
         batch_coros.append(_batch_narrate(thematic_batch, lang, client, semaphore))
 
@@ -1135,12 +1164,14 @@ async def _translate_batch(
         logger.warning("Translation cache read failed", exc_info=True)
 
     user_prompt = json.dumps(texts, ensure_ascii=False, indent=2)
+    translation_model = TRANSLATION_MODEL if settings.use_haiku_for_translation else NARRATIVE_MODEL
+    logger.info("Translation batch: model=%s, items=%d", translation_model, len(texts))
 
     try:
         async with semaphore:
             response = await asyncio.wait_for(
                 client.messages.create(
-                    model=MODEL,
+                    model=translation_model,
                     max_tokens=4096,
                     temperature=0.3,
                     system=[{
