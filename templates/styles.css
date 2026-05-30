@@ -96,6 +96,11 @@ body {
     font-family: 'Noto Sans Devanagari', 'Crimson Pro', sans-serif;
 }
 
+[lang="hi"] .section-header,
+[lang="hi"] .section-subheader {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
 /* ===== SECTION PAGES ===== */
 .section-page {
     page-break-before: always;

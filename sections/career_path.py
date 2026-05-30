@@ -27,7 +27,7 @@ def _get_house_sign(houses: list | None, house_num: int) -> str:
     if not houses:
         return ""
     for h in houses:
-        hnum = getattr(h, "house", 0) or (h.get("house", 0) if isinstance(h, dict) else 0)
+        hnum = getattr(h, "house_id", 0) or (h.get("house_id", 0) if isinstance(h, dict) else 0)
         if hnum == house_num:
             return getattr(h, "sign", "") or (h.get("sign", "") if isinstance(h, dict) else "")
     return ""
