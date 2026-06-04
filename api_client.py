@@ -48,7 +48,7 @@ _api_semaphore: asyncio.Semaphore | None = None
 def _get_semaphore() -> asyncio.Semaphore:
     global _api_semaphore
     if _api_semaphore is None:
-        _api_semaphore = asyncio.Semaphore(3)
+        _api_semaphore = asyncio.Semaphore(settings.api_concurrency)
     return _api_semaphore
 
 

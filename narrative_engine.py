@@ -22,7 +22,7 @@ DB_PATH = pathlib.Path(__file__).parent / "narrative_cache.db"
 NARRATIVE_MODEL = "claude-sonnet-4-20250514"
 TRANSLATION_MODEL = "claude-haiku-4-5-20251001"
 MODEL = NARRATIVE_MODEL
-MAX_CONCURRENT = 5
+MAX_CONCURRENT = settings.narrative_concurrency
 CALL_TIMEOUT = 30.0
 
 _db_lock = asyncio.Lock()
@@ -138,6 +138,7 @@ async def _ensure_db() -> None:
         if _db_ready:
             return
         async with aiosqlite.connect(DB_PATH) as db:
+            await db.execute("PRAGMA journal_mode=WAL")
             await db.execute(
                 "CREATE TABLE IF NOT EXISTS cache "
                 "(key TEXT PRIMARY KEY, narrative TEXT NOT NULL, created_at TEXT NOT NULL)"

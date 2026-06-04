@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     payment_currency: str = "INR"
     allow_free_generation: bool = False
     use_haiku_for_translation: bool = True
+    api_concurrency: int = 10
+    narrative_concurrency: int = 5
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
