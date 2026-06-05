@@ -28,7 +28,14 @@ class Settings(BaseSettings):
     api_concurrency: int = 10
     narrative_concurrency: int = 5
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    google_drive_folder_id: str = ""
+    google_oauth_credentials_path: str = "oauth_credentials.json"
+    google_token_path: str = "token.json"
+    drive_archive_enabled: bool = True
+    generation_timeout_seconds: int = 600
+    admin_key: str = ""
+
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

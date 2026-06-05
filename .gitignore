@@ -3,6 +3,9 @@ __pycache__/
 .env
 *.pyc
 *.db
+*.db-shm
+*.db-wal
 *.pdf
-=0.20.0
-=0.40.0
+service_account.json
+oauth_credentials.json
+token.json

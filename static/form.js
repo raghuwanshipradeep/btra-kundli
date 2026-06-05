@@ -272,7 +272,7 @@ async function handlePaidFlow(payload) {
 
 async function verifyAndGenerate(rzpResponse, name, year) {
     const btnText = document.querySelector('#submitBtn .btn-text');
-    btnText.textContent = 'Generating your Kundli...';
+    btnText.textContent = 'Confirming payment...';
     try {
         const resp = await fetch('/verify-and-generate', {
             method: 'POST',
@@ -287,10 +287,13 @@ async function verifyAndGenerate(rzpResponse, name, year) {
             const err = await resp.json().catch(() => ({}));
             throw new Error(err.detail || `Server error: ${resp.status}`);
         }
-        const blob = await resp.blob();
-        showPdfResult(blob, name, year);
+        const result = await resp.json();
+        showThankYouPage(name, result.order_id, result.payment_id);
     } catch (err) {
-        showError(err.message || 'Payment succeeded but generation failed. Contact support with your payment ID.');
+        showError(
+            (err.message || 'Something went wrong') +
+            ' — please save your payment ID and contact us. Your payment is secure.'
+        );
     } finally {
         resetSubmitButton();
     }
@@ -324,6 +327,73 @@ function setupGenerateAnother() {
         frame.src = '';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+}
+
+function showThankYouPage(name, orderId, paymentId) {
+    const form = document.getElementById('kundliForm');
+    if (form) form.style.display = 'none';
+
+    const pdfPanel = document.getElementById('pdfResult');
+    if (pdfPanel) pdfPanel.style.display = 'none';
+
+    let panel = document.getElementById('thankYouPanel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'thankYouPanel';
+        panel.style.cssText = `
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 40px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            text-align: center;
+            font-family: sans-serif;
+        `;
+        document.querySelector('main, body').appendChild(panel);
+    }
+
+    panel.innerHTML = `
+        <div style="font-size: 64px; margin-bottom: 16px;">\u{1F64F}</div>
+        <h2 style="color: #b8860b; margin-bottom: 16px;">धन्यवाद, ${escapeHtml(name)}!</h2>
+        <p style="font-size: 18px; line-height: 1.6; color: #333; margin-bottom: 12px;">
+            <strong>आपकी कुंडली तैयार हो रही है।</strong>
+        </p>
+        <p style="font-size: 15px; line-height: 1.6; color: #555; margin-bottom: 24px;">
+            हम जल्द ही आपकी कुंडली आप तक पहुँचा देंगे।<br>
+            <span style="font-size: 13px; color: #888;">
+            We will deliver your Kundli to you shortly.
+            </span>
+        </p>
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 16px;
+                    border-radius: 8px; margin-bottom: 24px; color: #155724;">
+            <strong>✓ Payment confirmed</strong>
+        </div>
+        <div style="background: #f7f3e8; padding: 16px; border-radius: 8px;
+                    font-size: 14px; color: #5a4a2a; margin-bottom: 24px;">
+            <strong>Order ID:</strong> ${escapeHtml(orderId)}<br>
+            <strong>Payment ID:</strong> ${escapeHtml(paymentId)}<br>
+            <em style="font-size: 12px;">Please save these for reference</em>
+        </div>
+        <p style="font-size: 14px; color: #888;">
+            कोई समस्या हो तो संपर्क करें:
+            <a href="https://wa.me/918839523452" style="color: #25D366; font-weight: 500;">
+                +91-8839523452 (WhatsApp)
+            </a>
+        </p>
+        <p style="font-size: 12px; color: #aaa; margin-top: 16px;">
+            आप यह पेज बंद कर सकते हैं — आपकी कुंडली तैयार होती रहेगी।<br>
+            <em>You can close this page — your Kundli is being prepared in the background.</em>
+        </p>
+    `;
+
+    panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
 }
 
 function showError(msg) {

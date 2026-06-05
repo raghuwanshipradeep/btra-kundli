@@ -9,7 +9,7 @@ import time
 from io import BytesIO
 
 import razorpay
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -19,6 +19,7 @@ from config import settings
 from models import KundliRequest, MatchRequest
 from narrative_engine import generate_narratives, translate_reports
 from pdf_generator import PDFGenerator
+from drive_uploader import upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
@@ -82,6 +83,113 @@ def _prune_orders() -> None:
     expired = [k for k, (_, t) in _ORDER_STORE.items() if now - t > _ORDER_TTL_SECONDS]
     for k in expired:
         _ORDER_STORE.pop(k, None)
+
+
+# ---------------------------------------------------------------------------
+# Background job state
+# ---------------------------------------------------------------------------
+_JOB_STATE: dict[str, dict] = {}
+
+
+def _set_job_state(order_id: str, status: str, **details):
+    _JOB_STATE[order_id] = {
+        "status": status,
+        "updated_at": time.time(),
+        **details,
+    }
+
+
+def _get_job_state(order_id: str) -> dict | None:
+    return _JOB_STATE.get(order_id)
+
+
+def _list_recent_jobs(limit: int = 50) -> list[dict]:
+    items = [{"order_id": oid, **state} for oid, state in _JOB_STATE.items()]
+    items.sort(key=lambda x: x.get("updated_at", 0), reverse=True)
+    return items[:limit]
+
+
+async def _generate_and_archive(
+    request: KundliRequest,
+    order_id: str,
+    payment_id: str,
+):
+    start = time.time()
+    _set_job_state(order_id, "generating", customer=request.name, lang=request.lang)
+    logger.info("BG START: order=%s customer=%s", order_id, request.name)
+
+    try:
+        pdf_bytes, filename = await asyncio.wait_for(
+            _build_kundli_pdf(request),
+            timeout=settings.generation_timeout_seconds,
+        )
+        logger.info(
+            "BG PDF generated: order=%s size=%d filename=%s elapsed=%.1fs",
+            order_id, len(pdf_bytes), filename, time.time() - start,
+        )
+    except asyncio.TimeoutError:
+        logger.error(
+            "BG TIMEOUT (>%ds): order=%s customer=%s",
+            settings.generation_timeout_seconds, order_id, request.name,
+        )
+        _set_job_state(
+            order_id, "timeout",
+            customer=request.name,
+            elapsed_s=round(time.time() - start, 1),
+        )
+        return
+    except Exception:
+        logger.exception("BG PDF FAILED: order=%s customer=%s", order_id, request.name)
+        _set_job_state(
+            order_id, "pdf_failed",
+            customer=request.name,
+            elapsed_s=round(time.time() - start, 1),
+        )
+        return
+
+    drive_result = await upload_kundli_pdf(
+        pdf_bytes=pdf_bytes,
+        filename=filename,
+        customer_name=request.name,
+        order_id=order_id,
+        payment_id=payment_id,
+    )
+
+    if drive_result is None and settings.drive_archive_enabled and settings.google_drive_folder_id:
+        logger.error(
+            "DRIVE ARCHIVE MISSING — paid order=%s customer=%s — manual recovery required",
+            order_id, request.name,
+        )
+        _set_job_state(
+            order_id, "drive_failed",
+            customer=request.name,
+            pdf_size_bytes=len(pdf_bytes),
+            elapsed_s=round(time.time() - start, 1),
+        )
+        return
+
+    if drive_result is None:
+        _set_job_state(
+            order_id, "generated_no_archive",
+            customer=request.name,
+            filename=filename,
+            elapsed_s=round(time.time() - start, 1),
+        )
+        logger.info("BG COMPLETE (no archive): order=%s customer=%s", order_id, request.name)
+        return
+
+    _set_job_state(
+        order_id, "archived",
+        customer=request.name,
+        drive_file_id=drive_result.get("id"),
+        drive_link=drive_result.get("webViewLink", ""),
+        filename=filename,
+        elapsed_s=round(time.time() - start, 1),
+    )
+    logger.info(
+        "BG COMPLETE: order=%s customer=%s elapsed=%.1fs drive_link=%s",
+        order_id, request.name, time.time() - start, drive_result.get("webViewLink"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -230,7 +338,10 @@ async def create_order(request: KundliRequest) -> dict:
 
 
 @app.post("/verify-and-generate")
-async def verify_and_generate(verification: PaymentVerification) -> StreamingResponse:
+async def verify_and_generate(
+    verification: PaymentVerification,
+    background_tasks: BackgroundTasks,
+) -> dict:
     if not _verify_signature(
         verification.razorpay_order_id,
         verification.razorpay_payment_id,
@@ -257,15 +368,21 @@ async def verify_and_generate(verification: PaymentVerification) -> StreamingRes
         logger.exception("Payment fetch failed")
         raise HTTPException(status_code=502, detail="Could not confirm payment")
 
-    pdf_bytes, filename = await _build_kundli_pdf(request)
-
     _ORDER_STORE.pop(verification.razorpay_order_id, None)
 
-    return StreamingResponse(
-        BytesIO(pdf_bytes),
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    background_tasks.add_task(
+        _generate_and_archive,
+        request=request,
+        order_id=verification.razorpay_order_id,
+        payment_id=verification.razorpay_payment_id,
     )
+
+    return {
+        "status": "processing",
+        "message": "Your Kundli is being prepared. We will send it to you shortly.",
+        "order_id": verification.razorpay_order_id,
+        "payment_id": verification.razorpay_payment_id,
+    }
 
 
 @app.post("/generate-kundli")
@@ -338,3 +455,29 @@ async def demo() -> StreamingResponse:
         media_type="application/pdf",
         headers={"Content-Disposition": 'inline; filename="demo_kundli.pdf"'},
     )
+
+
+# ---------------------------------------------------------------------------
+# Admin endpoints
+# ---------------------------------------------------------------------------
+@app.get("/admin/jobs")
+async def list_jobs(
+    x_admin_key: str | None = Header(None),
+    limit: int = 50,
+) -> dict:
+    if not settings.admin_key or x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"jobs": _list_recent_jobs(limit=limit)}
+
+
+@app.get("/admin/jobs/{order_id}")
+async def get_job(
+    order_id: str,
+    x_admin_key: str | None = Header(None),
+) -> dict:
+    if not settings.admin_key or x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    state = _get_job_state(order_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return state
