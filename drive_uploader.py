@@ -30,7 +30,17 @@ def _load_credentials() -> Credentials:
 
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
-        token_path.write_text(creds.to_json())
+        # Persist the refreshed token, but don't let a write failure (e.g. a
+        # read-only mount in production) break the upload — the in-memory creds
+        # are already valid for this process.
+        try:
+            token_path.write_text(creds.to_json())
+        except OSError as exc:
+            logger.warning(
+                "Could not persist refreshed token to %s: %s "
+                "(continuing with in-memory credentials)",
+                token_path, exc,
+            )
 
     return creds
 
