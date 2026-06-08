@@ -3,6 +3,7 @@ let _priceDisplay = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
     populateSelects();
+    setupValidationMessages();
     setupAutocomplete();
     await loadPaymentConfig();
     setupFormSubmit();
@@ -45,6 +46,41 @@ function populateSelects() {
     for (let i = 0; i <= 59; i++) {
         minSelect.innerHTML += `<option value="${i}">${i.toString().padStart(2, '0')}</option>`;
     }
+}
+
+// --- Field-specific validation messages ---
+
+const FIELD_MESSAGES = {
+    name: 'Please enter your full name.',
+    phone: 'Please enter your contact number.',
+    day: 'Please select your birth day.',
+    month: 'Please select your birth month.',
+    year: 'Please enter your birth year.',
+    hour: 'Please select your birth hour.',
+    min: 'Please select your birth minute.',
+    place: 'Please enter your birth place.',
+};
+
+function setupValidationMessages() {
+    Object.keys(FIELD_MESSAGES).forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('invalid', () => {
+            if (el.validity.valueMissing) {
+                el.setCustomValidity(FIELD_MESSAGES[id]);
+            } else if (id === 'year' && (el.validity.rangeUnderflow || el.validity.rangeOverflow)) {
+                el.setCustomValidity('Please enter a year between 1900 and 2100.');
+            } else if (id === 'phone' && el.validity.typeMismatch) {
+                el.setCustomValidity('Please enter a valid 10-digit mobile number.');
+            } else {
+                el.setCustomValidity(''); // fall back to native message for other cases
+            }
+        });
+        // Clear the custom error as soon as the user edits the field
+        const clear = () => el.setCustomValidity('');
+        el.addEventListener('input', clear);
+        el.addEventListener('change', clear);
+    });
 }
 
 // --- Place Autocomplete ---
@@ -163,6 +199,12 @@ async function resolveTimezone(lat, lon, tzId) {
 
 // --- Form Submission ---
 
+function validatePhone(raw) {
+    // Strip spaces, dashes, parentheses, and a leading +91 / 91 / 0
+    const digits = raw.replace(/[\s\-()]/g, '').replace(/^(\+?91|0)/, '');
+    return /^[6-9]\d{9}$/.test(digits) ? digits : null;
+}
+
 function setupFormSubmit() {
     const form = document.getElementById('kundliForm');
     form.addEventListener('submit', async (e) => {
@@ -172,6 +214,12 @@ function setupFormSubmit() {
         const lon = document.getElementById('lon').value;
         if (!lat || !lon) {
             showError('Please select a place from the autocomplete dropdown.');
+            return;
+        }
+
+        const phone = validatePhone(document.getElementById('phone').value.trim());
+        if (!phone) {
+            showError('Please enter a valid 10-digit mobile number.');
             return;
         }
 
@@ -185,6 +233,7 @@ function setupFormSubmit() {
 
         const payload = {
             name: document.getElementById('name').value.trim(),
+            phone: phone,
             day: parseInt(document.getElementById('day').value),
             month: parseInt(document.getElementById('month').value),
             year: parseInt(document.getElementById('year').value),
