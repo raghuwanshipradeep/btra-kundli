@@ -17,6 +17,11 @@ class KundliRequest(BaseModel):
     tzone: float
     lang: str = "en"
     place: str = ""
+    phone: str = ""
+    email: str = ""
+    gender: str = ""
+    state: str = ""
+    pincode: str = ""
     report_tier: str = "detailed"
 
 

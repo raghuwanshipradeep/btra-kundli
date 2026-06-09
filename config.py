@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     generation_timeout_seconds: int = 600
     admin_key: str = ""
 
+    # Pabbly Connect webhook — POST a payment-success payload for downstream
+    # automation (WhatsApp, CRM, sheets). Empty = integration disabled.
+    pabbly_webhook_url: str = ""
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 

@@ -25,6 +25,34 @@ MODEL = NARRATIVE_MODEL
 MAX_CONCURRENT = settings.narrative_concurrency
 CALL_TIMEOUT = 30.0
 
+# USD per token. Cache reads cost 0.1x input; cache writes cost 1.25x input.
+MODEL_PRICING = {
+    "claude-sonnet-4-20250514":  {"in": 3 / 1e6, "out": 15 / 1e6, "cache_read": 0.30 / 1e6, "cache_write": 3.75 / 1e6},
+    "claude-haiku-4-5-20251001": {"in": 1 / 1e6, "out": 5 / 1e6,  "cache_read": 0.10 / 1e6, "cache_write": 1.25 / 1e6},
+}
+
+
+def _log_usage(model: str, usage: Any, label: str, sink: list[float] | None = None) -> float:
+    """Log per-call token usage + estimated USD cost; append cost to sink if given."""
+    p = MODEL_PRICING.get(model, {})
+    in_tok = getattr(usage, "input_tokens", 0) or 0
+    out_tok = getattr(usage, "output_tokens", 0) or 0
+    cache_r = getattr(usage, "cache_read_input_tokens", 0) or 0
+    cache_w = getattr(usage, "cache_creation_input_tokens", 0) or 0
+    cost = (
+        in_tok * p.get("in", 0)
+        + out_tok * p.get("out", 0)
+        + cache_r * p.get("cache_read", 0)
+        + cache_w * p.get("cache_write", 0)
+    )
+    logger.info(
+        "COST %s model=%s in=%d out=%d cache_r=%d cache_w=%d => $%.4f",
+        label, model, in_tok, out_tok, cache_r, cache_w, cost,
+    )
+    if sink is not None:
+        sink.append(cost)
+    return cost
+
 _db_lock = asyncio.Lock()
 _db_ready = False
 
@@ -466,6 +494,7 @@ async def narrate(
                 ),
                 timeout=CALL_TIMEOUT,
             )
+        _log_usage(MODEL, response.usage, f"narrate:{section_type}")
         narrative = response.content[0].text.strip()
 
         if response.stop_reason == "max_tokens":
@@ -496,6 +525,8 @@ async def _batch_narrate(
     semaphore: asyncio.Semaphore,
     use_mahadasha_prompt: bool = False,
     batch_kind: str = "generic",
+    label: str = "",
+    cost_sink: list[float] | None = None,
 ) -> dict[str, str]:
     if not items:
         return {}
@@ -579,6 +610,7 @@ async def _batch_narrate(
                 timeout=120.0,
             )
 
+        _log_usage(MODEL, response.usage, f"batch:{label or batch_kind}", cost_sink)
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
@@ -1060,21 +1092,22 @@ async def generate_narratives(
             })
 
     # --- Fire all batches in parallel ---
+    cost_sink: list[float] = []
     batch_coros = []
     if planets_batch:
-        batch_coros.append(_batch_narrate(planets_batch, lang, client, semaphore))
+        batch_coros.append(_batch_narrate(planets_batch, lang, client, semaphore, label="planets", cost_sink=cost_sink))
     if misc_batch:
-        batch_coros.append(_batch_narrate(misc_batch, lang, client, semaphore))
+        batch_coros.append(_batch_narrate(misc_batch, lang, client, semaphore, label="misc", cost_sink=cost_sink))
     if md_journey_batch:
-        batch_coros.append(_batch_narrate(md_journey_batch, lang, client, semaphore, use_mahadasha_prompt=True))
+        batch_coros.append(_batch_narrate(md_journey_batch, lang, client, semaphore, use_mahadasha_prompt=True, label="md_journey", cost_sink=cost_sink))
     if yoga_batch:
-        batch_coros.append(_batch_narrate(yoga_batch, lang, client, semaphore))
+        batch_coros.append(_batch_narrate(yoga_batch, lang, client, semaphore, label="yoga", cost_sink=cost_sink))
     if numerology_batch:
-        batch_coros.append(_batch_narrate(numerology_batch, lang, client, semaphore))
+        batch_coros.append(_batch_narrate(numerology_batch, lang, client, semaphore, label="numerology", cost_sink=cost_sink))
     if remedy_batch:
-        batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore, batch_kind="remedy"))
+        batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore, batch_kind="remedy", label="remedy", cost_sink=cost_sink))
     if thematic_batch:
-        batch_coros.append(_batch_narrate(thematic_batch, lang, client, semaphore))
+        batch_coros.append(_batch_narrate(thematic_batch, lang, client, semaphore, label="thematic", cost_sink=cost_sink))
 
     if not batch_coros:
         return {}
@@ -1093,6 +1126,7 @@ async def generate_narratives(
         numerology_batch, remedy_batch, thematic_batch,
     ])
     logger.info("Narratives generated: %d/%d successful (%d batches)", len(results), total_items, len(batch_coros))
+    logger.info("COST TOTAL narratives lang=%s model=%s => $%.4f", lang, MODEL, sum(cost_sink))
     return results
 
 
@@ -1150,6 +1184,7 @@ async def _translate_batch(
     texts: dict[str, str],
     client: AsyncAnthropic,
     semaphore: asyncio.Semaphore,
+    cost_sink: list[float] | None = None,
 ) -> dict[str, str]:
     if not texts:
         return {}
@@ -1185,6 +1220,7 @@ async def _translate_batch(
                 timeout=60.0,
             )
 
+        _log_usage(translation_model, response.usage, "translate", cost_sink)
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
@@ -1232,10 +1268,11 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
             _extract_texts(kundli_data.general_rashi_reports, "rashi")
         )
 
+    cost_sink: list[float] = []
     results = await asyncio.gather(
-        _translate_batch(batch1_texts, client, semaphore),
-        _translate_batch(batch2_texts, client, semaphore),
-        _translate_batch(batch3_texts, client, semaphore),
+        _translate_batch(batch1_texts, client, semaphore, cost_sink),
+        _translate_batch(batch2_texts, client, semaphore, cost_sink),
+        _translate_batch(batch3_texts, client, semaphore, cost_sink),
         return_exceptions=True,
     )
 
@@ -1261,3 +1298,4 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
 
     translated_count = sum(len(r) for r in [batch1_result, batch2_result, batch3_result] if isinstance(r, dict))
     logger.info("Report translation complete: %d fields translated to Hindi", translated_count)
+    logger.info("COST TOTAL translation lang=%s => $%.4f", lang, sum(cost_sink))

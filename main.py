@@ -21,6 +21,7 @@ from narrative_engine import generate_narratives, translate_reports
 from pdf_generator import PDFGenerator
 from drive_uploader import upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
+from pabbly_notifier import notify_payment_success
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -369,6 +370,17 @@ async def verify_and_generate(
         raise HTTPException(status_code=502, detail="Could not confirm payment")
 
     _ORDER_STORE.pop(verification.razorpay_order_id, None)
+
+    # Notify Pabbly Connect immediately after payment success — registered before
+    # PDF generation so downstream automation (WhatsApp, CRM) fires right away.
+    # Background tasks run sequentially in order, and the PDF/Drive job takes
+    # minutes; registering Pabbly first keeps it from waiting on that.
+    background_tasks.add_task(
+        notify_payment_success,
+        request=request,
+        order_id=verification.razorpay_order_id,
+        payment_id=verification.razorpay_payment_id,
+    )
 
     background_tasks.add_task(
         _generate_and_archive,
