@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 DB_PATH = pathlib.Path(__file__).parent / "narrative_cache.db"
 NARRATIVE_MODEL = "claude-sonnet-4-20250514"
 TRANSLATION_MODEL = "claude-haiku-4-5-20251001"
+# Formulaic narrative batches (planets, numerology) route here when the
+# use_haiku_for_simple_narratives kill-switch is on. Same Haiku model as translation.
+SIMPLE_NARRATIVE_MODEL = "claude-haiku-4-5-20251001"
 MODEL = NARRATIVE_MODEL
 MAX_CONCURRENT = settings.narrative_concurrency
 CALL_TIMEOUT = 30.0
@@ -527,9 +530,49 @@ async def _batch_narrate(
     batch_kind: str = "generic",
     label: str = "",
     cost_sink: list[float] | None = None,
+    model: str | None = None,
 ) -> dict[str, str]:
     if not items:
         return {}
+
+    # Chunk oversized batches so no single API call exceeds the timeout / token budget.
+    # Recursive: a 30-item batch splits into 10-item calls, each under the limit (no re-split).
+    # Chunks run concurrently; a failed chunk loses only its items, not the whole batch.
+    _MAX_BATCH_ITEMS = 10
+    if len(items) > _MAX_BATCH_ITEMS:
+        item_list = list(items.items())
+        chunks = [
+            dict(item_list[i:i + _MAX_BATCH_ITEMS])
+            for i in range(0, len(item_list), _MAX_BATCH_ITEMS)
+        ]
+        logger.info(
+            "Batch narrate: splitting %d items into %d chunks (kind=%s)",
+            len(items), len(chunks), batch_kind,
+        )
+        chunk_results = await asyncio.gather(
+            *(
+                _batch_narrate(
+                    chunk, lang, client, semaphore,
+                    use_mahadasha_prompt=use_mahadasha_prompt,
+                    batch_kind=batch_kind,
+                    label=label,
+                    cost_sink=cost_sink,
+                    model=model,
+                )
+                for chunk in chunks
+            ),
+            return_exceptions=True,
+        )
+        merged: dict[str, str] = {}
+        for i, result in enumerate(chunk_results):
+            if isinstance(result, Exception):
+                logger.warning("Narrative chunk %d failed (kind=%s): %s", i, batch_kind, result)
+                continue
+            merged.update(result)
+        return merged
+
+    # Default to the narrative model (Sonnet) unless a specific model is passed.
+    active_model = model or NARRATIVE_MODEL
 
     results: dict[str, str] = {}
     uncached: dict[str, tuple[str, dict]] = {}
@@ -597,7 +640,7 @@ async def _batch_narrate(
         async with semaphore:
             response = await asyncio.wait_for(
                 client.messages.create(
-                    model=MODEL,
+                    model=active_model,
                     max_tokens=max_tokens,
                     temperature=0.7,
                     system=[{
@@ -607,10 +650,10 @@ async def _batch_narrate(
                     }],
                     messages=[{"role": "user", "content": batch_prompt}],
                 ),
-                timeout=120.0,
+                timeout=150.0,
             )
 
-        _log_usage(MODEL, response.usage, f"batch:{label or batch_kind}", cost_sink)
+        _log_usage(active_model, response.usage, f"batch:{label or batch_kind}", cost_sink)
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
@@ -1092,10 +1135,18 @@ async def generate_narratives(
             })
 
     # --- Fire all batches in parallel ---
+    # Cost lever: formulaic batches (planets, numerology) use Haiku (3x cheaper);
+    # flagship batches (md_journey, thematic, yoga, remedy, misc) stay on Sonnet.
+    # Expand the set after A/B verifying quality holds. Kill-switch in config.
+    simple_model = (
+        SIMPLE_NARRATIVE_MODEL
+        if settings.use_haiku_for_simple_narratives
+        else NARRATIVE_MODEL
+    )
     cost_sink: list[float] = []
     batch_coros = []
     if planets_batch:
-        batch_coros.append(_batch_narrate(planets_batch, lang, client, semaphore, label="planets", cost_sink=cost_sink))
+        batch_coros.append(_batch_narrate(planets_batch, lang, client, semaphore, label="planets", cost_sink=cost_sink, model=simple_model))
     if misc_batch:
         batch_coros.append(_batch_narrate(misc_batch, lang, client, semaphore, label="misc", cost_sink=cost_sink))
     if md_journey_batch:
@@ -1103,7 +1154,7 @@ async def generate_narratives(
     if yoga_batch:
         batch_coros.append(_batch_narrate(yoga_batch, lang, client, semaphore, label="yoga", cost_sink=cost_sink))
     if numerology_batch:
-        batch_coros.append(_batch_narrate(numerology_batch, lang, client, semaphore, label="numerology", cost_sink=cost_sink))
+        batch_coros.append(_batch_narrate(numerology_batch, lang, client, semaphore, label="numerology", cost_sink=cost_sink, model=simple_model))
     if remedy_batch:
         batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore, batch_kind="remedy", label="remedy", cost_sink=cost_sink))
     if thematic_batch:
@@ -1208,7 +1259,7 @@ async def _translate_batch(
             response = await asyncio.wait_for(
                 client.messages.create(
                     model=translation_model,
-                    max_tokens=4096,
+                    max_tokens=8192,
                     temperature=0.3,
                     system=[{
                         "type": "text",
@@ -1224,7 +1275,19 @@ async def _translate_batch(
         raw = response.content[0].text.strip()
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-        translated = json.loads(raw)
+
+        if response.stop_reason == "max_tokens":
+            logger.warning(
+                "Translation hit max_tokens (%d items); attempting salvage", len(texts),
+            )
+            raw = _salvage_truncated_json(raw)
+
+        try:
+            translated = json.loads(raw)
+        except json.JSONDecodeError:
+            # Last-ditch salvage even if stop_reason wasn't max_tokens.
+            logger.warning("Translation JSON parse failed; attempting salvage", exc_info=True)
+            translated = json.loads(_salvage_truncated_json(raw))
 
         try:
             await _set_cached(cache_key, json.dumps(translated, ensure_ascii=False))
@@ -1237,6 +1300,45 @@ async def _translate_batch(
     except Exception:
         logger.warning("Translation batch failed", exc_info=True)
         return {}
+
+
+async def _translate_chunked(
+    texts: dict[str, str],
+    client: AsyncAnthropic,
+    semaphore: asyncio.Semaphore,
+    cost_sink: list[float] | None = None,
+    chunk_size: int = 6,
+) -> dict[str, str]:
+    """Split a large text dict into chunks and translate each separately.
+
+    Bounds each API call's output so it fits under max_tokens and the timeout.
+    A failure in one chunk loses only that chunk, not the whole batch. Chunks
+    run concurrently (bounded by the shared semaphore).
+    """
+    if not texts:
+        return {}
+
+    items = list(texts.items())
+    chunks = [dict(items[i:i + chunk_size]) for i in range(0, len(items), chunk_size)]
+
+    if len(chunks) == 1:
+        return await _translate_batch(texts, client, semaphore, cost_sink)
+
+    logger.info("Translation: splitting %d texts into %d chunks of ~%d",
+                len(texts), len(chunks), chunk_size)
+
+    chunk_results = await asyncio.gather(
+        *(_translate_batch(chunk, client, semaphore, cost_sink) for chunk in chunks),
+        return_exceptions=True,
+    )
+
+    merged: dict[str, str] = {}
+    for i, result in enumerate(chunk_results):
+        if isinstance(result, Exception):
+            logger.warning("Translation chunk %d failed: %s", i, result)
+            continue
+        merged.update(result)
+    return merged
 
 
 async def translate_reports(kundli_data: KundliData, lang: str) -> None:
@@ -1270,9 +1372,9 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
 
     cost_sink: list[float] = []
     results = await asyncio.gather(
-        _translate_batch(batch1_texts, client, semaphore, cost_sink),
-        _translate_batch(batch2_texts, client, semaphore, cost_sink),
-        _translate_batch(batch3_texts, client, semaphore, cost_sink),
+        _translate_chunked(batch1_texts, client, semaphore, cost_sink),
+        _translate_chunked(batch2_texts, client, semaphore, cost_sink),
+        _translate_chunked(batch3_texts, client, semaphore, cost_sink),
         return_exceptions=True,
     )
 

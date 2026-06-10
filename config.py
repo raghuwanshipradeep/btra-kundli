@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     payment_currency: str = "INR"
     allow_free_generation: bool = False
     use_haiku_for_translation: bool = True
+    # Cost optimization: route formulaic narrative batches (planets, numerology)
+    # to cheaper Haiku 4.5. Kill-switch: set False to revert ALL narratives to Sonnet.
+    use_haiku_for_simple_narratives: bool = True
     api_concurrency: int = 10
     narrative_concurrency: int = 5
 
