@@ -227,9 +227,23 @@ async def _build_kundli_pdf(request: KundliRequest) -> tuple[bytes, str]:
         logger.exception("PDF generation failed")
         raise HTTPException(status_code=500, detail="PDF generation failed")
 
-    safe_name = "".join(c for c in request.name if c.isalnum() or c in " _-").strip()
-    filename = f"kundli_{safe_name}_{request.year}.pdf"
+    filename = _build_filename(request)
     return pdf_bytes, filename
+
+
+def _build_filename(request: KundliRequest) -> str:
+    """Build the archive filename as First##Last##Phone##Email.pdf.
+
+    Name words are joined with '##' (e.g. "Pradeep Raghuwanshi" -> "Pradeep##Raghuwanshi"),
+    then phone and email are appended with '##'. Empty fields are skipped.
+    """
+    def _clean(value: str) -> str:
+        return "".join(c for c in value if c.isalnum() or c in "@._-").strip()
+
+    name_parts = [_clean(w) for w in request.name.split() if _clean(w)]
+    parts = name_parts + [_clean(request.phone), _clean(request.email)]
+    base = "##".join(p for p in parts if p) or "kundli"
+    return f"{base}.pdf"
 
 
 # ---------------------------------------------------------------------------
