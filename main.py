@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import hmac
+import json
 import logging
 import pathlib
 import time
 from io import BytesIO
 
 import razorpay
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -84,6 +85,55 @@ def _prune_orders() -> None:
     expired = [k for k, (_, t) in _ORDER_STORE.items() if now - t > _ORDER_TTL_SECONDS]
     for k in expired:
         _ORDER_STORE.pop(k, None)
+
+
+# ---------------------------------------------------------------------------
+# Fulfillment idempotency: a paid order may arrive via BOTH the browser
+# /verify-and-generate callback AND the /razorpay-webhook. Whoever claims the
+# order first runs generation; the other is a no-op. The check+add is
+# synchronous (no await between), so it's atomic within the single worker.
+# ---------------------------------------------------------------------------
+_FULFILLED_ORDERS: set[str] = set()
+
+
+def _claim_order(order_id: str) -> bool:
+    """Return True if this caller wins the right to fulfill; False if already claimed."""
+    if order_id in _FULFILLED_ORDERS:
+        return False
+    _FULFILLED_ORDERS.add(order_id)
+    return True
+
+
+def _start_fulfillment(
+    background_tasks: BackgroundTasks,
+    request: KundliRequest,
+    order_id: str,
+    payment_id: str,
+) -> bool:
+    """Schedule Pabbly notify + PDF generation/archive for a paid order, once.
+
+    Returns False (and does nothing) if the order was already fulfilled by the
+    other payment-confirmation path. Pabbly is registered before the PDF/Drive
+    job so downstream automation fires right away (the PDF job takes minutes).
+    """
+    if not _claim_order(order_id):
+        logger.info("Fulfillment already claimed for order=%s — skipping duplicate", order_id)
+        return False
+
+    _ORDER_STORE.pop(order_id, None)
+    background_tasks.add_task(
+        notify_payment_success,
+        request=request,
+        order_id=order_id,
+        payment_id=payment_id,
+    )
+    background_tasks.add_task(
+        _generate_and_archive,
+        request=request,
+        order_id=order_id,
+        payment_id=payment_id,
+    )
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -259,6 +309,19 @@ def _verify_signature(order_id: str, payment_id: str, signature: str) -> bool:
     return hmac.compare_digest(expected, signature)
 
 
+def _verify_webhook_signature(body: bytes, signature: str) -> bool:
+    """Verify a Razorpay webhook: HMAC-SHA256 of the RAW body using the webhook
+    secret (distinct from the checkout signature, which uses the key secret)."""
+    if not settings.razorpay_webhook_secret:
+        return False
+    expected = hmac.new(
+        settings.razorpay_webhook_secret.encode(),
+        body,
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
 class PaymentVerification(BaseModel):
     razorpay_order_id: str
     razorpay_payment_id: str
@@ -383,21 +446,8 @@ async def verify_and_generate(
         logger.exception("Payment fetch failed")
         raise HTTPException(status_code=502, detail="Could not confirm payment")
 
-    _ORDER_STORE.pop(verification.razorpay_order_id, None)
-
-    # Notify Pabbly Connect immediately after payment success — registered before
-    # PDF generation so downstream automation (WhatsApp, CRM) fires right away.
-    # Background tasks run sequentially in order, and the PDF/Drive job takes
-    # minutes; registering Pabbly first keeps it from waiting on that.
-    background_tasks.add_task(
-        notify_payment_success,
-        request=request,
-        order_id=verification.razorpay_order_id,
-        payment_id=verification.razorpay_payment_id,
-    )
-
-    background_tasks.add_task(
-        _generate_and_archive,
+    _start_fulfillment(
+        background_tasks,
         request=request,
         order_id=verification.razorpay_order_id,
         payment_id=verification.razorpay_payment_id,
@@ -409,6 +459,81 @@ async def verify_and_generate(
         "order_id": verification.razorpay_order_id,
         "payment_id": verification.razorpay_payment_id,
     }
+
+
+@app.post("/razorpay-webhook")
+async def razorpay_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    x_razorpay_signature: str = Header(default=""),
+) -> dict:
+    """Server-to-server fulfillment: Razorpay calls this on payment.captured,
+    independent of the browser. This is the reliable path — the in-page
+    callback (/verify-and-generate) is only a best-effort fast path.
+
+    Idempotent: if the browser callback already fulfilled the order, this is a
+    no-op (and vice versa), guarded by _claim_order.
+    """
+    body = await request.body()
+
+    if not settings.razorpay_webhook_secret:
+        logger.error("Webhook received but RAZORPAY_WEBHOOK_SECRET is not configured")
+        raise HTTPException(status_code=503, detail="Webhook not configured")
+
+    if not _verify_webhook_signature(body, x_razorpay_signature):
+        logger.warning("Razorpay webhook signature verification failed")
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    try:
+        payload = json.loads(body)
+    except (json.JSONDecodeError, ValueError):
+        logger.warning("Razorpay webhook body was not valid JSON")
+        raise HTTPException(status_code=400, detail="Invalid payload")
+
+    event = payload.get("event", "")
+    # Only payment-confirming events trigger fulfillment; ack everything else.
+    if event not in ("payment.captured", "order.paid"):
+        logger.info("Razorpay webhook ignored event=%s", event)
+        return {"status": "ignored", "event": event}
+
+    payment_entity = (
+        payload.get("payload", {}).get("payment", {}).get("entity", {})
+    )
+    order_id = payment_entity.get("order_id", "")
+    payment_id = payment_entity.get("id", "")
+    amount = payment_entity.get("amount")
+
+    if not order_id:
+        logger.warning("Razorpay webhook %s had no order_id", event)
+        return {"status": "ignored", "reason": "no order_id"}
+
+    if amount is not None and amount != settings.kundli_price_paise:
+        logger.warning(
+            "Webhook amount mismatch on order %s (got %s, expected %s)",
+            order_id, amount, settings.kundli_price_paise,
+        )
+
+    kundli_request = _get_order(order_id)
+    if kundli_request is None:
+        # Paid order we can't map back to form data — needs manual recovery.
+        logger.error(
+            "WEBHOOK paid order not found in store — order=%s payment=%s — manual recovery required",
+            order_id, payment_id,
+        )
+        # 200 so Razorpay stops retrying; there is nothing more we can do here.
+        return {"status": "ok", "fulfilled": False, "reason": "order not found"}
+
+    scheduled = _start_fulfillment(
+        background_tasks,
+        request=kundli_request,
+        order_id=order_id,
+        payment_id=payment_id,
+    )
+    logger.info(
+        "WEBHOOK %s order=%s payment=%s scheduled=%s",
+        event, order_id, payment_id, scheduled,
+    )
+    return {"status": "ok", "fulfilled": scheduled}
 
 
 @app.post("/generate-kundli")

@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
     kundli_price_paise: int = 9900
     payment_currency: str = "INR"
     allow_free_generation: bool = False
