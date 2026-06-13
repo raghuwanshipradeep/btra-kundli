@@ -59,6 +59,7 @@ const FIELD_MESSAGES = {
     hour: 'Please select your birth hour.',
     min: 'Please select your birth minute.',
     place: 'Please enter your birth place.',
+    gender: 'Please select your gender.',
 };
 
 function setupValidationMessages() {
@@ -244,6 +245,10 @@ function setupFormSubmit() {
             tzone: parseFloat(document.getElementById('tzone').value),
             lang: document.getElementById('lang').value,
             place: document.getElementById('place').value,
+            email: document.getElementById('email').value.trim(),
+            gender: document.getElementById('gender').value,
+            state: document.getElementById('state').value.trim(),
+            pincode: document.getElementById('pincode').value.trim(),
         };
 
         if (_paymentEnabled) {

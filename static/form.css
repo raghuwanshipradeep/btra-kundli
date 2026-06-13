@@ -117,6 +117,12 @@ body {
     font-size: 14px;
 }
 
+.optional-tag {
+    font-weight: 400;
+    font-size: 0.85em;
+    color: #999;
+}
+
 .form-group input,
 .form-group select {
     width: 100%;

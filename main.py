@@ -21,6 +21,7 @@ from narrative_engine import generate_narratives, translate_reports
 from pdf_generator import PDFGenerator
 from drive_uploader import upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
+from pabbly_notifier import notify_payment_success
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -226,9 +227,23 @@ async def _build_kundli_pdf(request: KundliRequest) -> tuple[bytes, str]:
         logger.exception("PDF generation failed")
         raise HTTPException(status_code=500, detail="PDF generation failed")
 
-    safe_name = "".join(c for c in request.name if c.isalnum() or c in " _-").strip()
-    filename = f"kundli_{safe_name}_{request.year}.pdf"
+    filename = _build_filename(request)
     return pdf_bytes, filename
+
+
+def _build_filename(request: KundliRequest) -> str:
+    """Build the archive filename as First##Last##Phone##Email.pdf.
+
+    Name words are joined with '##' (e.g. "Pradeep Raghuwanshi" -> "Pradeep##Raghuwanshi"),
+    then phone and email are appended with '##'. Empty fields are skipped.
+    """
+    def _clean(value: str) -> str:
+        return "".join(c for c in value if c.isalnum() or c in "@._-").strip()
+
+    name_parts = [_clean(w) for w in request.name.split() if _clean(w)]
+    parts = name_parts + [_clean(request.phone), _clean(request.email)]
+    base = "##".join(p for p in parts if p) or "kundli"
+    return f"{base}.pdf"
 
 
 # ---------------------------------------------------------------------------
@@ -369,6 +384,17 @@ async def verify_and_generate(
         raise HTTPException(status_code=502, detail="Could not confirm payment")
 
     _ORDER_STORE.pop(verification.razorpay_order_id, None)
+
+    # Notify Pabbly Connect immediately after payment success — registered before
+    # PDF generation so downstream automation (WhatsApp, CRM) fires right away.
+    # Background tasks run sequentially in order, and the PDF/Drive job takes
+    # minutes; registering Pabbly first keeps it from waiting on that.
+    background_tasks.add_task(
+        notify_payment_success,
+        request=request,
+        order_id=verification.razorpay_order_id,
+        payment_id=verification.razorpay_payment_id,
+    )
 
     background_tasks.add_task(
         _generate_and_archive,

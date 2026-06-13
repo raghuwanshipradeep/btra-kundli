@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     payment_currency: str = "INR"
     allow_free_generation: bool = False
     use_haiku_for_translation: bool = True
+    # Cost optimization: route formulaic narrative batches (planets, numerology)
+    # to cheaper Haiku 4.5. Kill-switch: set False to revert ALL narratives to Sonnet.
+    use_haiku_for_simple_narratives: bool = True
     api_concurrency: int = 10
     narrative_concurrency: int = 5
 
@@ -34,6 +37,10 @@ class Settings(BaseSettings):
     drive_archive_enabled: bool = True
     generation_timeout_seconds: int = 600
     admin_key: str = ""
+
+    # Pabbly Connect webhook — POST a payment-success payload for downstream
+    # automation (WhatsApp, CRM, sheets). Empty = integration disabled.
+    pabbly_webhook_url: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
