@@ -4,6 +4,7 @@ import asyncio
 import base64
 import logging
 import time
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -1058,6 +1059,9 @@ class AstrologyAPIClient:
     async def fetch_all(self, request: KundliRequest) -> KundliData:
         payload = self._make_payload(request)
         payload_with_ayan = {**payload, "ayanamsha": "LAHIRI"}
+        # Varshaphal (annual/Tajika chart) endpoints require the year to cast the
+        # annual chart for, in addition to the birth params. Use the current year.
+        varshaphal_payload = {**payload_with_ayan, "varshaphal_year": datetime.now().year}
         numero_payload = self._make_numero_payload(request)
 
         # Phase 1: all independent parallel calls
@@ -1095,16 +1099,16 @@ class AstrologyAPIClient:
             self.get_daily_nakshatra_prediction(payload),   # 30
             self.get_daily_nakshatra_prediction_next(payload),     # 31
             self.get_daily_nakshatra_prediction_previous(payload), # 32
-            self.get_varshaphal_year_chart(payload_with_ayan),     # 33
-            self.get_varshaphal_month_chart(payload_with_ayan),    # 34
-            self.get_varshaphal_details(payload_with_ayan),        # 35
-            self.get_varshaphal_planets(payload_with_ayan),        # 36
-            self.get_varshaphal_muntha(payload_with_ayan),         # 37
-            self.get_varshaphal_mudda_dasha(payload_with_ayan),    # 38
-            self.get_varshaphal_panchavargeeya_bala(payload_with_ayan),  # 39
-            self.get_varshaphal_harsha_bala(payload_with_ayan),    # 40
-            self.get_varshaphal_saham_points(payload_with_ayan),   # 41
-            self.get_varshaphal_yoga(payload_with_ayan),           # 42
+            self.get_varshaphal_year_chart(varshaphal_payload),     # 33
+            self.get_varshaphal_month_chart(varshaphal_payload),    # 34
+            self.get_varshaphal_details(varshaphal_payload),        # 35
+            self.get_varshaphal_planets(varshaphal_payload),        # 36
+            self.get_varshaphal_muntha(varshaphal_payload),         # 37
+            self.get_varshaphal_mudda_dasha(varshaphal_payload),    # 38
+            self.get_varshaphal_panchavargeeya_bala(varshaphal_payload),  # 39
+            self.get_varshaphal_harsha_bala(varshaphal_payload),    # 40
+            self.get_varshaphal_saham_points(varshaphal_payload),   # 41
+            self.get_varshaphal_yoga(varshaphal_payload),           # 42
             self.get_current_vdasha_all(payload_with_ayan),        # 43
             self.get_kp_planets(payload_with_ayan),         # 44
             self.get_kp_house_cusps(payload_with_ayan),     # 45

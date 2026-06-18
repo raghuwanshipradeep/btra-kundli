@@ -3,7 +3,7 @@
     —
   {% elif val is mapping %}
     <table class="kv-table">
-      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
+      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and not k.endswith('_timestamp') and k != 'planet_small' %}
       <tr>
         <td>{{ k | humanize_key(lang) }}</td>
         <td>{{ render_value(v) }}</td>

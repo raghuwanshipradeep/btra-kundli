@@ -396,6 +396,28 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         # KP keys (camelCase from API)
         "planetSignificator": "ग्रह कारक",
         "houseSignificator": "भाव कारक",
+        # Varshaphal (annual chart) keys
+        "varshaphala_year": "वर्षफल वर्ष",
+        "age_of_native": "आयु",
+        "ayanamsha_name": "अयनांश",
+        "ayanamsha_degree": "अयनांश अंश",
+        "native_birth_date": "जन्म तिथि",
+        "varshaphala_date": "वर्षफल तिथि",
+        "panchadhikari": "पंचाधिकारी",
+        "muntha_lord": "मुंथा स्वामी",
+        "birth_ascendant_lord": "जन्म लग्न स्वामी",
+        "year_ascendant_lord": "वर्ष लग्न स्वामी",
+        "dinratri_lord": "दिनरात्रि स्वामी",
+        "trirashi_lord": "त्रिराशि स्वामी",
+        "varshaphala_year_lord": "वर्ष स्वामी",
+        "varshaphala_muntha": "मुंथा",
+        "muntha_sign": "मुंथा राशि",
+        "muntha_sign_lord": "मुंथा राशि स्वामी",
+        "saham_name": "सहम",
+        "saham_degree": "सहम अंश",
+        "planet": "ग्रह",
+        "chart": "चार्ट",
+        "planet_degree": "ग्रह अंश",
     },
     "en": {
         "is_retro": "Retrograde",
@@ -408,6 +430,27 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "planet_name": "Planet Name",
         "sign_name": "Sign Name",
         "planet_degree": "Planet Degree",
+        # Varshaphal (annual chart) keys
+        "varshaphala_year": "Varshaphal Year",
+        "age_of_native": "Age",
+        "ayanamsha_name": "Ayanamsha",
+        "ayanamsha_degree": "Ayanamsha Degree",
+        "native_birth_date": "Birth Date",
+        "varshaphala_date": "Varshaphal Date",
+        "panchadhikari": "Five Authorities",
+        "muntha_lord": "Muntha Lord",
+        "birth_ascendant_lord": "Birth Ascendant Lord",
+        "year_ascendant_lord": "Year Ascendant Lord",
+        "dinratri_lord": "Day-Night Lord",
+        "trirashi_lord": "Trirashi Lord",
+        "varshaphala_year_lord": "Year Lord",
+        "varshaphala_muntha": "Muntha",
+        "muntha_sign": "Muntha Sign",
+        "muntha_sign_lord": "Muntha Sign Lord",
+        "saham_name": "Saham",
+        "saham_degree": "Saham Degree",
+        "planet": "Planet",
+        "chart": "Chart",
         "end_time": "End Time",
         "start_time": "Start Time",
         "sun_sign": "Sun Sign",
@@ -545,7 +588,7 @@ def to_hindi_value(value, lang: str = "en"):
     translated = VALUE_TRANSLATIONS_HI.get(v)
     if translated:
         return translated
-    return TAMIL_TRANSLIT_TO_HI.get(v, value)
+    return TAMIL_TRANSLIT_TO_HI.get(v, v)
 
 
 _MONTH_NAMES_HI = {
