@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DB_PATH = pathlib.Path(__file__).parent / "narrative_cache.db"
-NARRATIVE_MODEL = "claude-sonnet-4-20250514"
+# Flagship narratives now run on Haiku 4.5 (cost cut). Sonnet is no longer the default,
+# so the use_haiku_for_* switches below resolve to Haiku on both branches.
+NARRATIVE_MODEL = "claude-haiku-4-5-20251001"
 TRANSLATION_MODEL = "claude-haiku-4-5-20251001"
 # Formulaic narrative batches (planets, numerology) route here when the
 # use_haiku_for_simple_narratives kill-switch is on. Same Haiku model as translation.
