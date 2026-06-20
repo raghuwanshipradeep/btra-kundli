@@ -154,6 +154,24 @@ def _get_job_state(order_id: str) -> dict | None:
     return _JOB_STATE.get(order_id)
 
 
+def _save_recovery_pdf(order_id: str, filename: str, pdf_bytes: bytes) -> str | None:
+    """Persist a paid PDF to disk when the Drive upload failed, so it's
+    recoverable instead of lost. Returns the path written, or None if disabled
+    or the write itself failed (already-bad situation — never raise)."""
+    if not settings.drive_recovery_dir:
+        return None
+    try:
+        recovery_dir = pathlib.Path(settings.drive_recovery_dir)
+        recovery_dir.mkdir(parents=True, exist_ok=True)
+        # Prefix with order_id so the file is unambiguous and collision-free.
+        dest = recovery_dir / f"{order_id}__{filename}"
+        dest.write_bytes(pdf_bytes)
+        return str(dest)
+    except OSError:
+        logger.exception("Failed to write recovery PDF for order=%s", order_id)
+        return None
+
+
 def _list_recent_jobs(limit: int = 50) -> list[dict]:
     items = [{"order_id": oid, **state} for oid, state in _JOB_STATE.items()]
     items.sort(key=lambda x: x.get("updated_at", 0), reverse=True)
@@ -207,14 +225,17 @@ async def _generate_and_archive(
     )
 
     if drive_result is None and settings.drive_archive_enabled and settings.google_drive_folder_id:
+        recovery_path = _save_recovery_pdf(order_id, filename, pdf_bytes)
         logger.error(
-            "DRIVE ARCHIVE MISSING — paid order=%s customer=%s — manual recovery required",
-            order_id, request.name,
+            "DRIVE ARCHIVE MISSING — paid order=%s customer=%s — manual recovery required "
+            "(local copy: %s)",
+            order_id, request.name, recovery_path or "NOT SAVED",
         )
         _set_job_state(
             order_id, "drive_failed",
             customer=request.name,
             pdf_size_bytes=len(pdf_bytes),
+            recovery_path=recovery_path,
             elapsed_s=round(time.time() - start, 1),
         )
         return

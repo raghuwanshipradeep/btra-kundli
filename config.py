@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     google_oauth_credentials_path: str = "oauth_credentials.json"
     google_token_path: str = "token.json"
     drive_archive_enabled: bool = True
+    # Per-attempt socket timeout (seconds) for Drive uploads. The underlying
+    # httplib2 default (~60s) was killing legitimately-slow uploads from the
+    # container's limited egress to Google.
+    drive_upload_timeout_seconds: int = 180
+    # When a Drive upload ultimately fails, write the paid PDF here so it is
+    # recoverable from disk instead of lost. Empty = disabled.
+    drive_recovery_dir: str = "recovery"
     generation_timeout_seconds: int = 600
     admin_key: str = ""
 

@@ -4,9 +4,12 @@ import time
 from io import BytesIO
 from pathlib import Path
 
+import google_auth_httplib2
+import httplib2
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseUpload
 
 from config import settings
@@ -51,7 +54,12 @@ def _get_drive_service():
         return _drive_service
 
     creds = _load_credentials()
-    _drive_service = build("drive", "v3", credentials=creds, cache_discovery=False)
+    # Build with an explicit socket timeout so a slow-but-working upload isn't
+    # killed at httplib2's ~60s default. AuthorizedHttp injects the OAuth creds.
+    authed_http = google_auth_httplib2.AuthorizedHttp(
+        creds, http=httplib2.Http(timeout=settings.drive_upload_timeout_seconds)
+    )
+    _drive_service = build("drive", "v3", http=authed_http, cache_discovery=False)
     return _drive_service
 
 
@@ -67,17 +75,26 @@ def _upload_sync(pdf_bytes: bytes, filename: str, folder_id: str, description: s
     last_exc = None
     for attempt in range(3):
         try:
+            # Resumable upload: chunked and individually retriable, far more
+            # robust on flaky container egress than a single-shot PUT.
             media = MediaIoBaseUpload(
                 BytesIO(pdf_bytes),
                 mimetype="application/pdf",
-                resumable=False,
+                resumable=True,
             )
-            return service.files().create(
+            request = service.files().create(
                 body=file_metadata,
                 media_body=media,
                 fields="id, name, webViewLink, createdTime",
-            ).execute()
-        except ConnectionError as exc:
+            )
+            response = None
+            while response is None:
+                _, response = request.next_chunk()
+            return response
+        # TimeoutError/ConnectionError are both OSError subclasses; the previous
+        # `except ConnectionError` missed the production write timeout entirely.
+        # HttpError covers transient 5xx/429 from Drive.
+        except (TimeoutError, OSError, HttpError) as exc:
             last_exc = exc
             logger.warning("Drive upload attempt %d failed: %s", attempt + 1, exc)
             time.sleep(2 ** attempt)
