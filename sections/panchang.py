@@ -74,10 +74,7 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         or data.planet_panchang_sunrise
         or data.chaughadiya_muhurta
         or data.hora_muhurta
-        or data.hora_muhurta_dinman
         or data.panchang_chart
-        or data.tamil_month_panchang
-        or data.tamil_panchang
         or data.panchang_festival
         or data.monthly_panchang
     )
@@ -85,10 +82,9 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         return None
 
     logger.info(
-        "Panchang data: chaughadiya=%s hora=%s hora_dinman=%s",
+        "Panchang data: chaughadiya=%s hora=%s",
         type(data.chaughadiya_muhurta).__name__ if data.chaughadiya_muhurta else None,
         type(data.hora_muhurta).__name__ if data.hora_muhurta else None,
-        type(data.hora_muhurta_dinman).__name__ if data.hora_muhurta_dinman else None,
     )
 
     locale = LOCALES.get(lang, LOCALES["en"])
@@ -108,10 +104,7 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         planet_panchang_sunrise=data.planet_panchang_sunrise,
         chaughadiya_muhurta=_empty_to_none(_sanitize_nan(data.chaughadiya_muhurta)),
         hora_muhurta=_empty_to_none(_sanitize_nan(data.hora_muhurta)),
-        hora_muhurta_dinman=_empty_to_none(_sanitize_nan(data.hora_muhurta_dinman)),
         panchang_chart=data.panchang_chart,
-        tamil_month_panchang=_sanitize_monthly_panchang(_sanitize_nan(data.tamil_month_panchang)),
-        tamil_panchang=_sanitize_nan(data.tamil_panchang),
         panchang_festival=data.panchang_festival,
         monthly_panchang=_sanitize_monthly_panchang(_sanitize_nan(data.monthly_panchang)),
         locale=locale,

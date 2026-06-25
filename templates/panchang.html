@@ -233,7 +233,7 @@
 {% endif %}
 
 {# ===== PAGE 2: Chaughadiya & Hora Muhurta ===== #}
-{% if chaughadiya_muhurta or hora_muhurta or hora_muhurta_dinman %}
+{% if chaughadiya_muhurta or hora_muhurta %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.chaughadiya_muhurta_title }}</h2>
 
@@ -260,7 +260,7 @@
     {% endif %}
 </div>
 
-{% if hora_muhurta or hora_muhurta_dinman %}
+{% if hora_muhurta %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.hora_muhurta_title }}</h2>
 
@@ -282,25 +282,6 @@
         {{ hora_table(hdata) }}
       {% else %}
         {{ render_value(hora_muhurta) }}
-      {% endif %}
-    {% endif %}
-
-    {% if hora_muhurta_dinman %}
-      <hr class="divider">
-      <h3 class="section-subheader">{{ locale.hora_muhurta_dinman_title }}</h3>
-      {% set hddata = hora_muhurta_dinman.get('hora', hora_muhurta_dinman) if hora_muhurta_dinman is mapping else hora_muhurta_dinman %}
-      {% if hddata is mapping %}
-        {% for period_name, items in hddata.items() %}
-          {% if items is iterable and items is not string and items is not mapping %}
-            <h3 class="section-subheader">{{ locale.hora_muhurta_dinman_title }} — {{ period_name | replace('_', ' ') | title }}</h3>
-            {{ hora_table(items) }}
-            {% if not loop.last %}<hr class="divider">{% endif %}
-          {% endif %}
-        {% endfor %}
-      {% elif hddata is iterable and hddata is not string %}
-        {{ hora_table(hddata) }}
-      {% else %}
-        {{ render_value(hora_muhurta_dinman) }}
       {% endif %}
     {% endif %}
 </div>
@@ -519,259 +500,10 @@
 </div>
 {% endif %}
 
-{# ===== PAGE 5: Tamil Panchang & Festivals ===== #}
-{% if tamil_panchang or tamil_month_panchang or panchang_festival or panchang_chart %}
+{# ===== PAGE 5: Festivals & Panchang ===== #}
+{% if panchang_festival or panchang_chart or monthly_panchang %}
 <div class="section-page">
-    <h2 class="section-header">{{ locale.tamil_panchang_title }}</h2>
-
-    {% if tamil_panchang %}
-    <div class="panchang-card">
-        <h3 class="section-subheader">{{ locale.tamil_panchang_title }}</h3>
-
-        {# --- Time & Day --- #}
-        <table>
-          <thead>
-            <tr>
-              <th style="width:35%">{{ locale.element }}</th>
-              <th>{{ locale.value }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if tamil_panchang.day %}
-            <tr><td><strong>{{ "वार" if lang == "hi" else "Day" }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.day | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.day }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.sunrise %}
-            <tr><td><strong>{{ locale.sunrise }}</strong></td><td>{{ tamil_panchang.sunrise | safe_time }}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.sunset %}
-            <tr><td><strong>{{ locale.sunset }}</strong></td><td>{{ tamil_panchang.sunset | safe_time }}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.moonrise %}
-            <tr><td><strong>{{ locale.moonrise }}</strong></td><td>{{ tamil_panchang.moonrise | safe_time }}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.moonset %}
-            <tr><td><strong>{{ locale.moonset }}</strong></td><td>{{ tamil_panchang.moonset | safe_time }}</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-
-        <hr class="divider">
-
-        {# --- Tithi / Nakshatra / Yog / Karan --- #}
-        {% set tp_elements = [
-            (locale.tithi, tamil_panchang.tithi if tamil_panchang.tithi is defined else none),
-            (locale.nakshatra, tamil_panchang.nakshatra if tamil_panchang.nakshatra is defined else none),
-            (locale.yoga, tamil_panchang.yog if tamil_panchang.yog is defined else none),
-            (locale.karana, tamil_panchang.karan if tamil_panchang.karan is defined else none),
-        ] %}
-        <table>
-          <thead>
-            <tr>
-              <th style="width:20%">{{ locale.element }}</th>
-              <th style="width:45%">{{ locale.details }}</th>
-              <th style="width:35%">{{ locale.end_time_col }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for label, elem in tp_elements %}
-              {% if elem and elem is mapping %}
-              <tr>
-                <td><strong>{{ label }}</strong></td>
-                <td>{% if lang == "hi" %}{{ elem.details | to_hindi_value(lang) }}{% else %}{{ elem.details }}{% endif %}</td>
-                <td>{{ elem.end_time | safe_time if elem.end_time else "—" }}</td>
-              </tr>
-              {% elif elem %}
-              <tr>
-                <td><strong>{{ label }}</strong></td>
-                <td colspan="2">{% if lang == "hi" %}{{ elem | to_hindi_value(lang) }}{% else %}{{ elem }}{% endif %}</td>
-              </tr>
-              {% endif %}
-            {% endfor %}
-          </tbody>
-        </table>
-
-        <hr class="divider">
-
-        {# --- Paksha / Ritu / Signs / Months / Samvat --- #}
-        <table>
-          <thead>
-            <tr>
-              <th style="width:35%">{{ locale.element }}</th>
-              <th>{{ locale.value }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if tamil_panchang.paksha %}
-            <tr><td><strong>{{ locale.paksha }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.paksha | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.paksha }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.ritu %}
-            <tr><td><strong>{{ locale.ritu }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.ritu | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.ritu }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.sun_sign %}
-            <tr><td><strong>{{ locale.sun_sign }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.sun_sign | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.sun_sign }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.moon_sign %}
-            <tr><td><strong>{{ locale.moon_sign }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.moon_sign | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.moon_sign }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.ayana %}
-            <tr><td><strong>{{ "अयन" if lang == "hi" else "Ayana" }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.ayana | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.ayana }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.tamil_month is defined and tamil_panchang.tamil_month is mapping and tamil_panchang.tamil_month.month_name %}
-            <tr><td><strong>{{ locale.tamil_month }}</strong></td><td>{% if lang == "hi" %}{{ tamil_panchang.tamil_month.month_name | to_hindi_value(lang) }}{% else %}{{ tamil_panchang.tamil_month.month_name }}{% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.hindu_month is defined and tamil_panchang.hindu_month is mapping %}
-              {% set hm = tamil_panchang.hindu_month %}
-              {% if hm.purnimanta %}
-              <tr><td><strong>{{ "पूर्णिमांत मास" if lang == "hi" else "Purnimanta Month" }}</strong></td><td>{% if lang == "hi" %}{{ hm.purnimanta | to_hindi_value(lang) }}{% else %}{{ hm.purnimanta }}{% endif %}</td></tr>
-              {% endif %}
-              {% if hm.amanta %}
-              <tr><td><strong>{{ "अमांत मास" if lang == "hi" else "Amanta Month" }}</strong></td><td>{% if lang == "hi" %}{{ hm.amanta | to_hindi_value(lang) }}{% else %}{{ hm.amanta }}{% endif %}</td></tr>
-              {% endif %}
-              <tr><td><strong>{{ "अधिक मास" if lang == "hi" else "Adhik Status" }}</strong></td><td>{{ locale.get('yes', 'Yes') if hm.adhik_status else locale.get('no', 'No') }}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.vikram_samvat %}
-            <tr><td><strong>{{ "विक्रम संवत" if lang == "hi" else "Vikram Samvat" }}</strong></td><td>{{ tamil_panchang.vikram_samvat }}{% if tamil_panchang.vkram_samvat_name %} ({{ tamil_panchang.vkram_samvat_name }}){% endif %}</td></tr>
-            {% endif %}
-            {% if tamil_panchang.shaka_samvat %}
-            <tr><td><strong>{{ "शक संवत" if lang == "hi" else "Shaka Samvat" }}</strong></td><td>{{ tamil_panchang.shaka_samvat }}{% if tamil_panchang.shaka_samvat_name %} ({{ tamil_panchang.shaka_samvat_name }}){% endif %}</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-
-        {# --- Special time periods --- #}
-        {% set tp_periods = [] %}
-        {% if tamil_panchang.abhijit_muhurta is defined and tamil_panchang.abhijit_muhurta is mapping %}
-          {% set _ = tp_periods.append(("अभिजित मुहूर्त" if lang == "hi" else "Abhijit Muhurta", tamil_panchang.abhijit_muhurta)) %}
-        {% endif %}
-        {% if tamil_panchang.rahu_kaal is defined and tamil_panchang.rahu_kaal is mapping %}
-          {% set _ = tp_periods.append(("राहुकाल" if lang == "hi" else "Rahu Kaal", tamil_panchang.rahu_kaal)) %}
-        {% endif %}
-        {% if tamil_panchang.gulik_kaal is defined and tamil_panchang.gulik_kaal is mapping %}
-          {% set _ = tp_periods.append(("गुलिक काल" if lang == "hi" else "Gulika Kaal", tamil_panchang.gulik_kaal)) %}
-        {% endif %}
-        {% if tamil_panchang.yamghant_kaal is defined and tamil_panchang.yamghant_kaal is mapping %}
-          {% set _ = tp_periods.append(("यमघंट काल" if lang == "hi" else "Yamghant Kaal", tamil_panchang.yamghant_kaal)) %}
-        {% endif %}
-
-        {% if tp_periods %}
-        <hr class="divider">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:35%">{{ "विशेष काल" if lang == "hi" else "Special Period" }}</th>
-              <th>{{ locale.timing }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for name, period in tp_periods %}
-            <tr>
-              <td><strong>{{ name }}</strong></td>
-              <td>{{ period.start | safe_time }} — {{ period.end | safe_time }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-
-        {# --- Dur Muhurtha / Amrit Kaal / Varjyam --- #}
-        {% set tp_ranges = [] %}
-        {% if tamil_panchang.dur_muhurtha is defined and tamil_panchang.dur_muhurtha is iterable and tamil_panchang.dur_muhurtha is not string and tamil_panchang.dur_muhurtha is not mapping %}
-          {% for item in tamil_panchang.dur_muhurtha %}
-            {% set _ = tp_ranges.append((locale.dur_muhurtha, (item.start_time or item.start) | safe_time, (item.end_time or item.end) | safe_time)) %}
-          {% endfor %}
-        {% endif %}
-        {% if tamil_panchang.amrit_kaal is defined and tamil_panchang.amrit_kaal is iterable and tamil_panchang.amrit_kaal is not string and tamil_panchang.amrit_kaal is not mapping %}
-          {% for item in tamil_panchang.amrit_kaal %}
-            {% set _ = tp_ranges.append((locale.amrit_kaal, item.start | safe_time, item.end | safe_time)) %}
-          {% endfor %}
-        {% endif %}
-        {% if tamil_panchang.varjyam is defined and tamil_panchang.varjyam is iterable and tamil_panchang.varjyam is not string and tamil_panchang.varjyam is not mapping %}
-          {% for item in tamil_panchang.varjyam %}
-            {% set _ = tp_ranges.append((locale.varjyam, item.start | safe_time, item.end | safe_time)) %}
-          {% endfor %}
-        {% endif %}
-
-        {% if tp_ranges %}
-        <hr class="divider">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:35%">{{ locale.element }}</th>
-              <th style="width:32%">{{ locale.start_col }}</th>
-              <th style="width:33%">{{ locale.end_col }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for name, start, end in tp_ranges %}
-            <tr>
-              <td><strong>{{ name }}</strong></td>
-              <td>{{ start }}</td>
-              <td>{{ end }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-
-        {# --- Anandadi Yog --- #}
-        {% if tamil_panchang.anandadi_yog is defined and tamil_panchang.anandadi_yog is iterable and tamil_panchang.anandadi_yog is not string and tamil_panchang.anandadi_yog is not mapping %}
-        <hr class="divider">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:35%">{{ locale.anandadi_yog }}</th>
-              <th>{{ locale.end_time_col }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for yog in tamil_panchang.anandadi_yog %}
-            <tr>
-              <td><strong>{% if lang == "hi" %}{{ yog.yog_name | to_hindi_value(lang) }}{% else %}{{ yog.yog_name }}{% endif %}</strong></td>
-              <td>{{ yog.end_time | safe_time if yog.end_time is defined and yog.end_time else "—" }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    {% if tamil_month_panchang %}
-    <div class="panchang-card">
-        <h3 class="section-subheader">{{ locale.tamil_month_panchang_title }}</h3>
-
-        {% if tamil_month_panchang.month is defined and tamil_month_panchang.year is defined %}
-        <p style="font-size: 10.5pt; color: #555; margin-bottom: 4mm;">
-          <strong>{{ locale.month_year_label }}:</strong> {{ tamil_month_panchang.month }} / {{ tamil_month_panchang.year }}
-        </p>
-        {% endif %}
-
-        {% if tamil_month_panchang.panchang_data is defined and tamil_month_panchang.panchang_data is iterable and tamil_month_panchang.panchang_data is not string %}
-        <table>
-          <thead>
-            <tr>
-              <th style="width:12%">{{ locale.date_col }}</th>
-              <th style="width:30%">{{ locale.tithi }}</th>
-              <th style="width:30%">{{ locale.nakshatra }}</th>
-              <th style="width:28%">{{ locale.paksha }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in tamil_month_panchang.panchang_data %}
-            <tr>
-              <td style="text-align:center;"><strong>{{ row.date }}</strong></td>
-              <td>{% if lang == "hi" %}{{ row.tithi | to_hindi_value(lang) }}{% else %}{{ row.tithi }}{% endif %}</td>
-              <td>{% if lang == "hi" %}{{ row.nakshatra | to_hindi_value(lang) }}{% else %}{{ row.nakshatra }}{% endif %}</td>
-              <td>{% if lang == "hi" %}{{ row.paksha | to_hindi_value(lang) }}{% else %}{{ row.paksha }}{% endif %}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}
-        {{ render_value(tamil_month_panchang) }}
-        {% endif %}
-    </div>
-    {% endif %}
+    <h2 class="section-header">{{ locale.panchang_festival_title }}</h2>
 
     {% if panchang_festival %}
     <div class="panchang-card">
@@ -813,7 +545,7 @@
     </div>
     {% endif %}
 
-    {% if monthly_panchang and not tamil_month_panchang %}
+    {% if monthly_panchang %}
     <div class="panchang-card">
         <h3 class="section-subheader">{{ locale.monthly_panchang_title }}</h3>
         {{ render_value(monthly_panchang) }}

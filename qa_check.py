@@ -78,7 +78,7 @@ def check_no_english_labels_in_hindi(text: str) -> list[str]:
         return []
     en_labels = ["Sub Lord", "Sub Sub Lord", "Planet Name", "Is Retro",
                  "Formatted Degree", "Norm Degree", "Cusp Full Degree",
-                 "Adhik Status", "Hindu Month", "Tamil Month"]
+                 "Adhik Status", "Hindu Month"]
     for label in en_labels:
         if label in text:
             errors.append(f"P1-8 FAIL: English label '{label}' in Hindi PDF")

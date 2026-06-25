@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -180,7 +181,6 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "karan": "करण",
         "karana": "करण",
         "hindu_month": "हिंदू मास",
-        "tamil_month": "तमिल मास",
         "paksha": "पक्ष",
         "ritu": "ऋतु",
         "sun_sign": "सूर्य राशि",
@@ -418,6 +418,67 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "planet": "ग्रह",
         "chart": "चार्ट",
         "planet_degree": "ग्रह अंश",
+        # Varshaphal — Panchavargeeya / Harsha Bala
+        "kshetra_bala": "क्षेत्र बल",
+        "uccha_bala": "उच्च बल",
+        "hadda_bala": "हद्दा बल",
+        "drekkana_bala": "द्रेष्काण बल",
+        "navmansha_bala": "नवमांश बल",
+        "sthana_bala": "स्थान बल",
+        "gender_bala": "लिंग बल",
+        "dinratri_bala": "दिन-रात्रि बल",
+        "ucchaswachetri_bala": "उच्च-स्वक्षेत्र बल",
+        "total_bala": "कुल बल",
+        "final_bala": "अंतिम बल",
+        # Varshaphal — Yoga
+        "yog_description": "योग विवरण",
+        "yog_prediction": "योग फल",
+        "yog_type": "योग प्रकार",
+        "is_yog_happening": "योग सक्रिय",
+        "powerfullness_percentage": "प्रबलता प्रतिशत",
+        # Varshaphal — Mudda Dasha / chart
+        "dasha_start": "दशा प्रारंभ",
+        "dasha_end": "दशा समाप्ति",
+        "year_lord": "वर्ष स्वामी",
+        "varshaphal_date": "वर्षफल तिथि",
+        "varshaphal_ascendant": "वर्षफल लग्न",
+        "varshesh": "वर्षेश",
+        "varshesha_strength": "वर्षेश बल",
+        "muntha_house": "मुंथा भाव",
+        "is_benefic": "शुभ ग्रह",
+        # Planet (camelCase handled separately) — extra snake keys
+        "nakshatra_pad": "नक्षत्र पद",
+        "planet_awastha": "ग्रह अवस्था",
+        "nakshatra_number": "नक्षत्र क्रमांक",
+        # Reports
+        "report": "रिपोर्ट",
+        "ascendant_report": "लग्न रिपोर्ट",
+        "nakshatra_report": "नक्षत्र रिपोर्ट",
+        "chart_url": "चार्ट लिंक",
+        # Yogini Dasha
+        "yogini_name": "योगिनी नाम",
+        "yoga_name": "योग नाम",
+        # Numerology — favourable / fasting / mantra
+        "fav_time": "शुभ समय",
+        "fav_dates": "शुभ तिथियाँ",
+        "fav_years": "शुभ वर्ष",
+        "vastu_tips": "वास्तु सुझाव",
+        "fasting_day": "व्रत दिवस",
+        "fasting_deity": "व्रत देवता",
+        "fasting_benefit": "व्रत लाभ",
+        "lord_name": "स्वामी का नाम",
+        "mantra": "मंत्र",
+        "count": "संख्या",
+        "benefit": "लाभ",
+        # Lal Kitab
+        "lalkitab_chart": "लाल किताब चार्ट",
+        "debt_type": "ऋण प्रकार",
+        "is_present": "उपस्थित",
+        "remedy": "उपाय",
+        "effect": "प्रभाव",
+        # Yogas
+        "planet1": "ग्रह 1",
+        "planet2": "ग्रह 2",
     },
     "en": {
         "is_retro": "Retrograde",
@@ -457,7 +518,6 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "moon_sign": "Moon Sign",
         "adhik_status": "Adhik Status",
         "hindu_month": "Hindu Month",
-        "tamil_month": "Tamil Month",
         "month_name": "Month Name",
         "name_alphabet": "Name Alphabet",
         "sign_lord": "Sign Lord",
@@ -568,6 +628,14 @@ VALUE_TRANSLATIONS_HI: dict[str, str] = {
 }
 
 
+_CAMEL_BOUNDARY_RE = re.compile(r"(?<!^)(?=[A-Z])")
+_HOUSE_NUM_RE = re.compile(r"^house_(\d+)$")
+
+
+def _camel_to_snake(s: str) -> str:
+    return _CAMEL_BOUNDARY_RE.sub("_", s).lower()
+
+
 def humanize_key(key: str, lang: str = "en") -> str:
     """Convert a snake_case API key to a human label in the given language."""
     if not key:
@@ -575,9 +643,21 @@ def humanize_key(key: str, lang: str = "en") -> str:
     table = HUMAN_LABELS.get(lang, HUMAN_LABELS.get("en", {}))
     if key in table:
         return table[key]
+    # Already-localized (Devanagari) keys — e.g. translated life-report sections —
+    # are returned unchanged rather than English-title-cased.
+    if any("ऀ" <= ch <= "ॿ" for ch in key):
+        return key
+    # camelCase API keys (fullDegree, signLord, …) reuse the snake_case mappings.
+    snake = _camel_to_snake(key)
+    if snake != key and snake in table:
+        return table[snake]
+    # house_1, house_2, … → "भाव N" / "House N"
+    m = _HOUSE_NUM_RE.match(snake)
+    if m:
+        return f"भाव {m.group(1)}" if lang == "hi" else f"House {m.group(1)}"
     if lang == "hi":
         logger.warning("humanize_key: unmapped Hindi key %r (falling back to title-case)", key)
-    return key.replace("_", " ").title()
+    return snake.replace("_", " ").title()
 
 
 def to_hindi_value(value, lang: str = "en"):
@@ -676,12 +756,9 @@ LOCALES: dict[str, dict] = {
         "chaughadiya_desc": "Choghadiya divides day and night into 8 equal parts, each ruled by a planet. Used to pick auspicious time slots for travel, business, and daily tasks.",
         "hora_muhurta_title": "Hora Muhurta",
         "hora_desc": "Hora divides each day into 24 one-hour slots, each ruled by a planet. Choose the hora matching your activity for best results.",
-        "hora_muhurta_dinman_title": "Hora Muhurta (Dinman)",
         "hora_guide_title": "Hora Activity Guide",
         "hora_best_activities": "Best Activities",
         "panchang_chart_title": "Panchang Chart",
-        "tamil_month_panchang_title": "Tamil Month Panchang",
-        "tamil_panchang_title": "Tamil Panchang",
         "panchang_festival_title": "Panchang Festival",
         "dur_muhurtha": "Dur Muhurtha",
         "amrit_kaal": "Amrit Kaal",
@@ -1464,12 +1541,9 @@ LOCALES: dict[str, dict] = {
         "chaughadiya_desc": "चौघड़िया दिन और रात को 8-8 भागों में बाँटता है। हर भाग एक ग्रह से शासित होता है जो उस समय की शुभता तय करता है — यात्रा, व्यापार और दैनिक कार्यों के लिए उपयोगी।",
         "hora_muhurta_title": "होरा मुहूर्त",
         "hora_desc": "होरा प्रत्येक घंटे का ग्रह स्वामी बताती है। दिन में 12 और रात में 12 होराएं होती हैं। जिस कार्य का ग्रह स्वामी बलवान, उस होरा में वह कार्य सफल होगा।",
-        "hora_muhurta_dinman_title": "होरा मुहूर्त (दिनमान)",
         "hora_guide_title": "होरा गतिविधि मार्गदर्शिका",
         "hora_best_activities": "उत्तम गतिविधियाँ",
         "panchang_chart_title": "पंचांग चार्ट",
-        "tamil_month_panchang_title": "तमिल मासिक पंचांग",
-        "tamil_panchang_title": "तमिल पंचांग",
         "panchang_festival_title": "पंचांग त्योहार",
         "dur_muhurtha": "दुर्मुहूर्त",
         "amrit_kaal": "अमृत काल",

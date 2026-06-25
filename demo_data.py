@@ -176,17 +176,6 @@ SAMPLE_PLANET_PANCHANG = {
     ]
 }
 
-SAMPLE_TAMIL_PANCHANG = {
-    "tamil_month": "Aadi",
-    "tamil_year": "Hevilambi",
-    "tithi": "Dashami",
-    "nakshatra": "Purva Bhadrapada",
-    "yoga": "Shubha",
-    "karana": "Taitil",
-    "sunrise": "06:05:42",
-    "sunset": "19:06:18",
-}
-
 SAMPLE_PANCHANG_FESTIVAL = {
     "festivals": [
         {"name": "Ekadashi", "description": "Fasting day dedicated to Lord Vishnu"},
@@ -796,10 +785,7 @@ SAMPLE_KUNDLI_DATA = KundliData(
     planet_panchang_sunrise=SAMPLE_PLANET_PANCHANG,
     chaughadiya_muhurta=SAMPLE_CHAUGHADIYA,
     hora_muhurta=SAMPLE_HORA_MUHURTA,
-    hora_muhurta_dinman=SAMPLE_HORA_MUHURTA,
     panchang_chart=SAMPLE_PANCHANG_CHART,
-    tamil_month_panchang=SAMPLE_TAMIL_PANCHANG,
-    tamil_panchang=SAMPLE_TAMIL_PANCHANG,
     panchang_festival=SAMPLE_PANCHANG_FESTIVAL,
     current_vdasha=SAMPLE_CURRENT_DASHA,
     major_vdasha=SAMPLE_MAJOR_VDASHA,

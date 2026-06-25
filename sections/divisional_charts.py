@@ -4,7 +4,16 @@ import logging
 from typing import TYPE_CHECKING
 
 
-from sections import LOCALES, SIGN_NAMES_HI_BY_ID, make_env
+from sections import (
+    LOCALES,
+    SIGN_NAMES_BY_ID,
+    SIGN_NAMES_HI_BY_ID,
+    PLANET_SHORT_EN,
+    PLANET_SHORT_HI,
+    get_north_indian_sign_for_house,
+    make_env,
+)
+from sections.north_chart import HOUSE_CENTROIDS
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -32,6 +41,43 @@ CHART_ORDER = [
 ]
 
 
+def build_chart_houses(chart_data, lang, locale):
+    """Build a North Indian 12-house layout for one varga chart so it can be
+    drawn as inline SVG (renders Hindi correctly), instead of the broken API image.
+
+    Returns a list of house dicts (like north_chart.py), or None if the varga's
+    ascendant sign can't be determined — in which case the caller falls back to
+    the API image.
+    """
+    short = PLANET_SHORT_HI if lang == "hi" else PLANET_SHORT_EN
+
+    sign_planet_map_en: dict[str, list[str]] = {}
+    lagna_sign_id: int | None = None
+    for entry in chart_data:
+        sign_planet_map_en[entry.sign_name] = [short.get(p, p) for p in entry.planet]
+        if any(p == "Ascendant" for p in entry.planet):
+            lagna_sign_id = entry.sign
+
+    if not lagna_sign_id:
+        return None
+
+    sign_names_by_id = locale.get("sign_names_by_id", {})
+    houses = []
+    for h in range(1, 13):
+        sid = get_north_indian_sign_for_house(h, lagna_sign_id)
+        sign_name_en = SIGN_NAMES_BY_ID[sid]
+        cx, cy = HOUSE_CENTROIDS[h]
+        houses.append({
+            "house": h,
+            "sign_id": sid,
+            "sign_name": sign_names_by_id.get(sid, sign_name_en),
+            "planets": sign_planet_map_en.get(sign_name_en, []),
+            "cx": cx,
+            "cy": cy,
+        })
+    return houses
+
+
 def render_divisional_charts(data: KundliData, lang: str = "en") -> str | None:
     if not data.horo_charts:
         logger.debug("divisional_charts: horo_charts is empty/None")
@@ -50,13 +96,16 @@ def render_divisional_charts(data: KundliData, lang: str = "en") -> str | None:
             continue
         image_url = images.get(chart_id)
         signs_sorted = sorted(chart_data, key=lambda s: s.sign if hasattr(s, 'sign') else 0)
-        logger.info("divisional_charts: %s → %d signs, image=%s",
-                    chart_id, len(signs_sorted), "yes" if image_url else "no")
+        houses = build_chart_houses(chart_data, lang, locale)
+        logger.info("divisional_charts: %s → %d signs, houses=%s, image=%s",
+                    chart_id, len(signs_sorted), "yes" if houses else "no",
+                    "yes" if image_url else "no")
         charts.append({
             "id": chart_id,
             "title": locale.get(title_key, chart_id),
             "desc": locale.get(desc_key, ""),
             "signs": signs_sorted,
+            "houses": houses,
             "image_url": image_url,
         })
 

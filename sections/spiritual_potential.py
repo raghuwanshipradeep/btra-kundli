@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 
 from sections import LOCALES, make_env
+from sections.divisional_charts import build_chart_houses
 from sections.graha_profile import SIGN_LORDS
 
 if TYPE_CHECKING:
@@ -124,6 +125,7 @@ def render_spiritual_potential(data: KundliData, lang: str = "en") -> str | None
         d20_chart = data.horo_charts.get("D20")
     if data.horo_chart_images:
         d20_image = data.horo_chart_images.get("D20")
+    d20_houses = build_chart_houses(d20_chart, lang, locale) if d20_chart else None
 
     env = make_env()
     template = env.get_template("spiritual_potential.html")
@@ -145,6 +147,7 @@ def render_spiritual_potential(data: KundliData, lang: str = "en") -> str | None
         ak_report=ak_report,
         spiritual_yogas=spiritual_yogas,
         d20_image=d20_image,
+        d20_houses=d20_houses,
         narrative=data.narratives.get("spiritual_potential", ""),
         locale=locale,
         lang=lang,

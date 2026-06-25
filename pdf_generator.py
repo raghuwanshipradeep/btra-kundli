@@ -11,7 +11,7 @@ from models import KundliData
 from sections import _format_degree, _safe_time, humanize_key, to_hindi_value
 
 LITE_SKIP_SECTIONS = {
-    "tamil_month_panchang", "tamil_panchang", "panchang_festival",
+    "panchang_festival",
     "extended_dosha", "panchada_maitri", "tatkalik_maitri",
     "bhinnashtak", "shodashvarga_summary", "char_dasha", "yogini_dasha",
 }

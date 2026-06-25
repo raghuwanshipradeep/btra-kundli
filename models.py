@@ -302,10 +302,7 @@ class KundliData(BaseModel):
     planet_panchang_sunrise: dict | list | None = None
     chaughadiya_muhurta: dict | list | None = None
     hora_muhurta: dict | list | None = None
-    hora_muhurta_dinman: dict | list | None = None
     panchang_chart: dict | list | None = None
-    tamil_month_panchang: dict | list | None = None
-    tamil_panchang: dict | list | None = None
     panchang_festival: dict | list | None = None
     current_vdasha: CurrentDasha | None = None
     major_vdasha: list[DashaPeriod] | None = None
