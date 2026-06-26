@@ -301,20 +301,6 @@ class AstrologyAPIClient:
             logger.warning("hora_muhurta failed: %s", e)
             return None
 
-    async def get_panchang_chart(self, payload: dict) -> dict | None:
-        try:
-            return await self._post("/panchang_chart/sunrise", payload)
-        except Exception as e:
-            logger.warning("panchang_chart/sunrise failed: %s", e)
-            return None
-
-    async def get_panchang_festival(self, payload: dict) -> dict | None:
-        try:
-            return await self._post("/panchang_festival", payload)
-        except Exception as e:
-            logger.warning("panchang_festival failed: %s", e)
-            return None
-
     async def get_current_vdasha(self, payload: dict) -> CurrentDasha | None:
         try:
             raw = await self._post("/current_vdasha", payload)
@@ -891,14 +877,6 @@ class AstrologyAPIClient:
             logger.warning("moon_biorhythm failed: %s", e)
             return None
 
-    # --- Monthly Panchang ---
-    async def get_monthly_panchang(self, payload: dict) -> dict | None:
-        try:
-            return await self._post("/monthly_panchang", payload)
-        except Exception as e:
-            logger.warning("monthly_panchang failed: %s", e)
-            return None
-
     def _make_numero_payload(self, request: KundliRequest) -> dict:
         return {
             "day": request.day,
@@ -1103,32 +1081,28 @@ class AstrologyAPIClient:
             self.get_planet_panchang_sunrise(payload),              # 55
             self.get_chaughadiya_muhurta(payload),                  # 56
             self.get_hora_muhurta(payload),                         # 57
-            self.get_panchang_chart(payload),                       # 58
-            self.get_panchang_festival(payload),                    # 59
             # --- New: Char Dasha ---
-            self.get_current_chardasha(payload_with_ayan),         # 60
-            self.get_major_chardasha(payload_with_ayan),           # 61
+            self.get_current_chardasha(payload_with_ayan),         # 58
+            self.get_major_chardasha(payload_with_ayan),           # 59
             # --- New: Numerology ---
-            self.get_numero_table(numero_payload),                 # 62
-            self.get_numero_report(numero_payload),                # 63
-            self.get_numero_fav_time(numero_payload),              # 64
-            self.get_numero_place_vastu(numero_payload),           # 65
-            self.get_numero_fasts_report(numero_payload),          # 66
-            self.get_numero_fav_lord(numero_payload),              # 67
-            self.get_numero_fav_mantra(numero_payload),            # 68
-            self.get_numero_prediction_daily(numero_payload),      # 69
+            self.get_numero_table(numero_payload),                 # 60
+            self.get_numero_report(numero_payload),                # 61
+            self.get_numero_fav_time(numero_payload),              # 62
+            self.get_numero_place_vastu(numero_payload),           # 63
+            self.get_numero_fasts_report(numero_payload),          # 64
+            self.get_numero_fav_lord(numero_payload),              # 65
+            self.get_numero_fav_mantra(numero_payload),            # 66
+            self.get_numero_prediction_daily(numero_payload),      # 67
             # --- New: Lal Kitab ---
-            self.get_lalkitab_horoscope(payload_with_ayan),        # 70
-            self.get_lalkitab_planets(payload_with_ayan),          # 71
-            self.get_lalkitab_houses(payload_with_ayan),           # 72
-            self.get_lalkitab_debts(payload_with_ayan),            # 73
+            self.get_lalkitab_horoscope(payload_with_ayan),        # 68
+            self.get_lalkitab_planets(payload_with_ayan),          # 69
+            self.get_lalkitab_houses(payload_with_ayan),           # 70
+            self.get_lalkitab_debts(payload_with_ayan),            # 71
             # --- New: KP Extended ---
-            self.get_kp_horoscope(payload_with_ayan),              # 74
+            self.get_kp_horoscope(payload_with_ayan),              # 72
             # --- New: Biorhythm ---
-            self.get_biorhythm(payload_with_ayan),                 # 75
-            self.get_moon_biorhythm(payload_with_ayan),            # 76
-            # --- New: Monthly Panchang ---
-            self.get_monthly_panchang(payload),                    # 77
+            self.get_biorhythm(payload_with_ayan),                 # 73
+            self.get_moon_biorhythm(payload_with_ayan),            # 74
             return_exceptions=True,
         )
 
@@ -1252,7 +1226,7 @@ class AstrologyAPIClient:
             sub_sub_sub_sub_vdasha_data = safe(sub_results[3])
 
         # Phase 3b: Char Dasha sub-periods (need current_chardasha sign)
-        current_chardasha_data = safe(results[60])
+        current_chardasha_data = safe(results[58])
         sub_chardasha_data = None
         if current_chardasha_data and isinstance(current_chardasha_data, dict):
             cd_sign = current_chardasha_data.get("sign_id") or current_chardasha_data.get("sign", "")
@@ -1343,34 +1317,30 @@ class AstrologyAPIClient:
             planet_panchang_sunrise=safe(results[55]),
             chaughadiya_muhurta=safe(results[56]),
             hora_muhurta=safe(results[57]),
-            panchang_chart=safe(results[58]),
-            panchang_festival=safe(results[59]),
             # Char Dasha
             current_chardasha=current_chardasha_data,
-            major_chardasha=safe(results[61]),
+            major_chardasha=safe(results[59]),
             sub_chardasha=sub_chardasha_data,
             # Numerology
-            numero_table=safe(results[62]),
-            numero_report=safe(results[63]),
-            numero_fav_time=safe(results[64]),
-            numero_place_vastu=safe(results[65]),
-            numero_fasts_report=safe(results[66]),
-            numero_fav_lord=safe(results[67]),
-            numero_fav_mantra=safe(results[68]),
-            numero_prediction_daily=safe(results[69]),
+            numero_table=safe(results[60]),
+            numero_report=safe(results[61]),
+            numero_fav_time=safe(results[62]),
+            numero_place_vastu=safe(results[63]),
+            numero_fasts_report=safe(results[64]),
+            numero_fav_lord=safe(results[65]),
+            numero_fav_mantra=safe(results[66]),
+            numero_prediction_daily=safe(results[67]),
             # Lal Kitab
-            lalkitab_horoscope=safe(results[70]),
-            lalkitab_planets=safe(results[71]),
-            lalkitab_houses=safe(results[72]),
-            lalkitab_debts=safe(results[73]),
+            lalkitab_horoscope=safe(results[68]),
+            lalkitab_planets=safe(results[69]),
+            lalkitab_houses=safe(results[70]),
+            lalkitab_debts=safe(results[71]),
             lalkitab_remedies=lalkitab_remedies or None,
             # KP Extended
-            kp_horoscope=safe(results[74]),
+            kp_horoscope=safe(results[72]),
             # Biorhythm
-            biorhythm=safe(results[75]),
-            moon_biorhythm=safe(results[76]),
-            # Monthly Panchang
-            monthly_panchang=safe(results[77]),
+            biorhythm=safe(results[73]),
+            moon_biorhythm=safe(results[74]),
         )
 
     @staticmethod

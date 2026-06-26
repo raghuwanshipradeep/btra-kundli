@@ -11,7 +11,6 @@ from models import KundliData
 from sections import _format_degree, _safe_time, humanize_key, to_hindi_value
 
 LITE_SKIP_SECTIONS = {
-    "panchang_festival",
     "extended_dosha", "panchada_maitri", "tatkalik_maitri",
     "bhinnashtak", "shodashvarga_summary", "char_dasha", "yogini_dasha",
 }
@@ -19,7 +18,6 @@ from sections.ashtakvarga import render_ashtakvarga
 from sections.astro_details import render_astro_details
 from sections.bhav_madhya import render_bhav_madhya
 from sections.bhinnashtak import render_bhinnashtak
-from sections.birth_summary import render_birth_summary
 from sections.chart import render_chart
 from sections.cover import render_cover
 from sections.daily_predictions import render_daily_predictions
@@ -87,8 +85,9 @@ SECTION_RENDERERS = [
     ("cover", render_cover),
     ("authors_note", render_authors_note),
     ("front_matter", render_front_matter),
-    ("birth_summary", render_birth_summary),
+    ("astro_details", render_astro_details),
     ("panchang", render_panchang),
+    ("north_chart", render_north_chart),
     ("chart", render_chart),
     ("divisional_charts", render_divisional_charts),
     ("life_reports", render_life_reports),
@@ -106,7 +105,6 @@ SECTION_RENDERERS = [
     ("varshaphal", render_varshaphal),
     ("planets", render_planets),
     ("houses", render_houses),
-    ("astro_details", render_astro_details),
     ("ghat_chakra", render_ghat_chakra),
     ("bhav_madhya", render_bhav_madhya),
     ("planet_nature", render_planet_nature),
@@ -138,7 +136,6 @@ SECTION_RENDERERS = [
     ("career_path", render_career_path),
     ("shodashvarga_summary", render_shodashvarga_summary),
     ("south_chart", render_south_chart),
-    ("north_chart", render_north_chart),
     ("marriage_timing", render_marriage_timing),
     ("love_marriage", render_love_marriage),
     ("life_forecast", render_life_forecast),

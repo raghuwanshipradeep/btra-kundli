@@ -302,8 +302,6 @@ class KundliData(BaseModel):
     planet_panchang_sunrise: dict | list | None = None
     chaughadiya_muhurta: dict | list | None = None
     hora_muhurta: dict | list | None = None
-    panchang_chart: dict | list | None = None
-    panchang_festival: dict | list | None = None
     current_vdasha: CurrentDasha | None = None
     major_vdasha: list[DashaPeriod] | None = None
     kp_birth_chart: list[KPHouseData] | None = None
@@ -386,9 +384,6 @@ class KundliData(BaseModel):
     # Biorhythm
     biorhythm: dict | None = None
     moon_biorhythm: dict | None = None
-
-    # Monthly Panchang
-    monthly_panchang: dict | list | None = None
 
     # LLM Narratives (populated by narrative_engine before PDF generation)
     narratives: dict[str, str] = Field(default_factory=dict)

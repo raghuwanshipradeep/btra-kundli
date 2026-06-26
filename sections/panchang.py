@@ -47,23 +47,6 @@ def _empty_to_none(obj):
     return obj
 
 
-def _sanitize_monthly_panchang(data):
-    """Convert decimal-hour time fields in monthly panchang to HH:MM."""
-    if not data:
-        return data
-    if isinstance(data, list):
-        return [_sanitize_monthly_panchang(item) for item in data]
-    if isinstance(data, dict):
-        result = {}
-        for k, v in data.items():
-            if k in ("sunrise", "sunset", "moonrise", "moonset") and isinstance(v, (int, float)):
-                result[k] = _hours_to_hms(v)
-            else:
-                result[k] = _sanitize_monthly_panchang(v)
-        return result
-    return data
-
-
 def render_panchang(data: KundliData, lang: str = "en") -> str | None:
     has_any = (
         data.panchang
@@ -74,9 +57,6 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         or data.planet_panchang_sunrise
         or data.chaughadiya_muhurta
         or data.hora_muhurta
-        or data.panchang_chart
-        or data.panchang_festival
-        or data.monthly_panchang
     )
     if not has_any:
         return None
@@ -104,9 +84,6 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         planet_panchang_sunrise=data.planet_panchang_sunrise,
         chaughadiya_muhurta=_empty_to_none(_sanitize_nan(data.chaughadiya_muhurta)),
         hora_muhurta=_empty_to_none(_sanitize_nan(data.hora_muhurta)),
-        panchang_chart=data.panchang_chart,
-        panchang_festival=data.panchang_festival,
-        monthly_panchang=_sanitize_monthly_panchang(_sanitize_nan(data.monthly_panchang)),
         locale=locale,
         lang=lang,
     )

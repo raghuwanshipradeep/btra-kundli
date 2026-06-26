@@ -176,17 +176,6 @@ SAMPLE_PLANET_PANCHANG = {
     ]
 }
 
-SAMPLE_PANCHANG_FESTIVAL = {
-    "festivals": [
-        {"name": "Ekadashi", "description": "Fasting day dedicated to Lord Vishnu"},
-    ]
-}
-
-SAMPLE_PANCHANG_CHART = {
-    "chart_url": "https://example.com/panchang_chart.svg",
-    "ascendant": "Scorpio",
-}
-
 SAMPLE_CURRENT_DASHA = CurrentDasha(
     major=DashaPeriodLevel(planet="Mercury", planet_id=4, start="16-8-2012 14:30", end="16-8-2029 14:30"),
     minor=DashaPeriodLevel(planet="Saturn", planet_id=7, start="25-4-2025 08:15", end="4-1-2028 20:45"),
@@ -344,34 +333,36 @@ SAMPLE_PLANET_ASHTAK = {
     for i, planet in enumerate(["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"])
 }
 
+# Placements are consistent with the varga formulas in sections/varga.py applied
+# to SAMPLE_PLANETS, so the demo exercises the computed-varga-lagna render path.
 SAMPLE_HORO_CHARTS = {
     "D9": [
-        HoroChartSign(sign=1, sign_name="Aries", planet=["Venus"], planet_small=["Ve"]),
-        HoroChartSign(sign=2, sign_name="Taurus", planet=[], planet_small=[]),
-        HoroChartSign(sign=3, sign_name="Gemini", planet=["Sun"], planet_small=["Su"]),
+        HoroChartSign(sign=1, sign_name="Aries", planet=[], planet_small=[]),
+        HoroChartSign(sign=2, sign_name="Taurus", planet=["Moon"], planet_small=["Mo"]),
+        HoroChartSign(sign=3, sign_name="Gemini", planet=["Jupiter", "Rahu"], planet_small=["Ju", "Ra"]),
         HoroChartSign(sign=4, sign_name="Cancer", planet=["Mercury"], planet_small=["Me"]),
-        HoroChartSign(sign=5, sign_name="Leo", planet=[], planet_small=[]),
-        HoroChartSign(sign=6, sign_name="Virgo", planet=["Jupiter"], planet_small=["Ju"]),
-        HoroChartSign(sign=7, sign_name="Libra", planet=["Ascendant"], planet_small=["As"]),
-        HoroChartSign(sign=8, sign_name="Scorpio", planet=["Mars"], planet_small=["Ma"]),
-        HoroChartSign(sign=9, sign_name="Sagittarius", planet=[], planet_small=[]),
-        HoroChartSign(sign=10, sign_name="Capricorn", planet=["Moon", "Saturn"], planet_small=["Mo", "Sa"]),
-        HoroChartSign(sign=11, sign_name="Aquarius", planet=["Rahu"], planet_small=["Ra"]),
-        HoroChartSign(sign=12, sign_name="Pisces", planet=["Ketu"], planet_small=["Ke"]),
+        HoroChartSign(sign=5, sign_name="Leo", planet=["Mars"], planet_small=["Ma"]),
+        HoroChartSign(sign=6, sign_name="Virgo", planet=[], planet_small=[]),
+        HoroChartSign(sign=7, sign_name="Libra", planet=[], planet_small=[]),
+        HoroChartSign(sign=8, sign_name="Scorpio", planet=["Venus"], planet_small=["Ve"]),
+        HoroChartSign(sign=9, sign_name="Sagittarius", planet=["Ketu"], planet_small=["Ke"]),
+        HoroChartSign(sign=10, sign_name="Capricorn", planet=[], planet_small=[]),
+        HoroChartSign(sign=11, sign_name="Aquarius", planet=["Ascendant"], planet_small=["As"]),
+        HoroChartSign(sign=12, sign_name="Pisces", planet=["Sun", "Saturn"], planet_small=["Su", "Sa"]),
     ],
     "D3": [
-        HoroChartSign(sign=1, sign_name="Aries", planet=["Mars"], planet_small=["Ma"]),
-        HoroChartSign(sign=2, sign_name="Taurus", planet=[], planet_small=[]),
-        HoroChartSign(sign=3, sign_name="Gemini", planet=["Mercury"], planet_small=["Me"]),
-        HoroChartSign(sign=4, sign_name="Cancer", planet=["Moon"], planet_small=["Mo"]),
-        HoroChartSign(sign=5, sign_name="Leo", planet=["Sun"], planet_small=["Su"]),
-        HoroChartSign(sign=6, sign_name="Virgo", planet=["Ascendant"], planet_small=["As"]),
-        HoroChartSign(sign=7, sign_name="Libra", planet=["Venus"], planet_small=["Ve"]),
-        HoroChartSign(sign=8, sign_name="Scorpio", planet=[], planet_small=[]),
-        HoroChartSign(sign=9, sign_name="Sagittarius", planet=["Jupiter"], planet_small=["Ju"]),
-        HoroChartSign(sign=10, sign_name="Capricorn", planet=["Saturn", "Rahu"], planet_small=["Sa", "Ra"]),
-        HoroChartSign(sign=11, sign_name="Aquarius", planet=[], planet_small=[]),
-        HoroChartSign(sign=12, sign_name="Pisces", planet=["Ketu"], planet_small=["Ke"]),
+        HoroChartSign(sign=1, sign_name="Aries", planet=[], planet_small=[]),
+        HoroChartSign(sign=2, sign_name="Taurus", planet=["Rahu"], planet_small=["Ra"]),
+        HoroChartSign(sign=3, sign_name="Gemini", planet=[], planet_small=[]),
+        HoroChartSign(sign=4, sign_name="Cancer", planet=["Ascendant"], planet_small=["As"]),
+        HoroChartSign(sign=5, sign_name="Leo", planet=[], planet_small=[]),
+        HoroChartSign(sign=6, sign_name="Virgo", planet=[], planet_small=[]),
+        HoroChartSign(sign=7, sign_name="Libra", planet=["Moon"], planet_small=["Mo"]),
+        HoroChartSign(sign=8, sign_name="Scorpio", planet=["Venus", "Ketu"], planet_small=["Ve", "Ke"]),
+        HoroChartSign(sign=9, sign_name="Sagittarius", planet=["Mercury"], planet_small=["Me"]),
+        HoroChartSign(sign=10, sign_name="Capricorn", planet=["Mars", "Saturn"], planet_small=["Ma", "Sa"]),
+        HoroChartSign(sign=11, sign_name="Aquarius", planet=["Jupiter"], planet_small=["Ju"]),
+        HoroChartSign(sign=12, sign_name="Pisces", planet=["Sun"], planet_small=["Su"]),
     ],
 }
 
@@ -785,8 +776,6 @@ SAMPLE_KUNDLI_DATA = KundliData(
     planet_panchang_sunrise=SAMPLE_PLANET_PANCHANG,
     chaughadiya_muhurta=SAMPLE_CHAUGHADIYA,
     hora_muhurta=SAMPLE_HORA_MUHURTA,
-    panchang_chart=SAMPLE_PANCHANG_CHART,
-    panchang_festival=SAMPLE_PANCHANG_FESTIVAL,
     current_vdasha=SAMPLE_CURRENT_DASHA,
     major_vdasha=SAMPLE_MAJOR_VDASHA,
     kp_birth_chart=SAMPLE_KP_CHART,

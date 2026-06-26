@@ -289,7 +289,7 @@
 {% endif %}
 
 {# ===== PAGE 3: Planet Panchang ===== #}
-{% if planet_panchang or planet_panchang_sunrise %}
+{% if planet_panchang %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.planet_panchang_title }}</h2>
 
@@ -301,22 +301,11 @@
         {{ render_value(planet_panchang) }}
       {% endif %}
     {% endif %}
-
-    {% if planet_panchang_sunrise %}
-      <hr class="divider">
-      <h3 class="section-subheader">{{ locale.planet_panchang_sunrise_title }}</h3>
-      {% set psdata = planet_panchang_sunrise.get('planets', planet_panchang_sunrise) if planet_panchang_sunrise is mapping else planet_panchang_sunrise %}
-      {% if psdata is iterable and psdata is not string and psdata is not mapping %}
-        {{ planet_table(psdata) }}
-      {% else %}
-        {{ render_value(planet_panchang_sunrise) }}
-      {% endif %}
-    {% endif %}
 </div>
 {% endif %}
 
 {# ===== PAGE 4: Basic Panchang variants ===== #}
-{% if basic_panchang or basic_panchang_sunrise or advanced_panchang_sunrise %}
+{% if basic_panchang or advanced_panchang_sunrise %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.basic_panchang_title }}</h2>
 
@@ -324,13 +313,6 @@
     <div class="panchang-card">
         <h3 class="section-subheader">{{ locale.basic_panchang_title }}</h3>
         {{ render_value(basic_panchang) }}
-    </div>
-    {% endif %}
-
-    {% if basic_panchang_sunrise %}
-    <div class="panchang-card">
-        <h3 class="section-subheader">{{ locale.basic_panchang_sunrise_title }}</h3>
-        {{ render_value(basic_panchang_sunrise) }}
     </div>
     {% endif %}
 
@@ -495,60 +477,6 @@
           </tbody>
         </table>
         {% endif %}
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-{# ===== PAGE 5: Festivals & Panchang ===== #}
-{% if panchang_festival or panchang_chart or monthly_panchang %}
-<div class="section-page">
-    <h2 class="section-header">{{ locale.panchang_festival_title }}</h2>
-
-    {% if panchang_festival %}
-    <div class="panchang-card">
-        <h3 class="section-subheader">{{ locale.panchang_festival_title }}</h3>
-        {% set fdata = panchang_festival.get('festivals', panchang_festival) if panchang_festival is mapping else panchang_festival %}
-        {% if fdata is iterable and fdata is not string and fdata is not mapping %}
-          <table>
-            <thead>
-              <tr>
-                <th style="width:10%">#</th>
-                <th style="width:30%">{{ locale.get('festival_name_col', 'Festival') }}</th>
-                <th style="width:60%">{{ locale.details }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for f in fdata %}
-              <tr>
-                <td>{{ loop.index }}</td>
-                {% if f is mapping %}
-                <td><strong>{{ f.get('name', f.get('festival_name', '')) }}</strong></td>
-                <td>{{ f.get('description', f.get('details', '')) }}</td>
-                {% else %}
-                <td colspan="2"><strong>{{ f }}</strong></td>
-                {% endif %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          {{ render_value(panchang_festival) }}
-        {% endif %}
-    </div>
-    {% endif %}
-
-    {% if panchang_chart %}
-    <div class="panchang-card">
-        <h3 class="section-subheader">{{ locale.panchang_chart_title }}</h3>
-        {{ render_value(panchang_chart) }}
-    </div>
-    {% endif %}
-
-    {% if monthly_panchang %}
-    <div class="panchang-card">
-        <h3 class="section-subheader">{{ locale.monthly_panchang_title }}</h3>
-        {{ render_value(monthly_panchang) }}
     </div>
     {% endif %}
 </div>

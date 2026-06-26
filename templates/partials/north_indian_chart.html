@@ -1,0 +1,32 @@
+{# Reusable North Indian (diamond) chart.
+   Lines are drawn in SVG; all cell text is rendered as absolutely-positioned
+   HTML so WeasyPrint shapes Devanagari correctly and the font stays readable.
+   `houses` items expect: house, sign_name, planets (list), cx, cy (0-400 space). #}
+{% macro north_indian_chart(houses, lang, box=350) %}
+<div style="position: relative; width: {{ box }}px; height: {{ box }}px; margin: 0 auto; background: #FFFDF5;">
+  <svg viewBox="0 0 400 400" width="{{ box }}" height="{{ box }}"
+       xmlns="http://www.w3.org/2000/svg"
+       style="position: absolute; top: 0; left: 0;">
+    <!-- outer square -->
+    <rect x="2" y="2" width="396" height="396" fill="none" stroke="#C9A84C" stroke-width="2"/>
+    <!-- diagonals -->
+    <line x1="2" y1="2" x2="398" y2="398" stroke="#C9A84C" stroke-width="1"/>
+    <line x1="398" y1="2" x2="2" y2="398" stroke="#C9A84C" stroke-width="1"/>
+    <!-- inner diamond -->
+    <polygon points="200,2 398,200 200,398 2,200" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+  </svg>
+
+  {% for h in houses %}
+  <div style="position: absolute; left: {{ (h.cx / 4.0) }}%; top: {{ (h.cy / 4.0) }}%;
+              transform: translate(-50%, -50%); width: 80px; text-align: center; line-height: 1.25;">
+    <div style="font-size: 8.5pt; color: #999;">{{ h.sign_name }}</div>
+    {% if h.planets %}
+    <div style="font-size: 9.5pt; font-weight: bold; color: #C9A84C;">{{ h.planets | join(' ') }}</div>
+    {% endif %}
+    {% if h.house == 1 %}
+    <div style="font-size: 7.5pt; color: #999; font-style: italic;">{% if lang == 'hi' %}लग्न{% else %}Asc{% endif %}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}

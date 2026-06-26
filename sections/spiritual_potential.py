@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 
 from sections import LOCALES, make_env
-from sections.divisional_charts import build_chart_houses
+from sections.divisional_charts import build_varga_chart
 from sections.graha_profile import SIGN_LORDS
 
 if TYPE_CHECKING:
@@ -125,7 +125,12 @@ def render_spiritual_potential(data: KundliData, lang: str = "en") -> str | None
         d20_chart = data.horo_charts.get("D20")
     if data.horo_chart_images:
         d20_image = data.horo_chart_images.get("D20")
-    d20_houses = build_chart_houses(d20_chart, lang, locale) if d20_chart else None
+    d20_houses = build_varga_chart(data, d20_chart, "D20", lang, locale) if d20_chart else None
+    # If the diamond can't be computed, drop the API's inline SVG fallback for Hindi
+    # (WeasyPrint can't shape its Devanagari) so no garbled text shows.
+    if d20_houses is None and lang == "hi" and isinstance(d20_image, str) \
+            and d20_image.startswith("data:image/svg+xml"):
+        d20_image = None
 
     env = make_env()
     template = env.get_template("spiritual_potential.html")

@@ -758,8 +758,6 @@ LOCALES: dict[str, dict] = {
         "hora_desc": "Hora divides each day into 24 one-hour slots, each ruled by a planet. Choose the hora matching your activity for best results.",
         "hora_guide_title": "Hora Activity Guide",
         "hora_best_activities": "Best Activities",
-        "panchang_chart_title": "Panchang Chart",
-        "panchang_festival_title": "Panchang Festival",
         "dur_muhurtha": "Dur Muhurtha",
         "amrit_kaal": "Amrit Kaal",
         "varjyam": "Varjyam",
@@ -773,7 +771,6 @@ LOCALES: dict[str, dict] = {
         "muhurta_col": "Muhurta",
         "type_col": "Type",
         "hora_lord_col": "Hora Lord",
-        "festival_name_col": "Festival",
 
         "chart_title": "Lagna Chart (D1)",
         "chart_desc": "The birth chart (Lagna Kundli) is a snapshot of the sky at your birth moment. It reveals your personality, health tendencies, career path, and life direction.",
@@ -826,7 +823,7 @@ LOCALES: dict[str, dict] = {
         "signs_col": "Signs",
         "planets_col": "Planets",
 
-        "astro_details_title": "Astrological Details",
+        "astro_details_title": "Birth Summary",
         "astro_details_desc": "Key astrological attributes derived from your birth chart — varna, vashya, yoni, gan, nadi, and other classification parameters used in compatibility analysis.",
         "ayanamsha_systems_title": "Ayanamsha Systems",
         "ayanamsha_type": "System",
@@ -1011,7 +1008,6 @@ LOCALES: dict[str, dict] = {
         "moon_biorhythm_title": "Moon Biorhythm",
 
         "kp_horoscope_title": "KP Horoscope (Aspects)",
-        "monthly_panchang_title": "Monthly Panchang",
 
         "moon_chart_title": "Moon Chart (Chandra Kundli)",
         "moon_chart_desc": "Chart rotated with Moon sign as 1st house",
@@ -1543,8 +1539,6 @@ LOCALES: dict[str, dict] = {
         "hora_desc": "होरा प्रत्येक घंटे का ग्रह स्वामी बताती है। दिन में 12 और रात में 12 होराएं होती हैं। जिस कार्य का ग्रह स्वामी बलवान, उस होरा में वह कार्य सफल होगा।",
         "hora_guide_title": "होरा गतिविधि मार्गदर्शिका",
         "hora_best_activities": "उत्तम गतिविधियाँ",
-        "panchang_chart_title": "पंचांग चार्ट",
-        "panchang_festival_title": "पंचांग त्योहार",
         "dur_muhurtha": "दुर्मुहूर्त",
         "amrit_kaal": "अमृत काल",
         "varjyam": "वर्ज्यम",
@@ -1558,7 +1552,6 @@ LOCALES: dict[str, dict] = {
         "muhurta_col": "मुहूर्त",
         "type_col": "प्रकार",
         "hora_lord_col": "होरा स्वामी",
-        "festival_name_col": "त्योहार",
 
         "chart_title": "लग्न कुंडली (D1)",
         "chart_desc": "लग्न कुंडली आपके जन्म के समय का आकाशीय मानचित्र है। यह आपके व्यक्तित्व, स्वास्थ्य, करियर और जीवन की समग्र दिशा को दर्शाती है।",
@@ -1611,7 +1604,7 @@ LOCALES: dict[str, dict] = {
         "signs_col": "राशियाँ",
         "planets_col": "ग्रह",
 
-        "astro_details_title": "ज्योतिषीय विवरण",
+        "astro_details_title": "जन्म विवरण",
         "astro_details_desc": "जन्म कुंडली से प्राप्त मुख्य ज्योतिषीय गुण — वर्ण, वश्य, योनि, गण, नाड़ी और अन्य वर्गीकरण जो मिलान में प्रयुक्त होते हैं।",
         "ayanamsha_systems_title": "अयनांश प्रणालियाँ",
         "ayanamsha_type": "प्रणाली",
@@ -1796,7 +1789,6 @@ LOCALES: dict[str, dict] = {
         "moon_biorhythm_title": "चंद्र बायोरिदम",
 
         "kp_horoscope_title": "के.पी. कुंडली (दृष्टि)",
-        "monthly_panchang_title": "मासिक पंचांग",
 
         "moon_chart_title": "चंद्र कुंडली",
         "moon_chart_desc": "चंद्र राशि को प्रथम भाव मानकर कुंडली",
