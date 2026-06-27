@@ -59,7 +59,6 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
         and not data.manglik
         and not data.kalsarpa_details
         and not data.sadhesati_current_status
-        and not data.sadhesati_life_details
         and not data.pitra_dosha_report
     ):
         return None
@@ -68,7 +67,6 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
     manglik = data.manglik
     kalsarpa = data.kalsarpa_details
     sadhesati_status = data.sadhesati_current_status
-    sadhesati_life = data.sadhesati_life_details
     pitra_dosha = data.pitra_dosha_report
 
     if lang == "hi":
@@ -76,7 +74,6 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
         manglik = translate_keys(manglik, DOSHA_KEYS_HI)
         kalsarpa = translate_keys(kalsarpa, DOSHA_KEYS_HI)
         sadhesati_status = translate_keys(sadhesati_status, DOSHA_KEYS_HI)
-        sadhesati_life = translate_keys(sadhesati_life, DOSHA_KEYS_HI)
         pitra_dosha = translate_keys(pitra_dosha, DOSHA_KEYS_HI)
 
     locale = LOCALES.get(lang, LOCALES["en"])
@@ -87,7 +84,6 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
         manglik=manglik,
         kalsarpa=kalsarpa,
         sadhesati_status=sadhesati_status,
-        sadhesati_life=sadhesati_life,
         pitra_dosha=pitra_dosha,
         locale=locale,
         lang=lang,
