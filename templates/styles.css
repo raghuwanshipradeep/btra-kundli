@@ -77,6 +77,27 @@
     @bottom-center { content: none; }
 }
 
+@page divider {
+    margin: 0;
+    @bottom-center { content: none; }
+}
+
+/* ===== FULL-PAGE A4 IMAGE DIVIDERS ===== */
+.divider-page {
+    page: divider;
+    width: 210mm;
+    height: 297mm;
+    page-break-before: always;
+    overflow: hidden;
+}
+
+.divider-img {
+    width: 210mm;
+    height: 297mm;
+    object-fit: cover;
+    display: block;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -772,12 +793,18 @@ tr.active-dasha td {
     padding: 2mm 3mm;
     border-bottom: 0.5px solid #ddd;
     vertical-align: top;
+    text-align: left;
 }
 
 .kv-table td:first-child {
     font-weight: 600;
     color: var(--charcoal);
     width: 35%;
+}
+
+.kv-table td.report-text {
+    font-weight: 400;
+    width: auto;
 }
 
 .kv-table .kv-table {

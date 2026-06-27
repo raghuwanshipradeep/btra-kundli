@@ -13,36 +13,10 @@ from sections import (
     TAMIL_TRANSLIT_TO_HI,
     get_north_indian_sign_for_house,
     make_env,
+    planet_to_en as _planet_to_en,
 )
 from sections.north_chart import HOUSE_CENTROIDS
 from sections.varga import varga_sign
-
-# Resolve any planet label (English/Hindi, full name or abbreviation) to its
-# English canonical name. The varga (/horo_chart/{D}) endpoint returns planet
-# names in the request language, so for Hindi PDFs the Ascendant comes back as
-# "लग्न" and planets as Devanagari — this map lets us detect the Ascendant and
-# map to clean short forms regardless of language.
-_PLANET_ALIAS_TO_EN: dict[str, str] = {}
-for _en, _abbr in PLANET_SHORT_EN.items():
-    _PLANET_ALIAS_TO_EN[_en] = _en      # "Sun"  -> "Sun"
-    _PLANET_ALIAS_TO_EN[_abbr] = _en    # "Su"   -> "Sun"
-for _en, _abbr in PLANET_SHORT_HI.items():
-    _PLANET_ALIAS_TO_EN[_abbr] = _en    # "सू"   -> "Sun"
-for _en, _hi in TAMIL_TRANSLIT_TO_HI.items():
-    if _en in PLANET_SHORT_EN:
-        _PLANET_ALIAS_TO_EN[_hi] = _en  # "सूर्य" -> "Sun"
-for _asc_alias in ("लग्न", "Lagna", "Asc"):
-    _PLANET_ALIAS_TO_EN[_asc_alias] = "Ascendant"
-
-
-def _planet_to_en(name: str) -> str:
-    if not name:
-        return name
-    return (
-        _PLANET_ALIAS_TO_EN.get(name)
-        or _PLANET_ALIAS_TO_EN.get(name.strip().title())
-        or name.strip()
-    )
 
 if TYPE_CHECKING:
     from models import KundliData

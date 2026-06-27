@@ -167,6 +167,34 @@ def to_hi(value: str) -> str:
     return TAMIL_TRANSLIT_TO_HI.get(value.strip(), value)
 
 
+# Resolve any planet label (English/Hindi, full name or abbreviation) to its
+# English canonical name. The API returns planet names in the request language,
+# so Hindi PDFs get Devanagari ("सूर्य") and the Ascendant comes back as "लग्न" —
+# this map lets callers detect them and map to clean short forms in any language.
+PLANET_ALIAS_TO_EN: dict[str, str] = {}
+for _en, _abbr in PLANET_SHORT_EN.items():
+    PLANET_ALIAS_TO_EN[_en] = _en      # "Sun" -> "Sun"
+    PLANET_ALIAS_TO_EN[_abbr] = _en    # "Su"  -> "Sun"
+for _en, _abbr in PLANET_SHORT_HI.items():
+    PLANET_ALIAS_TO_EN[_abbr] = _en    # "सू"  -> "Sun"
+for _en, _hi in TAMIL_TRANSLIT_TO_HI.items():
+    if _en in PLANET_SHORT_EN:
+        PLANET_ALIAS_TO_EN[_hi] = _en  # "सूर्य" -> "Sun"
+for _asc_alias in ("लग्न", "Lagna", "Asc"):
+    PLANET_ALIAS_TO_EN[_asc_alias] = "Ascendant"
+
+
+def planet_to_en(name: str) -> str:
+    """Normalize any planet label (English/Hindi, full/abbr) to English canonical."""
+    if not name:
+        return name
+    return (
+        PLANET_ALIAS_TO_EN.get(name)
+        or PLANET_ALIAS_TO_EN.get(name.strip().title())
+        or name.strip()
+    )
+
+
 HUMAN_LABELS: dict[str, dict[str, str]] = {
     "hi": {
         "day": "वार",

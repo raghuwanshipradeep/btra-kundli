@@ -65,10 +65,15 @@ def render_life_forecast(data: KundliData, lang: str = "en") -> str | None:
                 f"modifying the main period's outcomes."
             )
 
-    if data.varshaphal_muntha:
-        muntha = data.varshaphal_muntha
-        if muntha.get("report"):
-            forecast_notes.append(muntha["report"])
+    muntha_raw = data.varshaphal_muntha
+    if isinstance(muntha_raw, list):
+        muntha = next((x for x in muntha_raw if isinstance(x, dict)), None)
+    elif isinstance(muntha_raw, dict):
+        muntha = muntha_raw
+    else:
+        muntha = None
+    if muntha and muntha.get("report"):
+        forecast_notes.append(muntha["report"])
 
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()

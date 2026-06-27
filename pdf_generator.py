@@ -76,6 +76,7 @@ from sections.sade_sati_journey import render_sade_sati_journey
 from sections.raj_yoga_celebration import render_raj_yoga_celebration
 from sections.mahadasha_journey import render_mahadasha_journey
 from sections.numerology_personality import render_numerology_personality
+from sections.divider_images import make_divider_renderer
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ SECTION_RENDERERS = [
     ("cover", render_cover),
     ("authors_note", render_authors_note),
     ("front_matter", render_front_matter),
+    ("divider_ganesha", make_divider_renderer("loard-ganesha.png")),
     ("astro_details", render_astro_details),
     ("panchang", render_panchang),
     ("north_chart", render_north_chart),
@@ -92,8 +94,10 @@ SECTION_RENDERERS = [
     ("divisional_charts", render_divisional_charts),
     ("life_reports", render_life_reports),
     ("three_pillars", render_three_pillars),
+    ("divider_grah", make_divider_renderer("ghrah.png")),
     ("graha_profile", render_graha_profile),
     ("outer_planets", render_outer_planets),
+    ("divider_dosha", make_divider_renderer("kundli-dosha.png")),
     ("dosha", render_dosha),
     ("remedy_rudraksha", render_remedy_rudraksha),
     ("remedy_gemstones", render_remedy_gemstones),
@@ -117,6 +121,7 @@ SECTION_RENDERERS = [
     ("kp_chart", render_kp_chart),
     ("yogini_dasha", render_yogini_dasha),
     ("char_dasha", render_char_dasha),
+    ("divider_numerology", make_divider_renderer("numrology.png")),
     ("numerology", render_numerology),
     ("numerology_personality", render_numerology_personality),
     ("lalkitab", render_lalkitab),

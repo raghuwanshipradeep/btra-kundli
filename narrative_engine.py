@@ -407,6 +407,19 @@ def _build_user_prompt(section_type: str, data: dict, lang: str) -> str:
             f"Cover: what this year holds, how the current dasha shapes opportunities, "
             f"and one actionable focus area for the coming months."
         )
+    if section_type == "varshaphal":
+        return (
+            f"Varshaphal (Annual / Tajik) Chart for year {data.get('year', '?')}\n"
+            f"Annual Ascendant (Varsha Lagna): {data.get('ascendant', '?')}\n"
+            f"Muntha: {data.get('muntha_sign', '?')} in House {data.get('muntha_house', '?')} "
+            f"(Lord: {data.get('muntha_lord', '?')})\n"
+            f"Year Lord (Varshesh): {data.get('varshesh', '?')} — Strength: {data.get('varshesha_strength', '?')}\n"
+            f"Key Yogas: {data.get('yogas', 'None')}\n\n"
+            f"Write a short, warm annual forecast (Varshaphal) for this year. "
+            f"Cover the overall theme of the year from the Varsha Lagna and Year Lord, "
+            f"what the Muntha placement highlights, and one practical focus for the year ahead. "
+            f"Keep it encouraging and grounded."
+        )
     if section_type == "career_path":
         return (
             f"10th House Sign: {data['tenth_sign']} (Lord: {data['tenth_lord']})\n"
@@ -1037,6 +1050,30 @@ async def generate_narratives(
         lf_data["muntha"] = vd.get("muntha_sign", "")
         lf_data["varshesh"] = vd.get("varshesh", "")
         thematic_batch["life_forecast"] = ("life_forecast", lf_data)
+
+    if kundli_data.varshaphal_details:
+        vd = kundli_data.varshaphal_details
+        vm_raw = kundli_data.varshaphal_muntha
+        if isinstance(vm_raw, list):
+            vm = next((x for x in vm_raw if isinstance(x, dict)), {})
+        elif isinstance(vm_raw, dict):
+            vm = vm_raw
+        else:
+            vm = {}
+        vp_data: dict[str, Any] = {
+            "year": vd.get("year", ""),
+            "ascendant": vd.get("varshaphal_ascendant", ""),
+            "muntha_sign": vd.get("muntha_sign", ""),
+            "varshesh": vd.get("varshesh", ""),
+            "varshesha_strength": vd.get("varshesha_strength", ""),
+            "muntha_house": vm.get("muntha_house", ""),
+            "muntha_lord": vm.get("muntha_lord", ""),
+        }
+        if kundli_data.varshaphal_yoga:
+            names = [y.get("yoga_name", "") for y in kundli_data.varshaphal_yoga
+                     if isinstance(y, dict) and y.get("yoga_name")]
+            vp_data["yogas"] = ", ".join(names) if names else "None"
+        thematic_batch["varshaphal"] = ("varshaphal", vp_data)
 
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL4
