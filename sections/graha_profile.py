@@ -12,6 +12,11 @@ if TYPE_CHECKING:
 
 PLANETS_ORDER = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]
 
+# Top-of-page deity illustration per planet (files live in templates/images/).
+PLANET_IMAGES: dict[str, str] = {
+    "Sun": "sun.png",
+}
+
 KARAKA_NAMES = [
     "Atmakaraka", "Amatyakaraka", "Bhratrikaraka", "Matrikaraka",
     "Putrakaraka", "Gnatikaraka", "Darakaraka",
@@ -114,6 +119,7 @@ def render_graha_profile(data: KundliData, lang: str = "en") -> str | None:
 
         profiles.append({
             "name": planet_name,
+            "image": PLANET_IMAGES.get(planet_name, ""),
             "house": planet_obj.house,
             "sign": planet_obj.sign,
             "sign_lord": sign_lord,

@@ -432,7 +432,7 @@ function showThankYouPage(name, orderId, paymentId) {
         <p style="font-size: 14px; color: #888;">
             कोई समस्या हो तो संपर्क करें:
             <a href="https://wa.me/918839523452" style="color: #25D366; font-weight: 500;">
-                +91-8839523452 (WhatsApp)
+                +91-8839XXXXXX (WhatsApp)
             </a>
         </p>
         <p style="font-size: 12px; color: #aaa; margin-top: 16px;">

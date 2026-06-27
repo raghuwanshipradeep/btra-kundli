@@ -7,6 +7,12 @@
     {% endif %}
   </h2>
 
+  {% if profile.image %}
+  <div style="text-align: center; margin-bottom: 2mm;">
+    <img src="images/{{ profile.image }}" alt="" style="max-width: 100%; max-height: 120mm; display: block; margin: 0 auto;">
+  </div>
+  {% endif %}
+
   <table class="kv-table" style="margin-bottom: 5mm;">
     <tr>
       <td>{{ locale.gp_house }}</td>
