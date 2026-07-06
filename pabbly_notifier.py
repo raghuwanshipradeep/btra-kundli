@@ -9,6 +9,7 @@ failure must never break payment confirmation or PDF generation.
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
@@ -147,6 +148,11 @@ async def notify_payment_success(
         return False
 
     payload = build_payload(request, order_id, payment_id)
+    logger.info(
+        "Pabbly webhook POST -> %s | payload=%s",
+        settings.pabbly_webhook_url,
+        json.dumps(payload, ensure_ascii=False),
+    )
 
     try:
         await _post(payload)

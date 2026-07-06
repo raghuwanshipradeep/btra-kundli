@@ -74,7 +74,7 @@ from sections.sade_sati_journey import render_sade_sati_journey
 from sections.raj_yoga_celebration import render_raj_yoga_celebration
 from sections.mahadasha_journey import render_mahadasha_journey
 from sections.numerology_personality import render_numerology_personality
-from sections.divider_images import make_divider_renderer
+from sections.divider_images import make_divider_renderer, make_link_banner_renderer
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +82,10 @@ TEMPLATES_DIR = pathlib.Path(__file__).parent / "templates"
 
 # Promotional filler images (award / celebrity photos), rotated across sparse pages.
 _FILLER_IMAGES = [
-    str(TEMPLATES_DIR / "images" / "promo_award_2021.jpg"),
-    str(TEMPLATES_DIR / "images" / "promo_award_2022.jpg"),
+    str(TEMPLATES_DIR / "images" / "promo_award_2021.png"),
+    str(TEMPLATES_DIR / "images" / "promo_award_2022.png"),
     str(TEMPLATES_DIR / "images" / "promo_celebrities.png"),
+    str(TEMPLATES_DIR / "images" / "promo_celebrities_.png"),
 ]
 # Content below this fraction of page height is the footer / page-number band and
 # is ignored when measuring how far down real content reaches.
@@ -179,6 +180,7 @@ SECTION_RENDERERS = [
     ("remedy_rudraksha", render_remedy_rudraksha),
     ("remedy_gemstones", render_remedy_gemstones),
     ("remedy_mantras", render_remedy_mantras),
+    ("offer_banner", make_link_banner_renderer("Artboard_offer.png", "https://gemsguruji.com/")),
     ("remedy_ishta_devata", render_remedy_ishta_devata),
     ("remedy_yantra", render_remedy_yantra),
     ("remedy_daan", render_remedy_daan),

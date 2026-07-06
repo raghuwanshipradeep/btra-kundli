@@ -298,7 +298,7 @@ async function handlePaidFlow(payload) {
             key: order.key_id,
             amount: order.amount,
             currency: order.currency,
-            name: 'Bloomx Kundli',
+            name: 'Aditya Kundli',
             description: 'Personalized Kundli Report',
             order_id: order.order_id,
             prefill: { name: order.name },
