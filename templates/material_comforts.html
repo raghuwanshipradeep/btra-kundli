@@ -1,0 +1,68 @@
+<div class="section-page">
+  <h2 class="section-header">{{ locale.mc_title }}</h2>
+
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+    {{ locale.mc_intro }}
+  </p>
+
+  {% if narrative %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+  </div>
+  {% endif %}
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+      {{ locale.mc_4th_title }}
+    </h4>
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      <tr>
+        <td>{{ locale.gp_sign }}</td>
+        <td>{{ locale.sign_names.get(fourth_sign, fourth_sign) }}</td>
+      </tr>
+      <tr>
+        <td>{{ locale.gp_lord }}</td>
+        <td>{{ locale.planet_names.get(fourth_lord, fourth_lord) }}
+          {% if fourth_lord_planet %}
+            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ fourth_lord_planet.house }})</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% if planets_in_4th %}
+      <tr>
+        <td>{{ locale.lm_planets_present }}</td>
+        <td>
+          {% for p in planets_in_4th %}
+            {{ locale.planet_names.get(p.name, p.name) }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ locale.mc_4th_desc }}</p>
+  </div>
+
+  <div class="report-card" style="margin-bottom: 5mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+      {{ locale.mc_karaka_title }}
+    </h4>
+    <table class="kv-table" style="font-size: 9.5pt;">
+      {% if venus %}
+      <tr>
+        <td>{{ locale.planet_names.get('Venus', 'Venus') }} — {{ locale.mc_venus_role }}</td>
+        <td>{{ locale.sign_names.get(venus.sign, venus.sign) }} — {{ locale.gp_house_prefix }} {{ venus.house }}</td>
+      </tr>
+      {% endif %}
+      {% if mars %}
+      <tr>
+        <td>{{ locale.planet_names.get('Mars', 'Mars') }} — {{ locale.mc_mars_role }}</td>
+        <td>{{ locale.sign_names.get(mars.sign, mars.sign) }} — {{ locale.gp_house_prefix }} {{ mars.house }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+
+  {% include "partials/area_remedies.html" %}
+
+  {% include "partials/section_disclaimer.html" %}
+</div>

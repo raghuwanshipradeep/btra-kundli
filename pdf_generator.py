@@ -26,7 +26,6 @@ from sections.divisional_charts import render_divisional_charts
 from sections.dosha import render_dosha
 from sections.ghat_chakra import render_ghat_chakra
 from sections.houses import render_houses
-from sections.kp_chart import render_kp_chart
 from sections.life_reports import render_life_reports
 from sections.panchada_maitri import render_panchada_maitri
 from sections.panchang import render_panchang
@@ -43,8 +42,6 @@ from sections.yogini_dasha import render_yogini_dasha
 from sections.char_dasha import render_char_dasha
 from sections.numerology import render_numerology
 from sections.lalkitab import render_lalkitab
-from sections.biorhythm import render_biorhythm
-from sections.moon_chart import render_moon_chart
 from sections.drishti import render_drishti
 from sections.dignity import render_dignity
 from sections.chara_karaka import render_chara_karaka
@@ -59,7 +56,7 @@ from sections.north_chart import render_north_chart
 from sections.marriage_timing import render_marriage_timing
 from sections.life_forecast import render_life_forecast
 from sections.tarot import render_tarot
-from sections.front_matter import render_front_matter
+from sections.front_matter import render_front_matter, render_front_matter_toc
 from sections.graha_profile import render_graha_profile
 from sections.graha_sanyog import render_graha_sanyog
 from sections.outer_planets import render_outer_planets
@@ -68,6 +65,7 @@ from sections.closing_cta import render_closing_cta
 from sections.dasha_narrative import render_dasha_narrative
 from sections.love_marriage import render_love_marriage
 from sections.career_path import render_career_path
+from sections.material_comforts import render_material_comforts
 from sections.rahu_ketu_analysis import render_rahu_ketu_analysis
 from sections.spiritual_potential import render_spiritual_potential
 from sections.sadhesati_enhanced import render_sadhesati_enhanced
@@ -82,14 +80,93 @@ logger = logging.getLogger(__name__)
 
 TEMPLATES_DIR = pathlib.Path(__file__).parent / "templates"
 
+# Promotional filler images (award / celebrity photos), rotated across sparse pages.
+_FILLER_IMAGES = [
+    str(TEMPLATES_DIR / "images" / "promo_award_2021.jpg"),
+    str(TEMPLATES_DIR / "images" / "promo_award_2022.jpg"),
+    str(TEMPLATES_DIR / "images" / "promo_celebrities.png"),
+]
+# Content below this fraction of page height is the footer / page-number band and
+# is ignored when measuring how far down real content reaches.
+_FILLER_FOOTER_ZONE = 0.90
+
+
+def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
+    """Overlay a promotional image into the empty bottom band of any page (after
+    settings.filler_skip_pages) whose bottom gap exceeds settings.filler_gap_threshold.
+    Same-page overlay only (page count unchanged). Best-effort: never raises."""
+    import fitz  # PyMuPDF
+
+    paths = [p for p in _FILLER_IMAGES if pathlib.Path(p).exists()]
+    if not paths:
+        logger.warning("Filler images missing; skipping gap-fill pass")
+        return pdf_bytes
+
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    rotate = 0
+    added = 0
+    for pno in range(len(doc)):
+        if pno < settings.filler_skip_pages:
+            continue
+        page = doc[pno]
+        H = page.rect.height
+        W = page.rect.width
+        cut = _FILLER_FOOTER_ZONE * H  # ignore footer/page-number band
+
+        bottom = 0.0
+        for b in page.get_text("blocks"):  # (x0, y0, x1, y1, text, block_no, block_type)
+            if b[1] < cut:
+                bottom = max(bottom, min(b[3], cut))
+        for im in page.get_image_info():   # raster image placements
+            x0, y0, x1, y1 = im["bbox"]
+            # Skip near-full-page background images (they cover the whole page and
+            # would mask a genuinely sparse content area).
+            if (x1 - x0) > 0.85 * W and (y1 - y0) > 0.85 * H:
+                continue
+            if y0 < cut:
+                bottom = max(bottom, min(y1, cut))
+
+        if bottom <= 0:
+            continue  # blank / vector-only page → leave alone
+        if (H - bottom) / H <= settings.filler_gap_threshold:
+            continue  # not enough bottom gap
+
+        path = paths[rotate % len(paths)]
+        rotate += 1
+        margin = 36.0
+        avail_w = W - 2 * margin
+        avail_h = (cut - bottom) - 2 * margin
+        if avail_w <= 0 or avail_h <= 0:
+            continue
+        pix = fitz.Pixmap(path)
+        iw, ih = pix.width, pix.height
+        if iw <= 0 or ih <= 0:
+            continue
+        scale = min(avail_w / iw, avail_h / ih)
+        dw, dh = iw * scale, ih * scale
+        x = (W - dw) / 2
+        y = bottom + ((cut - bottom) - dh) / 2
+        page.insert_image(fitz.Rect(x, y, x + dw, y + dh), filename=path)
+        added += 1
+
+    if added:
+        pdf_bytes = doc.tobytes()
+        logger.info("Filler-image pass: added %d image(s) to sparse pages", added)
+    doc.close()
+    return pdf_bytes
+
 SECTION_RENDERERS = [
-    ("cover", render_cover),
+    ("front_page", make_divider_renderer("front_page.png")),
+    ("astrologer_intro", make_divider_renderer("astrologer.png")),
     ("authors_note", render_authors_note),
-    ("front_matter", render_front_matter),
+    ("front_matter", render_front_matter),          # disclaimer + how-to-read
+    ("cover", render_cover),                         # personalized कुंडली रिपोर्ट cover
+    ("front_matter_toc", render_front_matter_toc),   # table of contents
     ("divider_ganesha", make_divider_renderer("loard-ganesha.png")),
     ("astro_details", render_astro_details),
     ("panchang", render_panchang),
-    ("north_chart", render_north_chart),
+    ("dasha", render_dasha),
+    ("mahadasha_journey", render_mahadasha_journey),
     ("chart", render_chart),
     ("divisional_charts", render_divisional_charts),
     ("life_reports", render_life_reports),
@@ -113,20 +190,14 @@ SECTION_RENDERERS = [
     ("bhav_madhya", render_bhav_madhya),
     ("planet_nature", render_planet_nature),
     ("panchada_maitri", render_panchada_maitri),
-    ("dasha", render_dasha),
-    ("mahadasha_journey", render_mahadasha_journey),
-    ("dasha_narrative", render_dasha_narrative),
     ("ashtakvarga", render_ashtakvarga),
     ("bhinnashtak", render_bhinnashtak),
-    ("kp_chart", render_kp_chart),
     ("yogini_dasha", render_yogini_dasha),
     ("char_dasha", render_char_dasha),
     ("divider_numerology", make_divider_renderer("numrology.png")),
     ("numerology", render_numerology),
     ("numerology_personality", render_numerology_personality),
     ("lalkitab", render_lalkitab),
-    ("biorhythm", render_biorhythm),
-    ("moon_chart", render_moon_chart),
     ("drishti", render_drishti),
     ("dignity", render_dignity),
     ("chara_karaka", render_chara_karaka),
@@ -143,6 +214,7 @@ SECTION_RENDERERS = [
     ("south_chart", render_south_chart),
     ("marriage_timing", render_marriage_timing),
     ("love_marriage", render_love_marriage),
+    ("material_comforts", render_material_comforts),
     ("life_forecast", render_life_forecast),
     ("spiritual_potential", render_spiritual_potential),
     ("sade_sati_journey", render_sade_sati_journey),
@@ -203,4 +275,11 @@ class PDFGenerator:
         base_url = TEMPLATES_DIR.as_uri() + "/"
         pdf_bytes: bytes = HTML(string=full_html, base_url=base_url).write_pdf()
         logger.info("PDF generated: %d bytes, %d sections", len(pdf_bytes), len(sections))
+
+        if settings.filler_images_enabled:
+            try:
+                pdf_bytes = _fill_gap_pages(pdf_bytes)
+            except Exception:
+                logger.exception("Filler-image pass failed; using PDF without fillers")
+
         return pdf_bytes

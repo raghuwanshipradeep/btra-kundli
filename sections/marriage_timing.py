@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 
 from sections import LOCALES, make_env
+from sections.life_area_remedies import build_area_remedies
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -69,6 +70,7 @@ def render_marriage_timing(data: KundliData, lang: str = "en") -> str | None:
         factors=factors,
         favorable_periods=favorable_periods,
         planets_in_7=planets_in_7,
+        remedies=build_area_remedies(data, [seventh_lord, "Venus"], lang),
         narrative=data.narratives.get("marriage_timing", ""),
         locale=locale,
         lang=lang,

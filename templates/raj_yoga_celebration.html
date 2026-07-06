@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
     {{ locale.ryc_intro }}
   </p>
 
@@ -21,7 +21,7 @@
     {% endif %}
 
     <div class="report-card" style="margin-bottom: 5mm; border-left: 4px solid #D4AF37;">
-      <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #8B0000; margin: 0 0 2mm 0;">
+      <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">
         {{ yoga.name }}
       </h4>
       <table class="kv-table" style="margin-bottom: 3mm;">
@@ -34,7 +34,7 @@
       {% set celeb_key = "raj_yoga_celeb_" ~ yoga.name %}
       {% if narratives and narratives.get(celeb_key) %}
       <div style="border-top: 1px solid #E0D8C0; padding-top: 3mm; margin-top: 2mm;">
-        <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+        <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">
           {{ narratives.get(celeb_key) }}
         </p>
       </div>
@@ -46,7 +46,7 @@
 
   {% else %}
   <div class="report-card" style="margin-top: 5mm; border-left: 4px solid #D4AF37;">
-    <p style="font-size: 11pt; line-height: 1.7; text-align: justify; margin: 0;">
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">
       {{ locale.ryc_no_yogas }}
     </p>
   </div>

@@ -8,6 +8,8 @@ from sections.remedy_constants import (
     SIGN_LORDS,
     SIGN_TO_ISHTADEVATA,
     TWELFTH_LORD_ISHTADEVATA,
+    DEITY_HI,
+    SHLOKA_HI,
 )
 
 if TYPE_CHECKING:
@@ -48,6 +50,11 @@ def render_remedy_ishta_devata(data: KundliData, lang: str = "en") -> str | None
     moon = next((p for p in data.planets if p.name == "Moon"), None)
     moon_sign = moon.sign if moon else ""
     moon_deity = SIGN_TO_ISHTADEVATA.get(moon_sign, "")
+
+    if lang == "hi":
+        deity = DEITY_HI.get(deity, deity)
+        moon_deity = DEITY_HI.get(moon_deity, moon_deity)
+        shloka = SHLOKA_HI.get(shloka, shloka)
 
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()

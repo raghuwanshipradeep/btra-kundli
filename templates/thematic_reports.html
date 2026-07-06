@@ -28,6 +28,12 @@
           {% endif %}
         </table>
       {% endfor %}
+      {% set rem = area_remedies.get(theme_key) if area_remedies else None %}
+      {% if rem %}
+        {% with remedies = rem %}
+          {% include "partials/area_remedies.html" %}
+        {% endwith %}
+      {% endif %}
     </div>
     {% endif %}
   {% endfor %}

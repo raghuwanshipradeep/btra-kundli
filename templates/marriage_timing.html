@@ -3,7 +3,7 @@
 
   {% if narrative %}
   <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
   </div>
   {% endif %}
 
@@ -65,6 +65,8 @@
     </table>
   </div>
   {% endif %}
+
+  {% include "partials/area_remedies.html" %}
 
   {% include "partials/section_disclaimer.html" %}
 </div>

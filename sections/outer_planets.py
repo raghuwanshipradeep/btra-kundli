@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 OUTER_PLANETS = {
     "Uranus": {
+        "image": "arun.png",
         "deity_en": "Arun Dev",
         "deity_hi": "अरुण देव",
         "myth_en": (
@@ -26,6 +27,7 @@ OUTER_PLANETS = {
         ),
     },
     "Neptune": {
+        "image": "varun.png",
         "deity_en": "Varun Dev",
         "deity_hi": "वरुण देव",
         "myth_en": (
@@ -42,6 +44,7 @@ OUTER_PLANETS = {
         ),
     },
     "Pluto": {
+        "image": "yam.png",
         "deity_en": "Yama / Shiva",
         "deity_hi": "यम / शिव",
         "myth_en": (
@@ -77,6 +80,7 @@ def render_outer_planets(data: KundliData, lang: str = "en") -> str | None:
         info = OUTER_PLANETS[name]
         profiles.append({
             "name": name,
+            "image": info.get("image", ""),
             "house": planet_obj.house,
             "sign": planet_obj.sign,
             "sign_lord": planet_obj.signLord,

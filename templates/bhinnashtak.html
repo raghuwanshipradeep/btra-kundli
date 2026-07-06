@@ -1,46 +1,44 @@
-{% for table in tables %}
 <div class="section-page">
-    {% if loop.first %}
     <h2 class="section-header">{{ locale.bhinnashtak_title }}</h2>
-    {% endif %}
 
-    <h3 class="section-subheader">{{ table.planet }}
-        {% if table.info.get('sign') %} — {{ locale.sign_names.get(table.info.sign, table.info.sign) }}{% endif %}
-    </h3>
+    {% for table in tables %}
+    <div class="bhinnashtak-block" style="page-break-inside: avoid; margin-bottom: 6mm;">
+        <h3 class="section-subheader">{{ table.planet }}
+            {% if table.info.get('sign') %} — {{ locale.sign_names.get(table.info.sign, table.info.sign) }}{% endif %}
+        </h3>
 
-    <table class="ashtakvarga-table">
-        <thead>
-            <tr>
-                <th>{{ locale.planet_col }}</th>
-                {% for sign_name in sign_order %}
-                <th>{{ sign_name[:3] }}</th>
+        <table class="ashtakvarga-table">
+            <thead>
+                <tr>
+                    <th>{{ locale.planet_col }}</th>
+                    {% for sign_name in sign_order %}
+                    <th>{{ sign_name[:3] }}</th>
+                    {% endfor %}
+                    <th>{{ locale.total }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cp_name, values, total in table.rows %}
+                <tr>
+                    <td><strong>{{ cp_name }}</strong></td>
+                    {% for v in values %}
+                    <td class="{% if v == 0 %}points-low{% else %}points-high{% endif %}">{{ v }}</td>
+                    {% endfor %}
+                    <td><strong>{{ total }}</strong></td>
+                </tr>
                 {% endfor %}
-                <th>{{ locale.total }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cp_name, values, total in table.rows %}
-            <tr>
-                <td><strong>{{ cp_name }}</strong></td>
-                {% for v in values %}
-                <td class="{% if v == 0 %}points-low{% else %}points-high{% endif %}">{{ v }}</td>
-                {% endfor %}
-                <td><strong>{{ total }}</strong></td>
-            </tr>
-            {% endfor %}
 
-            <tr class="total-row">
-                <td><strong>{{ locale.total }}</strong></td>
-                {% for t in table.totals %}
-                <td>{{ t }}</td>
-                {% endfor %}
-                <td><strong>{{ table.grand_total }}</strong></td>
-            </tr>
-        </tbody>
-    </table>
+                <tr class="total-row">
+                    <td><strong>{{ locale.total }}</strong></td>
+                    {% for t in table.totals %}
+                    <td>{{ t }}</td>
+                    {% endfor %}
+                    <td><strong>{{ table.grand_total }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
 
-    {% if loop.last %}
     <p class="note mt-4">{{ locale.bhinnashtak_note }}</p>
-    {% endif %}
 </div>
-{% endfor %}

@@ -1,7 +1,7 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.ssj_title }}</h2>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
     {{ locale.ssj_intro }}
   </p>
 
@@ -22,7 +22,7 @@
 
   {% if current_status %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ss_current_title }}
     </h4>
     <table class="kv-table">
@@ -40,7 +40,7 @@
 
   {% if not is_active %}
   <div class="report-card" style="margin-bottom: 5mm; border-left: 4px solid #2E7D32;">
-    <p style="font-size: 11pt; line-height: 1.7; color: #2E7D32; margin: 0;">
+    <p style="font-size: 12.5pt; line-height: 1.7; color: #2E7D32; margin: 0;">
       {{ locale.ssj_not_active }}
     </p>
   </div>
@@ -48,7 +48,7 @@
 
   {% if life_details %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ssj_cycle_title }}
     </h4>
 
@@ -97,13 +97,13 @@
       {% set phase_key = "sade_sati_phase_" ~ loop.index0 %}
       {% if narratives and narratives.get(phase_key) %}
       <div class="report-card" style="margin-bottom: 4mm; border-left: 4px solid #37474F;">
-        <h4 style="font-size: 11pt; color: #37474F; margin: 0 0 2mm 0;">
+        <h4 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">
           {% if entry is mapping %}
             {{ entry.get("phase", "") }} — {{ entry.get("saturn_sign", "") }}
             ({{ entry.get("start", "") }} → {{ entry.get("end", "") }})
           {% endif %}
         </h4>
-        <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+        <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">
           {{ narratives.get(phase_key) }}
         </p>
       </div>
@@ -116,20 +116,20 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.ssj_remedies_title }}</h2>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
     {{ locale.ss_practices_intro }}
   </p>
 
   {% for practice in locale.ss_daily_practices %}
   <div class="dosha-card" style="margin-bottom: 3mm;">
     <h4>{{ practice.title }}</h4>
-    <p style="font-size: 10.5pt; line-height: 1.6;">{{ practice.desc }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.6;">{{ practice.desc }}</p>
   </div>
   {% endfor %}
 
   {% if rudraksha %}
   <div class="report-card" style="margin-top: 5mm; margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ssj_rudraksha_title }}
     </h4>
     {% if rudraksha is iterable and rudraksha is not string and rudraksha is not mapping %}
@@ -159,7 +159,7 @@
 
   {% if remedies_data %}
   <div class="report-card" style="margin-top: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ssj_mantras_title }}
     </h4>
     {% if remedies_data is mapping %}

@@ -62,12 +62,14 @@ PLANET_SHORT_EN: dict[str, str] = {
     "Sun": "Su", "Moon": "Mo", "Mars": "Ma", "Mercury": "Me",
     "Jupiter": "Ju", "Venus": "Ve", "Saturn": "Sa",
     "Rahu": "Ra", "Ketu": "Ke", "Ascendant": "As",
+    "Uranus": "Ur", "Neptune": "Ne", "Pluto": "Pl",
 }
 
 PLANET_SHORT_HI: dict[str, str] = {
     "Sun": "सू", "Moon": "चं", "Mars": "मं", "Mercury": "बु",
     "Jupiter": "गु", "Venus": "शु", "Saturn": "श",
     "Rahu": "रा", "Ketu": "के", "Ascendant": "ल",
+    "Uranus": "यू", "Neptune": "ने", "Pluto": "प्लू",
 }
 
 
@@ -182,6 +184,12 @@ for _en, _hi in TAMIL_TRANSLIT_TO_HI.items():
         PLANET_ALIAS_TO_EN[_hi] = _en  # "सूर्य" -> "Sun"
 for _asc_alias in ("लग्न", "Lagna", "Asc"):
     PLANET_ALIAS_TO_EN[_asc_alias] = "Ascendant"
+# Alternate / conjunct Hindi spellings the dasha APIs return that the short-form
+# and Tamil-translit maps above don't cover (e.g. Moon as "चन्द्र" not "चंद्र").
+for _alias, _en_name in {
+    "चन्द्र": "Moon", "रवि": "Sun", "बृहस्पति": "Jupiter",
+}.items():
+    PLANET_ALIAS_TO_EN[_alias] = _en_name
 
 
 def planet_to_en(name: str) -> str:
@@ -510,6 +518,19 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
     },
     "en": {
         "is_retro": "Retrograde",
+        # Manglik / Dosha keys
+        "msg": "Message",
+        "is_present": "Present",
+        "is_cancelled": "Cancelled",
+        "manglik_status": "Manglik Status",
+        "manglik_report": "Manglik Report",
+        "percentage_manglik_present": "Manglik %",
+        "percentage_manglik_after_cancellation": "Manglik % (after cancellation)",
+        "is_mars_manglik_cancelled": "Is Mars Manglik Cancelled",
+        "manglik_present_rule": "Manglik Present Rule",
+        "manglik_cancel_rule": "Manglik Cancellation Rule",
+        "based_on_aspect": "Based on Aspect",
+        "based_on_house": "Based on House",
         "sub_lord": "Sub Lord",
         "sub_sub_lord": "Sub-Sub Lord",
         "norm_degree": "Normalized Degree",
@@ -748,6 +769,8 @@ LOCALES: dict[str, dict] = {
         "sun_sign": "Sun Sign",
         "moon_sign": "Moon Sign",
         "generated_on": "Generated on",
+        "cover_birth_details_title": "Birth Details",
+        "cover_full_name": "Full Name",
 
         "birth_summary_title": "Birth Summary",
         "janma_rashi": "Janma Rashi",
@@ -1349,6 +1372,7 @@ LOCALES: dict[str, dict] = {
         "gp_aspected_by": "Aspected by",
         "gp_house_placement": "House Placement Analysis",
         "gp_rashi_placement": "Sign (Rashi) Placement Analysis",
+        "gp_about": "About This Placement",
 
         # Outer Planets
         "op_deity_label": "Vedic Deity Association",
@@ -1412,6 +1436,25 @@ LOCALES: dict[str, dict] = {
         "cp_ak_label": "Your Amatyakaraka",
         "cp_ak_house_effect": "Amatyakaraka — House Placement Effect",
         "cp_ak_rashi_effect": "Amatyakaraka — Sign Placement Effect",
+
+        # Material Comforts (Home, Property & Vehicle)
+        "mc_title": "Home, Property & Vehicle",
+        "mc_intro": "Material comfort — a home of your own, property, land, and vehicles — is read primarily from the 4th house and its lord, with Venus (the karaka of luxury, comfort and vehicles) and Mars (co-significator of land and property) adding their influence. This section reads these factors and offers gentle remedies to strengthen them.",
+        "mc_4th_title": "4th House — Home, Property & Domestic Happiness",
+        "mc_4th_desc": "The 4th house governs your home, land, real estate, vehicles, and overall domestic comfort and peace of mind. The sign here, its lord, and any planets present shape your experience of property and a settled home life.",
+        "mc_karaka_title": "Natural Significators — Venus & Mars",
+        "mc_venus_role": "comfort, luxury & vehicles",
+        "mc_mars_role": "land & property",
+
+        # Shared life-area remedies block
+        "ar_remedies_title": "Recommended Remedies",
+        "ar_intro": "Gentle, time-honoured remedies to strengthen the planets governing this area of life. Practise with faith and consistency.",
+        "ar_for": "For",
+        "ar_priority": "needs strengthening",
+        "ar_mantra": "Mantra",
+        "ar_gemstone": "Gemstone",
+        "ar_donation": "Donation (Daan)",
+        "ar_practice": "Practice",
 
         # Rahu-Ketu Analysis
         "rk_title": "Rahu-Ketu: Karmic Axis Analysis",
@@ -1528,6 +1571,8 @@ LOCALES: dict[str, dict] = {
         "ascendant": "लग्न",
         "sun_sign": "सूर्य राशि",
         "moon_sign": "चंद्र राशि",
+        "cover_birth_details_title": "जन्म विवरण",
+        "cover_full_name": "पूरा नाम",
         "generated_on": "निर्मित तिथि",
 
         "birth_summary_title": "जन्म विवरण",
@@ -2136,6 +2181,7 @@ LOCALES: dict[str, dict] = {
         "gp_aspected_by": "इन ग्रहों की दृष्टि प्राप्त",
         "gp_house_placement": "भाव स्थिति विश्लेषण",
         "gp_rashi_placement": "राशि स्थिति विश्लेषण",
+        "gp_about": "इस स्थिति के बारे में",
 
         # Outer Planets
         "op_deity_label": "वैदिक देवता संबंध",
@@ -2199,6 +2245,25 @@ LOCALES: dict[str, dict] = {
         "cp_ak_label": "आपका अमात्यकारक",
         "cp_ak_house_effect": "अमात्यकारक — भाव स्थिति प्रभाव",
         "cp_ak_rashi_effect": "अमात्यकारक — राशि स्थिति प्रभाव",
+
+        # Material Comforts (Home, Property & Vehicle)
+        "mc_title": "गृह, संपत्ति एवं वाहन",
+        "mc_intro": "भौतिक सुख — अपना घर, संपत्ति, भूमि और वाहन — मुख्यतः चतुर्थ भाव और उसके स्वामी से देखा जाता है, जिसमें शुक्र (सुख, विलासिता एवं वाहन का कारक) और मंगल (भूमि एवं संपत्ति का सह-कारक) अपना प्रभाव जोड़ते हैं। यह खंड इन कारकों का विश्लेषण करता है और इन्हें सुदृढ़ करने हेतु सरल उपाय सुझाता है।",
+        "mc_4th_title": "चतुर्थ भाव — घर, संपत्ति एवं गृह-सुख",
+        "mc_4th_desc": "चतुर्थ भाव आपके घर, भूमि, अचल संपत्ति, वाहन तथा समग्र गृह-सुख एवं मानसिक शांति का कारक है। यहाँ की राशि, उसका स्वामी और स्थित ग्रह आपके संपत्ति-सुख एवं स्थिर गृहस्थ जीवन को आकार देते हैं।",
+        "mc_karaka_title": "नैसर्गिक कारक — शुक्र एवं मंगल",
+        "mc_venus_role": "सुख, विलासिता एवं वाहन",
+        "mc_mars_role": "भूमि एवं संपत्ति",
+
+        # Shared life-area remedies block
+        "ar_remedies_title": "अनुशंसित उपाय",
+        "ar_intro": "जीवन के इस क्षेत्र के कारक ग्रहों को सुदृढ़ करने हेतु सरल, पारंपरिक उपाय। श्रद्धा एवं नियमितता के साथ करें।",
+        "ar_for": "हेतु —",
+        "ar_priority": "सुदृढ़ करने योग्य",
+        "ar_mantra": "मंत्र",
+        "ar_gemstone": "रत्न",
+        "ar_donation": "दान",
+        "ar_practice": "अभ्यास",
 
         # Rahu-Ketu Analysis
         "rk_title": "राहु-केतु: कर्म अक्ष विश्लेषण",

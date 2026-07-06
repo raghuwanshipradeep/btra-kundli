@@ -1,7 +1,7 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.ss_title }}</h2>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
     {{ locale.ss_intro }}
   </p>
 
@@ -22,7 +22,7 @@
 
   {% if current_status %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ss_current_title }}
     </h4>
     <table class="kv-table">
@@ -40,10 +40,10 @@
 
   {% if life_details %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ss_phases_title }}
     </h4>
-    <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 3mm;">{{ locale.ss_phases_desc }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 3mm;">{{ locale.ss_phases_desc }}</p>
 
     <table class="data-table" style="font-size: 9.5pt;">
       <thead>
@@ -92,20 +92,20 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.ss_practices_title }}</h2>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
     {{ locale.ss_practices_intro }}
   </p>
 
   {% for practice in locale.ss_daily_practices %}
   <div class="dosha-card" style="margin-bottom: 3mm;">
     <h4>{{ practice.title }}</h4>
-    <p style="font-size: 10.5pt; line-height: 1.6;">{{ practice.desc }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.6;">{{ practice.desc }}</p>
   </div>
   {% endfor %}
 
   {% if remedies_data %}
   <div class="report-card" style="margin-top: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.ss_remedies_title }}
     </h4>
     {% if remedies_data is mapping %}

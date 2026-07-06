@@ -1,32 +1,31 @@
-<div class="section-page">
-  <h2 class="section-header">{{ locale.an_title }}</h2>
+<div class="section-page authors-note-page">
 
-  <div style="background: linear-gradient(135deg, #FFFDF5 0%, #FFF8E1 100%); border: 1px solid #E0D5C5; border-radius: 3mm; padding: 8mm 10mm; margin-top: 5mm;">
+  <div style="background: #542F01; border: 1.5px solid #D4AF37; border-radius: 2mm; padding: 4mm 6mm; margin-bottom: 6mm; text-align: center;">
+    <h2 style="font-family: 'Playfair Display', 'Noto Sans Devanagari', serif; font-size: 22pt; font-weight: 700; color: #F8E9C8; margin: 0;">
+      {{ locale.an_title }}
+    </h2>
+  </div>
 
-    <p style="font-size: 12pt; line-height: 1.8; color: var(--maroon); font-weight: 600; margin-bottom: 4mm;">
+  <div style="background: #FDEED6; border: 1px solid #D4AF37; border-radius: 3mm; padding: 8mm 10mm;">
+
+    <p style="font-size: 14pt; line-height: 1.9; color: #3A2410; font-weight: 600; margin-bottom: 4mm;">
       {{ locale.an_greeting|replace('{name}', name) }}
     </p>
 
-    <p style="font-size: 11pt; line-height: 1.8; text-align: justify; margin-bottom: 4mm;">
+    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: #3A2410; margin-bottom: 4mm;">
       {{ locale.an_body_p1|replace('{name}', name) }}
     </p>
 
-    <p style="font-size: 11pt; line-height: 1.8; text-align: justify; margin-bottom: 4mm;">
+    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: #3A2410; margin-bottom: 4mm;">
       {{ locale.an_body_p2 }}
     </p>
 
-    <p style="font-size: 11pt; line-height: 1.8; text-align: justify; margin-bottom: 8mm;">
+    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: #3A2410; margin-bottom: 8mm;">
       {{ locale.an_body_p3 }}
     </p>
 
-    <div style="text-align: right; padding-top: 4mm; border-top: 1px solid #E0D5C5;">
-      <p style="font-size: 10pt; color: #666; margin-bottom: 1mm;">{{ locale.an_signature_label }}</p>
-      <p style="font-family: 'Playfair Display', serif; font-size: 16pt; color: var(--maroon); margin-bottom: 1mm;">
-        {{ author_name }}
-      </p>
-      {% if author_title %}
-      <p style="font-size: 10pt; color: #666; font-style: italic;">{{ author_title }}</p>
-      {% endif %}
+    <div style="padding-top: 4mm; border-top: 1px solid #D4AF37;">
+      {% include "partials/brand_signature.html" %}
     </div>
   </div>
 </div>

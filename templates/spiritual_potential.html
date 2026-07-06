@@ -2,19 +2,19 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.sp_title }}</h2>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; text-align: justify;">
     {{ locale.sp_intro }}
   </p>
 
   {% if narrative %}
   <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
   </div>
   {% endif %}
 
   {% if ninth_sign or ninth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.sp_9th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -37,13 +37,13 @@
       </tr>
       {% endif %}
     </table>
-    <p style="font-size: 10.5pt; line-height: 1.7;">{{ locale.sp_9th_desc }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7;">{{ locale.sp_9th_desc }}</p>
   </div>
   {% endif %}
 
   {% if twelfth_sign or twelfth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.sp_12th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -66,13 +66,13 @@
       </tr>
       {% endif %}
     </table>
-    <p style="font-size: 10.5pt; line-height: 1.7;">{{ locale.sp_12th_desc }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7;">{{ locale.sp_12th_desc }}</p>
   </div>
   {% endif %}
 
   {% if fifth_sign or fifth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.sp_5th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
@@ -94,7 +94,7 @@
 
   {% if jupiter %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.sp_jupiter_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -108,14 +108,14 @@
       </tr>
     </table>
     {% if jupiter_report %}
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ jupiter_report }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ jupiter_report }}</p>
     {% endif %}
   </div>
   {% endif %}
 
   {% if ketu %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 13pt; color: #8B0000; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.sp_ketu_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -129,7 +129,7 @@
       </tr>
     </table>
     {% if ketu_report %}
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ketu_report }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ketu_report }}</p>
     {% endif %}
   </div>
   {% endif %}
@@ -144,10 +144,10 @@
   </div>
   {% if ak_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.sp_ak_effect }}
     </h4>
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ ak_report }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ak_report }}</p>
   </div>
   {% endif %}
   {% endif %}
@@ -159,7 +159,7 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.sp_yogas_title }}</h2>
 
-  <p style="font-size: 11pt; line-height: 1.7; margin-bottom: 5mm;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm;">
     {{ locale.sp_yogas_intro }}
   </p>
 
@@ -187,7 +187,7 @@
 {% if d20_houses or d20_image %}
 <div class="section-page">
   <h2 class="section-header">{{ locale.sp_d20_title }}</h2>
-  <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 4mm;">{{ locale.sp_d20_desc }}</p>
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 4mm;">{{ locale.sp_d20_desc }}</p>
   <div class="chart-container">
     {% if d20_houses %}
     {{ nic.north_indian_chart(d20_houses, lang, 300) }}

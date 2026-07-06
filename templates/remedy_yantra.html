@@ -1,4 +1,4 @@
-<div class="section-page">
+<div class="section-page section-flow">
   <h2 class="section-header">{{ locale.ry_title }}</h2>
   <p class="section-desc">{{ locale.ry_desc }}</p>
 
@@ -18,22 +18,14 @@
       </tr>
       <tr>
         <td>{{ locale.ry_reason_label }}</td>
-        <td>
-          {% if reason == 'weak' %}
-            {{ planet }} is debilitated in your chart — this yantra helps strengthen its energy
-          {% elif reason == 'afflicted' %}
-            {{ planet }} is afflicted in your chart — this yantra helps balance its influence
-          {% else %}
-            {{ planet }} is your strongest planet — this yantra amplifies its blessings
-          {% endif %}
-        </td>
+        <td>{{ reason_text }}</td>
       </tr>
     </table>
   </div>
 
   {% if narrative %}
   <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
       {{ narrative }}
     </p>
   </div>

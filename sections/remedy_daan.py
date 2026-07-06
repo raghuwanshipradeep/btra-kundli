@@ -5,7 +5,9 @@ from typing import TYPE_CHECKING
 
 from sections import LOCALES, make_env
 from sections.dignity import DEBILITATION, OWN_SIGNS, EXALTATION, MOOLATRIKONA
-from sections.remedy_constants import PLANET_DONATIONS, BEHAVIORAL_REMEDIES
+from sections.remedy_constants import (
+    PLANET_DONATIONS, BEHAVIORAL_REMEDIES, PLANET_DONATIONS_HI, BEHAVIORAL_REMEDIES_HI,
+)
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -112,6 +114,8 @@ def render_remedy_daan(data: KundliData, lang: str = "en") -> str | None:
         return None
 
     dosha_map = _build_dosha_afflictions(data)
+    donations = PLANET_DONATIONS_HI if lang == "hi" else PLANET_DONATIONS
+    behavioral_map = BEHAVIORAL_REMEDIES_HI if lang == "hi" else BEHAVIORAL_REMEDIES
     weak_planets = []
     for p in data.planets:
         if p.name == "Ascendant" or p.name not in PLANET_DONATIONS:
@@ -137,7 +141,7 @@ def render_remedy_daan(data: KundliData, lang: str = "en") -> str | None:
         if lang == "hi":
             unique_reasons = [REASON_LABELS_HI.get(r, r) for r in unique_reasons]
 
-        donation = PLANET_DONATIONS[p.name]
+        donation = donations[p.name]
         dignity = _get_dignity(p.name, p.sign)
         weak_planets.append({
             "name": p.name,
@@ -148,7 +152,7 @@ def render_remedy_daan(data: KundliData, lang: str = "en") -> str | None:
             "item": donation["item"],
             "day": donation["day"],
             "metal": donation["metal"],
-            "behavioral": BEHAVIORAL_REMEDIES.get(p.name, ""),
+            "behavioral": behavioral_map.get(p.name, ""),
         })
 
     locale = LOCALES.get(lang, LOCALES["en"])

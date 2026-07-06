@@ -1,0 +1,35 @@
+{# Shared remedy block. Expects `remedies` (list of bundles from
+   life_area_remedies.build_area_remedies) and `locale` in context. #}
+{% if remedies %}
+<div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #8B0000;">
+  <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 1mm;">
+    {{ locale.ar_remedies_title }}
+  </h4>
+  <p style="font-size: 9.5pt; color: #666; margin-bottom: 3mm;">{{ locale.ar_intro }}</p>
+
+  {% for r in remedies %}
+  <div class="dosha-card" style="margin-top: 3mm;">
+    <h4>
+      {{ locale.ar_for }} {{ locale.planet_names.get(r.planet, r.planet) }}
+      {% if r.priority %}
+        <span style="font-size: 8pt; color: #B71C1C; font-weight: 700;">• {{ locale.ar_priority }}</span>
+      {% endif %}
+    </h4>
+    <table class="kv-table" style="font-size: 9.5pt; margin-top: 2mm;">
+      {% if r.mantra %}
+      <tr><td style="width: 28%;">{{ locale.ar_mantra }}</td><td>{{ r.mantra }}</td></tr>
+      {% endif %}
+      {% if r.gemstone %}
+      <tr><td>{{ locale.ar_gemstone }}</td><td>{{ r.gemstone }}</td></tr>
+      {% endif %}
+      {% if r.donation_item %}
+      <tr><td>{{ locale.ar_donation }}</td><td>{{ r.donation_item }}{% if r.donation_day %} — {{ r.donation_day }}{% endif %}</td></tr>
+      {% endif %}
+      {% if r.behavioral %}
+      <tr><td>{{ locale.ar_practice }}</td><td>{{ r.behavioral }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

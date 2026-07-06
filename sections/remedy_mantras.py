@@ -10,6 +10,8 @@ from sections.remedy_constants import (
     PLANET_MANTRAS_MEANING,
     SIGN_LORDS,
     TWELFTH_LORD_ISHTADEVATA,
+    DEITY_HI,
+    SHLOKA_HI,
 )
 
 if TYPE_CHECKING:
@@ -43,19 +45,23 @@ def render_remedy_mantras(data: KundliData, lang: str = "en") -> str | None:
         if pname not in PLANET_MANTRAS:
             continue
         info = PLANET_MANTRAS[pname]
+        deity = info["deity"]
         mantra_rows.append({
             "planet": pname,
             "devanagari": PLANET_MANTRAS_DEVANAGARI.get(pname, ""),
             "transliteration": info["mantra"],
             "meaning": PLANET_MANTRAS_MEANING.get(pname, ""),
             "count": info["count"],
-            "deity": info["deity"],
+            "deity": DEITY_HI.get(deity, deity) if lang == "hi" else deity,
         })
 
     twelfth_lord = _get_house_lord(data.houses, 12)
     ishta_info = TWELFTH_LORD_ISHTADEVATA.get(twelfth_lord, {})
     ishta_devata = ishta_info.get("deity", "")
     ishta_shloka = ishta_info.get("shloka", "")
+    if lang == "hi":
+        ishta_devata = DEITY_HI.get(ishta_devata, ishta_devata)
+        ishta_shloka = SHLOKA_HI.get(ishta_shloka, ishta_shloka)
 
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()

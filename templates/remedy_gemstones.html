@@ -1,4 +1,4 @@
-<div class="section-page">
+<div class="section-page section-flow">
   <h2 class="section-header">{{ locale.rg_title }}</h2>
   <p class="section-desc">{{ locale.rg_desc }}</p>
 
@@ -10,7 +10,7 @@
     <table class="kv-table">
       <tr>
         <td>{{ locale.rg_name_col }}</td>
-        <td><strong>{{ gem.name }}</strong>{% if gem.hindi_name %} ({{ gem.hindi_name }}){% endif %}</td>
+        <td>{% if lang == 'hi' and gem.hindi_name %}<strong>{{ gem.hindi_name }}</strong> ({{ gem.name }}){% else %}<strong>{{ gem.name }}</strong>{% if gem.hindi_name %} ({{ gem.hindi_name }}){% endif %}{% endif %}</td>
       </tr>
       <tr>
         <td>{{ locale.rg_planet_col }}</td>
@@ -32,7 +32,7 @@
 
     {% if gem.narrative %}
     <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-top: 3mm;">
-      <p style="font-size: 10pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
+      <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
         {{ gem.narrative }}
       </p>
     </div>

@@ -46,9 +46,23 @@ class Settings(BaseSettings):
     generation_timeout_seconds: int = 600
     admin_key: str = ""
 
+    # Post-generation filler images: overlay a promotional image into any page
+    # (after filler_skip_pages) whose bottom empty space exceeds filler_gap_threshold.
+    filler_images_enabled: bool = True
+    filler_gap_threshold: float = 0.40
+    filler_skip_pages: int = 15
+
     # Pabbly Connect webhook — POST a payment-success payload for downstream
     # automation (WhatsApp, CRM, sheets). Empty = integration disabled.
     pabbly_webhook_url: str = ""
+
+    # Supabase (Postgres) order/payment tracking. Best-effort audit layer — a
+    # failure here never blocks payment or PDF generation. Disabled unless both
+    # the URL and the service_role key are set. The service_role key bypasses
+    # RLS and must stay server-side only — never expose it to the frontend.
+    supabase_url: str = ""            # https://<ref>.supabase.co
+    supabase_service_key: str = ""    # service_role secret
+    supabase_table: str = "kundli_orders"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 

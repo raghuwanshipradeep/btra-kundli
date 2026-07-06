@@ -6,7 +6,7 @@ import re
 from typing import TYPE_CHECKING
 
 
-from sections import LOCALES, make_env
+from sections import LOCALES, make_env, planet_to_en
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -80,23 +80,27 @@ def render_mahadasha_journey(data: KundliData, lang: str = "en") -> str | None:
 
     current_planet = None
     if data.current_vdasha and data.current_vdasha.major:
-        current_planet = data.current_vdasha.major.planet
+        current_planet = planet_to_en(data.current_vdasha.major.planet)
 
     journey_entries = []
     for dasha in data.major_vdasha:
-        p = planet_map.get(dasha.planet)
-        narr_key = f"mahadasha_journey_{dasha.planet}"
+        # major_vdasha planet names are NOT normalized at fetch time, so in Hindi
+        # reports dasha.planet is Devanagari (e.g. "चन्द्र"); normalize to the
+        # English canonical so it matches planet_map (English) and the narrative key.
+        planet_en = planet_to_en(dasha.planet)
+        p = planet_map.get(planet_en)
+        narr_key = f"mahadasha_journey_{planet_en}"
         raw_narrative = data.narratives.get(narr_key, "") if data.narratives else ""
         parsed = _parse_journey_narrative(raw_narrative)
 
         journey_entries.append({
-            "planet": dasha.planet,
-            "planet_display": locale.get("planet_names", {}).get(dasha.planet, dasha.planet),
+            "planet": planet_en,
+            "planet_display": locale.get("planet_names", {}).get(planet_en, dasha.planet),
             "sign": locale.get("sign_names", {}).get(p.sign, p.sign) if p else "—",
             "house": p.house if p else "—",
             "start": dasha.start,
             "end": dasha.end,
-            "is_current": dasha.planet == current_planet,
+            "is_current": planet_en == current_planet,
             "experience": parsed.get("experience", []),
             "avoid": parsed.get("avoid", []),
             "fallback_text": parsed.get("fallback_text", ""),

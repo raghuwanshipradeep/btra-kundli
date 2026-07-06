@@ -1013,6 +1013,10 @@ class AstrologyAPIClient:
             match_detailed_report=safe(results[9]),
         )
 
+    async def _skip(self) -> None:
+        """Placeholder for a disabled fetch — keeps gather positions stable, makes no API call."""
+        return None
+
     async def fetch_all(self, request: KundliRequest) -> KundliData:
         payload = self._make_payload(request)
         payload_with_ayan = {**payload, "ayanamsha": "LAHIRI"}
@@ -1032,7 +1036,7 @@ class AstrologyAPIClient:
             self.get_panchang(payload_with_ayan),              # 6
             self.get_current_vdasha(payload),               # 7
             self.get_major_vdasha(payload),                 # 8
-            self.get_kp_birth_chart(payload),               # 9
+            self._skip(),                                   # 9 (KP removed)
             self.get_sarvashtak(payload),                   # 10
             self.get_ayanamsha(payload),                    # 11
             self.get_astro_details(payload_with_ayan),      # 12
@@ -1067,13 +1071,13 @@ class AstrologyAPIClient:
             self.get_varshaphal_saham_points(varshaphal_payload),   # 41
             self.get_varshaphal_yoga(varshaphal_payload),           # 42
             self.get_current_vdasha_all(payload_with_ayan),        # 43
-            self.get_kp_planets(payload_with_ayan),         # 44
-            self.get_kp_house_cusps(payload_with_ayan),     # 45
-            self.get_kp_house_significator(payload_with_ayan),     # 46
-            self.get_kp_planet_significator(payload_with_ayan),    # 47
+            self._skip(),                                   # 44 (KP removed)
+            self._skip(),                                   # 45 (KP removed)
+            self._skip(),                                   # 46 (KP removed)
+            self._skip(),                                   # 47 (KP removed)
             self.get_major_yogini_dasha(payload_with_ayan),        # 48
             self.get_current_yogini_dasha(payload_with_ayan),      # 49
-            self.get_sub_yogini_dasha(payload_with_ayan),          # 50
+            self._skip(),                                          # 50 (Upa/Sub Yogini Dasha removed)
             self.get_basic_panchang(payload),                       # 51
             self.get_basic_panchang_sunrise(payload),               # 52
             self.get_advanced_panchang_sunrise(payload),            # 53
@@ -1098,11 +1102,11 @@ class AstrologyAPIClient:
             self.get_lalkitab_planets(payload_with_ayan),          # 69
             self.get_lalkitab_houses(payload_with_ayan),           # 70
             self.get_lalkitab_debts(payload_with_ayan),            # 71
-            # --- New: KP Extended ---
-            self.get_kp_horoscope(payload_with_ayan),              # 72
-            # --- New: Biorhythm ---
-            self.get_biorhythm(payload_with_ayan),                 # 73
-            self.get_moon_biorhythm(payload_with_ayan),            # 74
+            # --- KP Extended (removed) ---
+            self._skip(),                                          # 72 (KP removed)
+            # --- Biorhythm (removed) ---
+            self._skip(),                                          # 73 (Biorhythm removed)
+            self._skip(),                                          # 74 (Moon Biorhythm removed)
             return_exceptions=True,
         )
 

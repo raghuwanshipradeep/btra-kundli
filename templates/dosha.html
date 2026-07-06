@@ -1,23 +1,7 @@
+{# Render a single scalar value (bool/number/string) for the summary table cell. #}
 {% macro render_value(val) %}
   {% if val is none or val == "" %}
     —
-  {% elif val is mapping %}
-    <table class="kv-table">
-      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
-      <tr>
-        <td>{{ k | humanize_key(lang) }}</td>
-        <td>{{ render_value(v) }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  {% elif val is iterable and val is not string %}
-    {% for item in val %}
-      {% if item is mapping %}
-        {{ render_value(item) }}
-      {% else %}
-        <span>{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}</span>{% if not loop.last %}, {% endif %}
-      {% endif %}
-    {% endfor %}
   {% elif val is sameas true %}
     {{ locale.get('yes', 'Yes') }}
   {% elif val is sameas false %}
@@ -29,43 +13,59 @@
   {% endif %}
 {% endmacro %}
 
+{# Long-form text / rules rendered as flowing "life-report" blocks (label + paragraph)
+   rather than cramped table cells, so descriptions fill the page and page-break cleanly. #}
+{% macro render_report(val) %}
+  {% if val is none or val == "" %}
+    <div class="report-field-text">&mdash;</div>
+  {% elif val is mapping %}
+    {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
+      {% if v is mapping %}
+        <div class="report-field">
+          <div class="report-field-label">{{ k | humanize_key(lang) }}</div>
+        </div>
+        {{ render_report(v) }}
+      {% else %}
+        <div class="report-field">
+          <div class="report-field-label">{{ k | humanize_key(lang) }}</div>
+          <div class="report-field-text">
+            {% if v is iterable and v is not string %}
+              {% for item in v %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
+            {% else %}
+              {% if lang == "hi" %}{{ v | to_hindi_value(lang) }}{% else %}{{ v }}{% endif %}
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% elif val is iterable and val is not string %}
+    <div class="report-field-text">
+      {% for item in val %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
+    </div>
+  {% else %}
+    <div class="report-field-text">{% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val }}{% endif %}</div>
+  {% endif %}
+{% endmacro %}
+
 <div class="section-page">
   <h2 class="section-header">{{ locale.dosha_title }}</h2>
 
-  {% if simple_manglik %}
+  {% for s in sections %}
   <div class="dosha-card">
-    <h3 class="sub-header">{{ locale.simple_manglik_title }}</h3>
-    {{ render_value(simple_manglik) }}
+    <h3 class="sub-header">{{ s.title }}</h3>
+    {% if s.summary %}
+    <table class="kv-table" style="margin-bottom: 3mm;">
+      {% for k, v in s.summary.items() %}
+      <tr>
+        <td>{{ k | humanize_key(lang) }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+    {% if s.narrative %}{{ render_report(s.narrative) }}{% endif %}
   </div>
-  {% endif %}
-
-  {% if manglik %}
-  <div class="dosha-card">
-    <h3 class="sub-header">{{ locale.manglik_title }}</h3>
-    {{ render_value(manglik) }}
-  </div>
-  {% endif %}
-
-  {% if kalsarpa %}
-  <div class="dosha-card">
-    <h3 class="sub-header">{{ locale.kalsarpa_title }}</h3>
-    {{ render_value(kalsarpa) }}
-  </div>
-  {% endif %}
-
-  {% if sadhesati_status %}
-  <div class="dosha-card">
-    <h3 class="sub-header">{{ locale.sadhesati_status_title }}</h3>
-    {{ render_value(sadhesati_status) }}
-  </div>
-  {% endif %}
-
-  {% if pitra_dosha %}
-  <div class="dosha-card">
-    <h3 class="sub-header">{{ locale.pitra_dosha_title }}</h3>
-    {{ render_value(pitra_dosha) }}
-  </div>
-  {% endif %}
+  {% endfor %}
 
   {% include "partials/section_disclaimer.html" %}
 </div>

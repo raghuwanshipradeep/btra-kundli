@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 
 from sections import LOCALES, make_env
-from sections.remedy_constants import RUDRAKSHA_MEANINGS
+from sections.remedy_constants import RUDRAKSHA_MEANINGS, DEITY_HI, RUDRAKSHA_BENEFIT_HI
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -29,11 +29,16 @@ def render_remedy_rudraksha(data: KundliData, lang: str = "en") -> str | None:
             continue
         mukhi_int = int(mukhi) if not isinstance(mukhi, int) else mukhi
         meaning = RUDRAKSHA_MEANINGS.get(mukhi_int, {})
+        deity = meaning.get("deity", "")
+        benefit = item.get("benefit", meaning.get("benefit", ""))
+        if lang == "hi":
+            deity = DEITY_HI.get(deity, deity)
+            benefit = RUDRAKSHA_BENEFIT_HI.get(mukhi_int, benefit)
         rudraksha_list.append({
             "mukhi": mukhi_int,
             "planet": item.get("planet", meaning.get("planet", "")),
-            "benefit": item.get("benefit", meaning.get("benefit", "")),
-            "deity": meaning.get("deity", ""),
+            "benefit": benefit,
+            "deity": deity,
         })
 
     if not rudraksha_list:
@@ -42,6 +47,12 @@ def render_remedy_rudraksha(data: KundliData, lang: str = "en") -> str | None:
     puja_list = []
     if data.puja_suggestion and isinstance(data.puja_suggestion, dict):
         puja_list = data.puja_suggestion.get("puja_list", [])
+        if lang == "hi":
+            # Localize the deity name; puja_name/benefit are free API text left as-is.
+            puja_list = [
+                {**pj, "deity": DEITY_HI.get(pj.get("deity", ""), pj.get("deity", ""))}
+                for pj in puja_list if isinstance(pj, dict)
+            ]
 
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()

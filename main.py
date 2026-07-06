@@ -23,6 +23,7 @@ from pdf_generator import PDFGenerator
 from drive_uploader import upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
 from pabbly_notifier import notify_payment_success
+from supabase_repo import record_order_created, record_order_paid, record_job_status
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -128,6 +129,12 @@ def _start_fulfillment(
         payment_id=payment_id,
     )
     background_tasks.add_task(
+        record_order_paid,
+        request=request,
+        order_id=order_id,
+        payment_id=payment_id,
+    )
+    background_tasks.add_task(
         _generate_and_archive,
         request=request,
         order_id=order_id,
@@ -185,11 +192,12 @@ async def _generate_and_archive(
 ):
     start = time.time()
     _set_job_state(order_id, "generating", customer=request.name, lang=request.lang)
+    await record_job_status(request, order_id, "generating")
     logger.info("BG START: order=%s customer=%s", order_id, request.name)
 
     try:
         pdf_bytes, filename = await asyncio.wait_for(
-            _build_kundli_pdf(request),
+            _build_kundli_pdf(request, order_id),
             timeout=settings.generation_timeout_seconds,
         )
         logger.info(
@@ -206,12 +214,22 @@ async def _generate_and_archive(
             customer=request.name,
             elapsed_s=round(time.time() - start, 1),
         )
+        await record_job_status(
+            request, order_id, "timeout",
+            error_detail=f"generation timeout (>{settings.generation_timeout_seconds}s)",
+            elapsed_s=round(time.time() - start, 1),
+        )
         return
     except Exception:
         logger.exception("BG PDF FAILED: order=%s customer=%s", order_id, request.name)
         _set_job_state(
             order_id, "pdf_failed",
             customer=request.name,
+            elapsed_s=round(time.time() - start, 1),
+        )
+        await record_job_status(
+            request, order_id, "pdf_failed",
+            error_detail="PDF generation failed",
             elapsed_s=round(time.time() - start, 1),
         )
         return
@@ -238,6 +256,11 @@ async def _generate_and_archive(
             recovery_path=recovery_path,
             elapsed_s=round(time.time() - start, 1),
         )
+        await record_job_status(
+            request, order_id, "drive_failed",
+            error_detail=f"Drive upload failed; local recovery: {recovery_path or 'NOT SAVED'}",
+            elapsed_s=round(time.time() - start, 1),
+        )
         return
 
     if drive_result is None:
@@ -245,6 +268,10 @@ async def _generate_and_archive(
             order_id, "generated_no_archive",
             customer=request.name,
             filename=filename,
+            elapsed_s=round(time.time() - start, 1),
+        )
+        await record_job_status(
+            request, order_id, "generated_no_archive",
             elapsed_s=round(time.time() - start, 1),
         )
         logger.info("BG COMPLETE (no archive): order=%s customer=%s", order_id, request.name)
@@ -258,6 +285,12 @@ async def _generate_and_archive(
         filename=filename,
         elapsed_s=round(time.time() - start, 1),
     )
+    await record_job_status(
+        request, order_id, "archived",
+        drive_file_id=drive_result.get("id"),
+        drive_link=drive_result.get("webViewLink", ""),
+        elapsed_s=round(time.time() - start, 1),
+    )
     logger.info(
         "BG COMPLETE: order=%s customer=%s elapsed=%.1fs drive_link=%s",
         order_id, request.name, time.time() - start, drive_result.get("webViewLink"),
@@ -267,7 +300,7 @@ async def _generate_and_archive(
 # ---------------------------------------------------------------------------
 # Reusable PDF pipeline
 # ---------------------------------------------------------------------------
-async def _build_kundli_pdf(request: KundliRequest) -> tuple[bytes, str]:
+async def _build_kundli_pdf(request: KundliRequest, order_id: str = "") -> tuple[bytes, str]:
     """Run the full pipeline: fetch astrology data, narrate, translate, render PDF.
     Returns (pdf_bytes, filename). This is where the PAID API calls happen.
     """
@@ -298,21 +331,23 @@ async def _build_kundli_pdf(request: KundliRequest) -> tuple[bytes, str]:
         logger.exception("PDF generation failed")
         raise HTTPException(status_code=500, detail="PDF generation failed")
 
-    filename = _build_filename(request)
+    filename = _build_filename(request, order_id)
     return pdf_bytes, filename
 
 
-def _build_filename(request: KundliRequest) -> str:
-    """Build the archive filename as First##Last##Phone##Email.pdf.
+def _build_filename(request: KundliRequest, order_id: str = "") -> str:
+    """Build the archive filename as First##Phone##Email##OrderId.pdf.
 
-    Name words are joined with '##' (e.g. "Pradeep Raghuwanshi" -> "Pradeep##Raghuwanshi"),
-    then phone and email are appended with '##'. Empty fields are skipped.
+    Only the first name word is used (e.g. "Pradeep Raghuwanshi" -> "Pradeep"),
+    then phone, email, and the order id are appended with '##'. Empty fields
+    are skipped (e.g. the free/dev flow has no order id).
     """
     def _clean(value: str) -> str:
         return "".join(c for c in value if c.isalnum() or c in "@._-").strip()
 
     name_parts = [_clean(w) for w in request.name.split() if _clean(w)]
-    parts = name_parts + [_clean(request.phone), _clean(request.email)]
+    first_name = name_parts[0] if name_parts else ""
+    parts = [first_name, _clean(request.phone), _clean(request.email), _clean(order_id)]
     base = "##".join(p for p in parts if p) or "kundli"
     return f"{base}.pdf"
 
@@ -406,7 +441,7 @@ async def payment_config() -> dict:
 
 
 @app.post("/create-order")
-async def create_order(request: KundliRequest) -> dict:
+async def create_order(request: KundliRequest, background_tasks: BackgroundTasks) -> dict:
     if not request.lat or not request.lon:
         raise HTTPException(status_code=400, detail="Place not selected")
 
@@ -426,6 +461,14 @@ async def create_order(request: KundliRequest) -> dict:
         raise HTTPException(status_code=502, detail="Could not create payment order")
 
     _store_order(order["id"], request)
+
+    # Durable audit record (best-effort; runs after the response, never blocks checkout).
+    background_tasks.add_task(
+        record_order_created,
+        request=request,
+        order_id=order["id"],
+        amount_paise=settings.kundli_price_paise,
+    )
 
     return {
         "order_id": order["id"],

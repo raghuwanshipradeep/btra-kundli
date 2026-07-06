@@ -48,22 +48,32 @@
 }
 
 :root {
-    --saffron: #FF6B2B;
-    --maroon: #8B0000;
-    --gold: #D4AF37;
+    --saffron: #E8961E;          /* was #FF6B2B — shifted orange→amber to match gold gradient */
+    --maroon: #8B0000;           /* dark text anchor on the gold gradient */
+    --gold: #D4AF37;             /* accent on cream body */
     --cream: #FFFDF5;
     --cream-alt: #FFF5E6;
     --charcoal: #2C2C2C;
-    --table-header-bg: #2C1A0E;
+    --table-header-bg: #2C1A0E;  /* dark table header stays for legibility */
     --table-header-text: #F5E6C8;
     --benefic: #2E7D32;
     --malefic: #B71C1C;
     --kendra-gold: #F9A825;
+
+    /* Golden gradient theme (from reference Frame 4.png) */
+    --grad-top: #F5B842;
+    --grad-bottom: #FDCA6B;
+    --brand-gradient: linear-gradient(180deg, var(--grad-top) 0%, var(--grad-bottom) 100%);
+    --on-gradient: #4A2208;      /* deep brown body text used on the gold gradient */
 }
 
 @page {
     size: A4;
-    margin: 12mm 12mm;
+    /* No top/side margins: heading sits flush at the top and the gold gradient
+       bleeds to every edge. A slim bottom strip is kept only so the page
+       number + branded footer (margin boxes) aren't clipped at the paper edge. */
+    margin: 0 0 9mm 0;
+    background: linear-gradient(180deg, #E0B058 0%, #EED195 100%);
     @bottom-center {
         content: counter(page);
         font-family: 'Crimson Pro', serif;
@@ -74,6 +84,7 @@
 
 @page cover {
     margin: 0;
+    background: linear-gradient(180deg, #E0B058 0%, #EED195 100%);
     @bottom-center { content: none; }
 }
 
@@ -108,7 +119,7 @@ body {
     font-family: 'Crimson Pro', serif;
     font-size: 11pt;
     color: var(--charcoal);
-    background: var(--cream);
+    background: transparent;
     line-height: 1.5;
 }
 
@@ -133,6 +144,13 @@ body {
     overflow: visible;
 }
 
+
+/* Front-matter / TOC carry their own logo — no extra bottom reserve. */
+.authors-note-page,
+.toc-page {
+    padding-bottom: 5mm;
+}
+
 .section-page::before {
     content: "";
     position: absolute;
@@ -145,17 +163,52 @@ body {
     pointer-events: none;
 }
 
+/* Flowing sections (e.g. the remedy journey): sized to their content and NOT
+   forced onto a fresh page, so consecutive sections stack on the same page with
+   a small top-margin gap instead of leaving large blank space. The top margin is
+   dropped automatically when a section lands at the top of a page. */
+.section-flow {
+    page-break-before: auto;
+    min-height: 0;
+    margin-top: 6mm;
+}
+
+/* Author's Note: golden page tint to match the reference design. */
+.authors-note-page {
+    background: transparent;
+}
+
+/* Front-matter / TOC carry their own logo — no extra bottom reserve. */
+.authors-note-page,
+.toc-page {
+    padding-bottom: 5mm;
+    min-height: 100%;
+}
+
 /* ===== COVER PAGE ===== */
 .cover-page {
     page: cover;
     width: 210mm;
     height: 297mm;
-    background: linear-gradient(160deg, #1a0a00 0%, #2C1A0E 30%, #3d1a00 60%, #1a0a00 100%);
-    color: #F5E6C8;
+    background: transparent;
+    color: var(--on-gradient);
     display: table;
     text-align: center;
     position: relative;
     overflow: hidden;
+}
+
+.cover-page::before {
+    content: "";
+    position: absolute;
+    top: 6mm;
+    left: 6mm;
+    right: 6mm;
+    bottom: 6mm;
+    border: 2px solid var(--gold);
+    border-radius: 3mm;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .cover-mandala {
@@ -165,20 +218,20 @@ body {
     transform: translate(-50%, -50%);
     width: 500px;
     height: 500px;
-    opacity: 0.06;
+    opacity: 0.10;
 }
 
 .cover-content {
     display: table-cell;
     vertical-align: middle;
-    padding: 30mm 25mm;
+    padding: 16mm 18mm 40mm;
     position: relative;
     z-index: 1;
 }
 
 .cover-om {
     font-size: 48pt;
-    color: var(--gold);
+    color: #552F02;
     margin-bottom: 5mm;
     font-family: 'Noto Sans Devanagari', sans-serif;
 }
@@ -187,7 +240,7 @@ body {
     font-family: 'Playfair Display', serif;
     font-size: 36pt;
     font-weight: 900;
-    color: var(--gold);
+    color: #552F02;
     margin-bottom: 3mm;
     letter-spacing: 2px;
 }
@@ -195,19 +248,133 @@ body {
 .cover-subtitle {
     font-family: 'Noto Sans Devanagari', sans-serif;
     font-size: 18pt;
-    color: #D4AF37;
-    margin-bottom: 15mm;
+    color: #7A2E12;
+    margin-bottom: 8mm;
     opacity: 0.85;
+}
+
+/* ===== COVER BIRTH DETAILS BOXES ===== */
+.cover-bd-card {
+    max-width: 150mm;
+    margin: 8mm auto 0;
+    text-align: left;
+}
+
+.cover-bd-header {
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
+    font-size: 18pt;
+    font-weight: 700;
+    color: #F8E9C8;
+    background: #542F01;
+    padding: 3.5mm 6mm;
+    border-radius: 2mm 2mm 0 0;
+    text-align: left;
+}
+
+.cover-bd-body {
+    padding-top: 3mm;
+}
+
+.cover-bd-row {
+    background: #FDEED6;
+    border-radius: 2mm;
+    padding: 3mm 6mm;
+    margin-bottom: 2mm;
+    font-size: 12pt;
+}
+
+.cover-bd-label {
+    display: inline-block;
+    width: 38%;
+    color: #793805;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.cover-bd-value {
+    display: inline-block;
+    width: 60%;
+    color: #8B5A1F;
+    vertical-align: middle;
+}
+
+[lang="hi"] .cover-bd-header,
+[lang="hi"] .cover-bd-label {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
+/* ===== TABLE OF CONTENTS BOXES (matches cover Birth Details) ===== */
+.toc-page {
+    background: transparent;
+}
+
+.toc-header {
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
+    font-size: 18pt;
+    font-weight: 700;
+    color: #F8E9C8;
+    background: #542F01;
+    padding: 3mm 6mm;
+    border-radius: 2mm;
+    text-align: left;
+    margin-bottom: 3mm;
+}
+
+.toc-row {
+    background: #FDEED6;
+    border-radius: 2mm;
+    padding: 2.2mm 6mm;
+    margin-bottom: 1.5mm;
+    font-size: 12pt;
+    line-height: 1.4;
+}
+
+.toc-num {
+    display: inline-block;
+    width: 7%;
+    color: #793805;
+    font-weight: 700;
+    vertical-align: top;
+}
+
+.toc-name {
+    display: inline-block;
+    width: 31%;
+    color: #793805;
+    font-weight: 700;
+    vertical-align: top;
+}
+
+.toc-desc {
+    display: inline-block;
+    width: 60%;
+    color: #8B5A1F;
+    vertical-align: top;
+}
+
+[lang="hi"] .toc-header,
+[lang="hi"] .toc-num,
+[lang="hi"] .toc-name {
+    font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
+.cover-logo {
+    position: absolute;
+    bottom: 10mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 1;
 }
 
 .cover-name {
     font-family: 'Playfair Display', serif;
     font-size: 28pt;
     font-weight: 700;
-    color: #FFFFFF;
+    color: var(--maroon);
     margin-bottom: 10mm;
-    border-bottom: 2px solid var(--gold);
-    border-top: 2px solid var(--gold);
+    border-bottom: 2px solid var(--maroon);
+    border-top: 2px solid var(--maroon);
     padding: 5mm 0;
     display: inline-block;
 }
@@ -215,11 +382,11 @@ body {
 .cover-details {
     font-size: 13pt;
     line-height: 2.2;
-    color: #F5E6C8;
+    color: var(--on-gradient);
 }
 
 .cover-details .label {
-    color: var(--gold);
+    color: var(--maroon);
     font-weight: 600;
 }
 
@@ -231,11 +398,11 @@ body {
     display: inline-block;
     padding: 3mm 6mm;
     margin: 2mm 3mm;
-    border: 1.5px solid var(--gold);
+    border: 1.5px solid var(--maroon);
     border-radius: 3mm;
     font-size: 11pt;
-    color: var(--gold);
-    background: rgba(212, 175, 55, 0.1);
+    color: var(--maroon);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .badge .badge-label {
@@ -243,7 +410,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     display: block;
-    color: #C4A04E;
+    color: #7A2E12;
 }
 
 .cover-footer {
@@ -253,41 +420,45 @@ body {
     right: 0;
     text-align: center;
     font-size: 9pt;
-    color: #8B7355;
+    color: #7A2E12;
 }
 
 /* ===== SECTION HEADERS ===== */
 .section-header {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
     font-size: 18pt;
     font-weight: 700;
-    color: var(--maroon);
+    color: #F8E9C8;
     margin-bottom: 4mm;
-    padding-bottom: 3mm;
-    border-bottom: 2px solid var(--gold);
+    padding: 3.5mm 6mm;
+    background: #542F01;
+    border-radius: 2mm;
+    /* Never leave a section title alone at the bottom of a page. */
+    page-break-after: avoid;
 }
 
 .section-header .icon {
     margin-right: 3mm;
-    color: var(--saffron);
+    color: #F8E9C8;
 }
 
 .section-subheader {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
     font-size: 14pt;
     font-weight: 700;
-    color: var(--charcoal);
+    color: #542F01;
     margin-top: 6mm;
     margin-bottom: 3mm;
 }
 
-/* ===== TABLES ===== */
+/* ===== TABLES — boxed theme is the default for every table ===== */
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0 2mm;
     margin-top: 4mm;
     margin-bottom: 4mm;
-    font-size: 10pt;
+    font-size: 12pt;
     table-layout: fixed;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -300,39 +471,64 @@ tr {
 }
 
 thead th {
-    background-color: var(--table-header-bg);
-    color: var(--table-header-text);
-    padding: 2.5mm 2mm;
+    background-color: #542F01;
+    color: #F8E9C8;
+    padding: 3mm 6mm;
     text-align: left;
     font-weight: 700;
-    font-size: 9pt;
+    font-size: 11pt;
     letter-spacing: 0.3px;
-    border-bottom: 2px solid var(--gold);
+    border-radius: 2mm;
 }
 
 tbody td {
-    padding: 2mm 2mm;
-    border-bottom: 0.5px solid #E0D5C5;
+    background: #FDEED6;
+    border: 0.75px solid #E7C98C;
+    padding: 3mm 6mm;
+    color: #8B5A1F;
     vertical-align: middle;
 }
 
-tbody tr:nth-child(even) {
-    background-color: var(--cream-alt);
+tbody td:first-child {
+    border-radius: 2mm 0 0 2mm;
+    color: #793805;
+    font-weight: 600;
 }
 
-tbody tr:nth-child(odd) {
-    background-color: var(--cream);
+tbody td:last-child {
+    border-radius: 0 2mm 2mm 0;
 }
 
-/* Key-value table */
+/* Key-value table: label column */
 .kv-table {
     table-layout: auto;
 }
 
 .kv-table td:first-child {
-    font-weight: 600;
-    color: var(--maroon);
+    font-weight: 700;
+    color: #793805;
     width: 40%;
+}
+
+/* ===== DENSE NUMERIC GRIDS — keep compact/collapsed (must fit page width) ===== */
+.ashtakvarga-table,
+.planets-table,
+.maitri-table,
+.kp-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.ashtakvarga-table tbody td,
+.planets-table tbody td,
+.maitri-table tbody td,
+.kp-table tbody td {
+    background: var(--cream);
+    border: none;
+    border-bottom: 0.5px solid #E0D5C5;
+    border-radius: 0;
+    padding: 1.5mm 1mm;
+    font-weight: 400;
 }
 
 /* ===== PLANET HIGHLIGHTS ===== */
@@ -370,8 +566,8 @@ tr.trikona td:first-child::after {
 
 /* ===== DASHA ===== */
 .dasha-current-card {
-    background: linear-gradient(135deg, #FF6B2B 0%, #FF8F5E 100%);
-    color: white;
+    background: var(--brand-gradient);
+    color: var(--on-gradient);
     padding: 6mm 8mm;
     border-radius: 3mm;
     margin-bottom: 5mm;
@@ -390,13 +586,12 @@ tr.trikona td:first-child::after {
     opacity: 0.85;
 }
 
-.dasha-current-card table td,
-.dasha-current-card table th {
+.dasha-current-card table td {
     color: var(--charcoal);
 }
 
 .dasha-current-card .section-subheader {
-    color: white;
+    color: var(--maroon);
 }
 
 .dasha-current-card .period-dates {
@@ -713,9 +908,10 @@ tr.active-dasha td {
 }
 
 .report-card h4 {
-    font-family: 'Playfair Display', serif;
-    font-size: 12pt;
-    color: var(--charcoal);
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #542F01;
     margin-bottom: 3mm;
 }
 
@@ -781,39 +977,24 @@ tr.active-dasha td {
     overflow-wrap: break-word;
 }
 
-/* ===== GENERIC KV TABLE (recursive dict rendering) ===== */
-.kv-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10pt;
-    margin-bottom: 2mm;
+/* Life-reports fields: flowing, page-breakable label + paragraph blocks
+   (not table rows) so long narrative text never orphans the section header. */
+.report-field {
+    margin-bottom: 3.5mm;
 }
 
-.kv-table td {
-    padding: 2mm 3mm;
-    border-bottom: 0.5px solid #ddd;
-    vertical-align: top;
-    text-align: left;
+.report-field-label {
+    font-weight: 700;
+    color: #793805;
+    font-size: 12.5pt;
+    margin-bottom: 1mm;
 }
 
-.kv-table td:first-child {
-    font-weight: 600;
-    color: var(--charcoal);
-    width: 35%;
-}
-
-.kv-table td.report-text {
-    font-weight: 400;
-    width: auto;
-}
-
-.kv-table .kv-table {
-    margin: 0;
-    font-size: 9.5pt;
-}
-
-.kv-table .kv-table td {
-    padding: 1mm 2mm;
+.report-field-text {
+    font-size: 12.5pt;
+    line-height: 1.6;
+    color: #3A2410;
+    text-align: justify;
 }
 
 /* ===== PANCHANG EXTENDED SECTIONS ===== */
@@ -827,7 +1008,7 @@ tr.active-dasha td {
 
 /* ===== SECTION DESCRIPTIONS ===== */
 .section-desc {
-    font-size: 10pt;
+    font-size: 12.5pt;
     color: #5a4a2a;
     line-height: 1.5;
     margin: 1mm 0 3mm 0;

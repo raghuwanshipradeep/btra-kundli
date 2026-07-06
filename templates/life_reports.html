@@ -1,37 +1,32 @@
-{% macro render_value(val) %}
+{# Life reports are long-form narrative text. Render each field as a flowing,
+   page-breakable block (label + paragraph) rather than an unbreakable table
+   row, so a long report never orphans the section header on a blank page. #}
+{% macro render_report(val) %}
   {% if val is none or val == "" %}
-    —
+    <div class="report-field-text">&mdash;</div>
   {% elif val is mapping %}
-    <table class="kv-table">
-      {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
-      {% if k in ('report', 'विवरण') %}
-      <tr>
-        <td colspan="2" class="report-text">{{ render_value(v) }}</td>
-      </tr>
+    {% for k, v in val.items() if not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
+      {% if v is mapping %}
+        {{ render_report(v) }}
       {% else %}
-      <tr>
-        <td>{{ k | humanize_key(lang) }}</td>
-        <td>{{ render_value(v) }}</td>
-      </tr>
-      {% endif %}
-      {% endfor %}
-    </table>
-  {% elif val is iterable and val is not string %}
-    {% for item in val %}
-      {% if item is mapping %}
-        {{ render_value(item) }}
-      {% else %}
-        <span>{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}</span>{% if not loop.last %}, {% endif %}
+        <div class="report-field">
+          <div class="report-field-label">{{ k | humanize_key(lang) }}</div>
+          <div class="report-field-text">
+            {% if v is iterable and v is not string %}
+              {% for item in v %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% else %}
+              {% if lang == "hi" %}{{ v | to_hindi_value(lang) }}{% else %}{{ v }}{% endif %}
+            {% endif %}
+          </div>
+        </div>
       {% endif %}
     {% endfor %}
-  {% elif val is sameas true %}
-    {{ locale.get('yes', 'Yes') }}
-  {% elif val is sameas false %}
-    {{ locale.get('no', 'No') }}
-  {% elif val is number and val is not sameas true and val is not sameas false and val % 1 != 0 %}
-    {{ "%.2f"|format(val) }}
+  {% elif val is iterable and val is not string %}
+    <div class="report-field-text">
+      {% for item in val %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+    </div>
   {% else %}
-    {% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | safe_time }}{% endif %}
+    <div class="report-field-text">{% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val }}{% endif %}</div>
   {% endif %}
 {% endmacro %}
 
@@ -40,15 +35,15 @@
 
   {% if ascendant_report %}
   <div class="report-card">
-    <h3 class="sub-header">{{ locale.ascendant_report_title }}</h3>
-    {{ render_value(ascendant_report) }}
+    <h3 class="section-subheader" style="margin-top: 0;">{{ locale.ascendant_report_title }}</h3>
+    {{ render_report(ascendant_report) }}
   </div>
   {% endif %}
 
   {% if nakshatra_report %}
   <div class="report-card">
-    <h3 class="sub-header">{{ locale.nakshatra_report_title }}</h3>
-    {{ render_value(nakshatra_report) }}
+    <h3 class="section-subheader" style="margin-top: 0;">{{ locale.nakshatra_report_title }}</h3>
+    {{ render_report(nakshatra_report) }}
   </div>
   {% endif %}
 </div>

@@ -30,7 +30,8 @@ CHART_ORDER = [
     ("D5", "d5_title", "d5_desc"),
     ("D7", "d7_title", "d7_desc"),
     ("D8", "d8_title", "d8_desc"),
-    ("D9", "d9_title", "d9_desc"),
+    # D9 (Navamsa) is shown earlier, embedded in the panchang page right after the
+    # D1 lagna chart (classic Rasi+Navamsa pairing) — see sections/panchang.py.
     ("D10", "d10_title", "d10_desc"),
     ("D12", "d12_title", "d12_desc"),
     ("D16", "d16_title", "d16_desc"),

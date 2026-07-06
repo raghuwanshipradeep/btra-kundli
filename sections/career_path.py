@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from sections import LOCALES, make_env
 from sections.graha_profile import SIGN_LORDS
+from sections.life_area_remedies import build_area_remedies
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -123,6 +124,7 @@ def render_career_path(data: KundliData, lang: str = "en") -> str | None:
         amatyakaraka=amatyakaraka,
         ak_house_report=ak_house_report,
         ak_rashi_report=ak_rashi_report,
+        remedies=build_area_remedies(data, [tenth_lord, "Sun", "Saturn"], lang),
         narrative=data.narratives.get("career_path", ""),
         locale=locale,
         lang=lang,

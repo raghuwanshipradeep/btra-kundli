@@ -5,12 +5,34 @@ from typing import TYPE_CHECKING
 
 from sections import LOCALES, make_env
 from sections.dignity import DEBILITATION, OWN_SIGNS, EXALTATION, MOOLATRIKONA
-from sections.remedy_constants import PLANET_YANTRAS, YANTRA_DOS, YANTRA_DONTS
+from sections.remedy_constants import (
+    PLANET_YANTRAS, YANTRA_DOS, YANTRA_DONTS,
+    PLANET_YANTRAS_HI, YANTRA_DOS_HI, YANTRA_DONTS_HI,
+)
 
 if TYPE_CHECKING:
     from models import KundliData
 
 DUSTHANA_HOUSES = {6, 8, 12}
+
+DIGNITY_LABELS_HI = {
+    "Exalted": "उच्च", "Debilitated": "नीच", "Moolatrikona": "मूलत्रिकोण",
+    "Own Sign": "स्वराशि", "Normal": "सामान्य",
+}
+
+# Reason sentence per (reason key, language); {p} is the localized planet name.
+REASON_TEMPLATES = {
+    "en": {
+        "weak": "{p} is debilitated in your chart — this yantra helps strengthen its energy",
+        "afflicted": "{p} is afflicted in your chart — this yantra helps balance its influence",
+        "strongest": "{p} is your strongest planet — this yantra amplifies its blessings",
+    },
+    "hi": {
+        "weak": "{p} आपकी कुंडली में नीच है — यह यंत्र इसकी ऊर्जा को मजबूत करने में सहायक है",
+        "afflicted": "{p} आपकी कुंडली में पीड़ित है — यह यंत्र इसके प्रभाव को संतुलित करने में सहायक है",
+        "strongest": "{p} आपका सबसे मजबूत ग्रह है — यह यंत्र इसके आशीर्वाद को बढ़ाता है",
+    },
+}
 
 
 def _get_dignity(name: str, sign: str) -> str:
@@ -69,20 +91,27 @@ def render_remedy_yantra(data: KundliData, lang: str = "en") -> str | None:
         dignity = _get_dignity(target.name, target.sign)
         reason = "strongest"
 
-    yantra_name = PLANET_YANTRAS.get(target.name, "")
-
     locale = LOCALES.get(lang, LOCALES["en"])
+
+    yantra_map = PLANET_YANTRAS_HI if lang == "hi" else PLANET_YANTRAS
+    yantra_name = yantra_map.get(target.name, "")
+
+    planet_display = locale.get("planet_names", {}).get(target.name, target.name)
+    dignity_label = DIGNITY_LABELS_HI.get(dignity, dignity) if lang == "hi" else dignity
+    sign_label = locale.get("sign_names", {}).get(target.sign, target.sign)
+    reason_text = REASON_TEMPLATES.get(lang, REASON_TEMPLATES["en"])[reason].format(p=planet_display)
+
     env = make_env()
     template = env.get_template("remedy_yantra.html")
     return template.render(
         yantra_name=yantra_name,
         planet=target.name,
-        dignity=dignity,
+        dignity=dignity_label,
         house=target.house,
-        sign=target.sign,
-        reason=reason,
-        dos=YANTRA_DOS,
-        donts=YANTRA_DONTS,
+        sign=sign_label,
+        reason_text=reason_text,
+        dos=YANTRA_DOS_HI if lang == "hi" else YANTRA_DOS,
+        donts=YANTRA_DONTS_HI if lang == "hi" else YANTRA_DONTS,
         narrative=data.narratives.get("yantra_guidance", ""),
         locale=locale,
         lang=lang,

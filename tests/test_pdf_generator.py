@@ -58,12 +58,12 @@ TESTABLE_SECTIONS = [
     "remedy_ishta_devata",
     "remedy_yantra",
     "remedy_daan",
-    "dasha_narrative",
     "love_marriage",
     "career_path",
     "rahu_ketu_analysis",
     "spiritual_potential",
     "marriage_timing",
+    "material_comforts",
     "life_forecast",
 ]
 

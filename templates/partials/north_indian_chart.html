@@ -1,7 +1,9 @@
 {# Reusable North Indian (diamond) chart.
    Lines are drawn in SVG; all cell text is rendered as absolutely-positioned
    HTML so WeasyPrint shapes Devanagari correctly and the font stays readable.
-   `houses` items expect: house, sign_name, planets (list), cx, cy (0-400 space). #}
+   Each house shows its rashi number (sign_id 1-12), the conventional North-Indian
+   presentation, instead of the sign name.
+   `houses` items expect: house, sign_id, sign_name, planets (list), cx, cy (0-400 space). #}
 {% macro north_indian_chart(houses, lang, box=350) %}
 <div style="position: relative; width: {{ box }}px; height: {{ box }}px; margin: 0 auto; background: #FFFDF5;">
   <svg viewBox="0 0 400 400" width="{{ box }}" height="{{ box }}"
@@ -19,9 +21,18 @@
   {% for h in houses %}
   <div style="position: absolute; left: {{ (h.cx / 4.0) }}%; top: {{ (h.cy / 4.0) }}%;
               transform: translate(-50%, -50%); width: 80px; text-align: center; line-height: 1.25;">
-    <div style="font-size: 8.5pt; color: #999;">{{ h.sign_name }}</div>
+    <div style="font-size: 11pt; color: #9a9a9a; font-weight: 600;">{{ h.sign_id }}</div>
     {% if h.planets %}
-    <div style="font-size: 9.5pt; font-weight: bold; color: #C9A84C;">{{ h.planets | join(' ') }}</div>
+    <div style="font-size: 9.5pt; font-weight: bold; color: #C9A84C;">
+      {%- for p in h.planets -%}
+        {%- if p is mapping -%}
+          {{ p.label }}<span style="font-size: 6pt; vertical-align: super; color: #B08A3E;">{{ p.deg }}</span>
+        {%- else -%}
+          {{ p }}
+        {%- endif -%}
+        {%- if not loop.last %} {% endif -%}
+      {%- endfor -%}
+    </div>
     {% endif %}
     {% if h.house == 1 %}
     <div style="font-size: 7.5pt; color: #999; font-style: italic;">{% if lang == 'hi' %}लग्न{% else %}Asc{% endif %}</div>

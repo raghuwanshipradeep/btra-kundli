@@ -1,0 +1,11 @@
+<div class="section-page toc-page">
+  <div class="toc-header">{{ locale.fm_toc_title }}</div>
+
+  {% for item in locale.fm_toc_items %}
+  <div class="toc-row">
+    <span class="toc-num">{{ loop.index }}</span><span class="toc-name">{{ item.name }}</span><span class="toc-desc">{{ item.desc }}</span>
+  </div>
+  {% endfor %}
+
+  {% with logo_width='95mm', logo_margin_top='6mm' %}{% include "partials/brand_signature.html" %}{% endwith %}
+</div>

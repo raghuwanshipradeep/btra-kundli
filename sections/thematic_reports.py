@@ -5,6 +5,9 @@ from typing import TYPE_CHECKING
 
 
 from sections import LOCALES, make_env
+from sections.career_path import _get_house_sign
+from sections.life_area_remedies import build_area_remedies
+from sections.remedy_constants import SIGN_LORDS
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -63,11 +66,22 @@ def render_thematic_reports(data: KundliData, lang: str = "en") -> str | None:
         logger.debug("thematic_reports: all theme categories empty (no planet-house report matches)")
         return None
 
+    # Curated remedies for the two domains people most often ask about.
+    lagna_lord = SIGN_LORDS.get(_get_house_sign(data.houses, 1), "")
+    sixth_lord = SIGN_LORDS.get(_get_house_sign(data.houses, 6), "")
+    second_lord = SIGN_LORDS.get(_get_house_sign(data.houses, 2), "")
+    eleventh_lord = SIGN_LORDS.get(_get_house_sign(data.houses, 11), "")
+    area_remedies = {
+        "health": build_area_remedies(data, [lagna_lord, sixth_lord], lang),
+        "finance": build_area_remedies(data, [second_lord, eleventh_lord, "Jupiter"], lang),
+    }
+
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()
     template = env.get_template("thematic_reports.html")
     return template.render(
         themes=themes,
+        area_remedies=area_remedies,
         locale=locale,
         lang=lang,
     )

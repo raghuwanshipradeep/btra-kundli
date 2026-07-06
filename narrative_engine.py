@@ -12,6 +12,7 @@ import aiosqlite
 from anthropic import AsyncAnthropic
 
 from config import settings
+from sections import planet_to_en
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -431,6 +432,18 @@ def _build_user_prompt(section_type: str, data: dict, lang: str) -> str:
             f"Cover: natural career strengths from the 10th house, "
             f"how Sun and Saturn shape authority and discipline in work, "
             f"and one specific career direction the chart supports."
+        )
+    if section_type == "material_comforts":
+        return (
+            f"4th House Sign: {data['fourth_sign']} (Lord: {data['fourth_lord']})\n"
+            f"4th Lord Placement: House {data.get('fourth_lord_house', '?')}\n"
+            f"Venus: House {data.get('venus_house', '?')} in {data.get('venus_sign', '?')}\n"
+            f"Mars: House {data.get('mars_house', '?')} in {data.get('mars_sign', '?')}\n\n"
+            f"Write a warm narrative about the native's material comforts — home, property, "
+            f"land, and vehicles. Cover: what the 4th house and its lord suggest about domestic "
+            f"happiness and owning a home, how Venus shapes comfort, luxury and vehicles, "
+            f"what Mars indicates for land/property, and one practical, encouraging focus. "
+            f"Keep it grounded and hopeful — avoid fear or rigid predictions."
         )
     if section_type == "love_marriage":
         return (
@@ -857,9 +870,13 @@ async def generate_narratives(
     if kundli_data.major_vdasha and kundli_data.planets:
         planet_map = {p.name: p for p in kundli_data.planets if p.name != "Ascendant"}
         for dasha in kundli_data.major_vdasha:
-            p = planet_map.get(dasha.planet)
-            md_journey_batch[f"mahadasha_journey_{dasha.planet}"] = ("mahadasha_journey", {
-                "planet": dasha.planet,
+            # Normalize the (possibly Devanagari) dasha planet name to English so
+            # the planet_map lookup works AND the narrative key matches the
+            # renderer's key (sections/mahadasha_journey.py).
+            planet_en = planet_to_en(dasha.planet)
+            p = planet_map.get(planet_en)
+            md_journey_batch[f"mahadasha_journey_{planet_en}"] = ("mahadasha_journey", {
+                "planet": planet_en,
                 "sign": p.sign if p else "Unknown",
                 "house": p.house if p else "Unknown",
                 "nakshatra": p.nakshatra if p else "Unknown",
@@ -1104,6 +1121,30 @@ async def generate_narratives(
         if ak:
             cp_data["amatyakaraka"] = f"{ak['name']} in {ak['sign']} (House {ak['house']})"
         thematic_batch["career_path"] = ("career_path", cp_data)
+
+    if kundli_data.planets and kundli_data.houses:
+        from sections.graha_profile import SIGN_LORDS as _SLM
+        h4_sign = ""
+        for h in kundli_data.houses:
+            hid = getattr(h, "house_id", None) or getattr(h, "house", 0)
+            if isinstance(h, dict):
+                hid = h.get("house_id", h.get("house", 0))
+            if hid == 4:
+                h4_sign = getattr(h, "sign", "") or (h.get("sign", "") if isinstance(h, dict) else "")
+                break
+        h4_lord = _SLM.get(h4_sign, "")
+        h4_lord_p = next((p for p in kundli_data.planets if p.name == h4_lord), None)
+        venus_mc = next((p for p in kundli_data.planets if p.name == "Venus"), None)
+        mars_mc = next((p for p in kundli_data.planets if p.name == "Mars"), None)
+        thematic_batch["material_comforts"] = ("material_comforts", {
+            "fourth_sign": h4_sign,
+            "fourth_lord": h4_lord,
+            "fourth_lord_house": h4_lord_p.house if h4_lord_p else "",
+            "venus_house": venus_mc.house if venus_mc else "",
+            "venus_sign": venus_mc.sign if venus_mc else "",
+            "mars_house": mars_mc.house if mars_mc else "",
+            "mars_sign": mars_mc.sign if mars_mc else "",
+        })
 
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL5

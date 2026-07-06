@@ -26,16 +26,25 @@ pytest tests/test_main.py::test_health -v
 
 # Quick smoke test (no API key needed)
 curl http://localhost:8000/demo -o demo.pdf
+
+# QA-check a generated PDF (uses pdftotext; flags rendering/content issues)
+python qa_check.py demo.pdf
 ```
 
 ## Architecture
 
 ### Two PDF pipelines
 
-1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (62 section renderers in `SECTION_RENDERERS`)
+1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (~65 section renderers in `SECTION_RENDERERS`)
 2. **Match-making:** `POST /generate-match` -> `AstrologyAPIClient.fetch_match()` -> `MatchData` -> `MatchPDFGenerator` (single `render_matching` section)
 
 Both share `base.html` + `styles.css` for final HTML->PDF conversion via WeasyPrint.
+
+`POST /generate-kundli` is gated behind `allow_free_generation` (403 unless enabled) — in production the real entry point is the paid flow below. The reusable pipeline lives in `_build_kundli_pdf()` in `main.py`: fetch -> `generate_narratives()` -> `translate_reports()` -> `pdf_gen.generate()`.
+
+### Report tiers
+
+`KundliRequest.report_tier` is `"detailed"` (default) or `"lite"`. `PDFGenerator.generate(..., report_tier=...)` skips the section names in `LITE_SKIP_SECTIONS` (`pdf_generator.py`) when tier is `"lite"`.
 
 ### API data fetching (`api_client.py`)
 
@@ -64,9 +73,27 @@ Each file in `sections/` exports a `render_<name>(data: KundliData, lang: str) -
 3. Add the renderer to `SECTION_RENDERERS` list in `pdf_generator.py`
 4. Add locale strings for both `"en"` and `"hi"` keys in `LOCALES` dict in `sections/__init__.py`
 
+### Payment, fulfillment, and delivery (`main.py`)
+
+Production flow is paid, asynchronous, and fire-and-forget for the customer:
+
+1. `POST /create-order` — creates a Razorpay order, stores the `KundliRequest` in the in-memory `_ORDER_STORE` (30-min TTL) keyed by `order_id`. Returns checkout params to the browser.
+2. Payment confirmation arrives via **two** independent paths: the in-page `POST /verify-and-generate` callback (best-effort fast path, verifies the checkout HMAC signature) and `POST /razorpay-webhook` (reliable server-to-server, verifies the webhook HMAC over the raw body — a *different* secret). Both call `_start_fulfillment()`.
+3. `_start_fulfillment()` is idempotent via `_claim_order()` (a `set` check-and-add with no `await` between, so atomic in one worker) — whichever path arrives first wins, the other is a no-op. It schedules two `BackgroundTasks`: `notify_payment_success` (Pabbly, registered first so downstream automation fires immediately) then `_generate_and_archive`.
+4. `_generate_and_archive()` runs `_build_kundli_pdf()` under a `generation_timeout_seconds` wall, uploads to Google Drive, and records progress in the in-memory `_JOB_STATE` dict (`generating` -> `archived` / `timeout` / `pdf_failed` / `drive_failed` / `generated_no_archive`). On Drive failure it writes the paid PDF to `drive_recovery_dir` so it's never lost.
+
+`/admin/jobs` and `/admin/jobs/{order_id}` expose `_JOB_STATE` for ops, gated by the `X-Admin-Key` header matching `admin_key`.
+
+**Caveat:** `_ORDER_STORE`, `_FULFILLED_ORDERS`, and `_JOB_STATE` are process-local dicts — they do not survive a restart and break under multiple workers. The code comments flag Redis/SQLite as the production fix.
+
+Archive filenames are `First##Phone##Email##OrderId.pdf` (`_build_filename()`; order id is appended in the paid flow and omitted in the free/dev flow).
+
+- **Drive archive** (`drive_uploader.py`): `upload_kundli_pdf()` uploads to `google_drive_folder_id` via OAuth (`token.json` / `oauth_credentials.json`). Returns `None` on any failure (never raises into fulfillment). `get_drive_token.py` mints the token; see the Coolify/Drive memory and `DEPLOYMENT.md` for the prod re-auth flow.
+- **Pabbly** (`pabbly_notifier.py`): `notify_payment_success()` POSTs a payment-success payload to `pabbly_webhook_url` for downstream automation (WhatsApp/CRM/sheets). Disabled when the URL is empty.
+
 ### Narrative engine (`narrative_engine.py`)
 
-AI-generated personalized narratives for 20+ section types using Claude Sonnet via the Anthropic SDK (`AsyncAnthropic`). Requires `ANTHROPIC_API_KEY` in `.env` — skips gracefully if not set.
+AI-generated personalized narratives for 20+ section types using Claude Sonnet via the Anthropic SDK (`AsyncAnthropic`). Requires `ANTHROPIC_API_KEY` in `.env` — skips gracefully if not set. Cost optimization: `use_haiku_for_translation` and `use_haiku_for_simple_narratives` route formulaic batches (translation, planets, numerology) to cheaper Haiku 4.5; both are kill-switches that revert to Sonnet when `False`. See `docs/cost-optimization-results.md`.
 
 - **Concurrency:** `asyncio.Semaphore(5)` limits parallel API calls, each with 30s timeout.
 - **Caching:** Async SQLite cache (`narrative_cache.db`) keyed by SHA-256 of section type + data + lang. Avoids re-generating identical narratives across runs.
@@ -115,8 +142,12 @@ Key optional settings:
 - `AUTHOR_NAME`, `AUTHOR_TITLE` — enables Author's Note page.
 - `CTA_CONSULT_URL`, `CTA_POOJA_URL` — enables Closing CTA page.
 - `BRAND_FOOTER_ENABLED`, `BRAND_FOOTER_NAME`, `BRAND_FOOTER_URL`, `BRAND_FOOTER_PHONE` — enables branded footer on every page.
+- `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `KUNDLI_PRICE_PAISE` — enables the paid generation flow. `ALLOW_FREE_GENERATION=true` re-opens the unauthenticated `/generate-kundli` endpoint (off in prod).
+- `GOOGLE_DRIVE_FOLDER_ID`, `DRIVE_ARCHIVE_ENABLED`, `DRIVE_RECOVERY_DIR` — Drive archive of paid PDFs.
+- `PABBLY_WEBHOOK_URL` — downstream payment-success automation.
+- `ADMIN_KEY` — required to access `/admin/jobs*`.
 
-**Important:** Settings must be in `.env` (not `.env.example`) to take effect. `.env.example` is documentation only.
+**Important:** Settings must be in `.env` (not `.env.example`) to take effect. `.env.example` is documentation only. See `DEPLOYMENT.md` for the Coolify production setup (Drive OAuth via file mounts, re-auth flow).
 
 ## Windows Dependency
 

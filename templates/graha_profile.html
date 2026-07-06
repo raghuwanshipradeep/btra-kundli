@@ -8,12 +8,12 @@
   </h2>
 
   {% if profile.image %}
-  <div style="text-align: center; margin-bottom: 2mm;">
-    <img src="images/{{ profile.image }}" alt="" style="max-width: 100%; max-height: 120mm; display: block; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 1mm;">
+    <img src="images/{{ profile.image }}" alt="" style="max-width: 100%; max-height: 60mm; display: block; margin: 0 auto;">
   </div>
   {% endif %}
 
-  <table class="kv-table" style="margin-bottom: 5mm;">
+  <table class="kv-table" style="margin-bottom: 3mm;">
     <tr>
       <td>{{ locale.gp_house }}</td>
       <td>{{ locale.gp_house_prefix }} {{ profile.house }}</td>
@@ -72,47 +72,44 @@
       <td style="font-weight: 600; color: #8B0000;">{{ locale.karaka_names.get(profile.karaka_role, profile.karaka_role) }}</td>
     </tr>
     {% endif %}
+    {% if profile.aspects_given %}
+    <tr>
+      <td>{{ locale.gp_aspects_given }}</td>
+      <td>{% for h in profile.aspects_given %}{{ locale.gp_house_prefix }} {{ h }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    </tr>
+    {% endif %}
+    {% if profile.aspects_received %}
+    <tr>
+      <td>{{ locale.gp_aspects_received }}</td>
+      <td>{% for p in profile.aspects_received %}{{ locale.planet_names.get(p, p) }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    </tr>
+    {% endif %}
   </table>
 
-  {% if profile.aspects_given %}
-  <div class="dosha-card" style="margin-bottom: 4mm;">
-    <h4>{{ locale.gp_aspects_given }}</h4>
-    <p style="font-size: 10pt;">
-      {{ locale.planet_names.get(profile.name, profile.name) }} {{ locale.gp_aspects_houses }}:
-      {% for h in profile.aspects_given %}
-        <strong>{{ locale.gp_house_prefix }} {{ h }}</strong>{% if not loop.last %}, {% endif %}
-      {% endfor %}
-    </p>
-  </div>
-  {% endif %}
-
-  {% if profile.aspects_received %}
-  <div class="dosha-card" style="margin-bottom: 4mm;">
-    <h4>{{ locale.gp_aspects_received }}</h4>
-    <p style="font-size: 10pt;">
-      {{ locale.gp_aspected_by }}:
-      {% for p in profile.aspects_received %}
-        <strong>{{ locale.planet_names.get(p, p) }}</strong>{% if not loop.last %}, {% endif %}
-      {% endfor %}
-    </p>
+  {% if profile.narrative %}
+  <div class="report-card" style="margin-top: 4mm; margin-bottom: 4mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', 'Noto Sans Devanagari', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+      {{ locale.gp_about }}
+    </h4>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; color: #3A2410;">{{ profile.narrative }}</p>
   </div>
   {% endif %}
 
   {% if profile.house_report %}
   <div class="report-card" style="margin-top: 4mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.gp_house_placement }}
     </h4>
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ profile.house_report }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ profile.house_report }}</p>
   </div>
   {% endif %}
 
   {% if profile.rashi_report %}
   <div class="report-card" style="margin-top: 4mm;">
-    <h4 style="font-family: 'Playfair Display', serif; font-size: 12pt; color: #2C2C2C; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
       {{ locale.gp_rashi_placement }}
     </h4>
-    <p style="font-size: 10.5pt; line-height: 1.7; text-align: justify;">{{ profile.rashi_report }}</p>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ profile.rashi_report }}</p>
   </div>
   {% endif %}
 </div>

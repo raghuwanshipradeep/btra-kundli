@@ -84,23 +84,20 @@ async def _post(payload: dict) -> None:
         response.raise_for_status()
 
 
-async def notify_payment_success(
+def build_payload(
     request: KundliRequest,
     order_id: str = "",
     payment_id: str = "",
-) -> bool:
-    """POST the payment-success payload to Pabbly. Returns True on success.
+) -> dict:
+    """Build the payment-success payload sent to Pabbly.
 
-    Never raises — logs and returns False on any failure or when not configured.
+    Extracted so the self-test (`test_pabbly.py`) can send the byte-for-byte
+    same payload as the production flow.
     """
-    if not settings.pabbly_webhook_url:
-        logger.info("Pabbly webhook not configured; skipping for order %s", order_id)
-        return False
-
     time_of_birth, am_pm = _format_time(request.hour, request.min)
     language = _language_label(request.lang)
 
-    payload = {
+    return {
         "event": "payment_success",
         "time_of_order": _now_ist(),
         "order_id": order_id,
@@ -134,6 +131,22 @@ async def notify_payment_success(
         "lon": request.lon,
         "tzone": request.tzone,
     }
+
+
+async def notify_payment_success(
+    request: KundliRequest,
+    order_id: str = "",
+    payment_id: str = "",
+) -> bool:
+    """POST the payment-success payload to Pabbly. Returns True on success.
+
+    Never raises — logs and returns False on any failure or when not configured.
+    """
+    if not settings.pabbly_webhook_url:
+        logger.info("Pabbly webhook not configured; skipping for order %s", order_id)
+        return False
+
+    payload = build_payload(request, order_id, payment_id)
 
     try:
         await _post(payload)

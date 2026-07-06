@@ -1,3 +1,4 @@
+{% import 'partials/north_indian_chart.html' as nic %}
 {% macro render_value(val) %}
   {% if val is none or val == "" %}
     —
@@ -229,6 +230,30 @@
             </tr>
         </tbody>
     </table>
+
+    {% if lagna_houses %}
+    <div style="page-break-inside: avoid; margin-top: 4mm; text-align: center;">
+        <h3 class="section-subheader" style="margin-top: 0;">{{ locale.north_chart_title }}</h3>
+        {% if locale.north_chart_desc %}
+        <p style="font-size: 11pt; color: #555; margin-bottom: 3mm;">{{ locale.north_chart_desc }}</p>
+        {% endif %}
+        {{ nic.north_indian_chart(lagna_houses, lang, 300) }}
+    </div>
+    {% endif %}
+
+    {% if navamsa_houses or navamsa_image %}
+    <div style="page-break-inside: avoid; margin-top: 6mm; text-align: center;">
+        <h3 class="section-subheader" style="margin-top: 0;">{{ navamsa_title }}</h3>
+        {% if navamsa_desc %}
+        <p style="font-size: 11pt; color: #555; margin-bottom: 3mm;">{{ navamsa_desc }}</p>
+        {% endif %}
+        {% if navamsa_houses %}
+        {{ nic.north_indian_chart(navamsa_houses, lang, 300) }}
+        {% elif navamsa_image %}
+        <img src="{{ navamsa_image }}" alt="Navamsa (D9)" style="max-width: 300px;">
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -237,7 +262,7 @@
 <div class="section-page">
     <h2 class="section-header">{{ locale.chaughadiya_muhurta_title }}</h2>
 
-    <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
+    <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
       {{ locale.chaughadiya_desc }}
     </p>
 
@@ -264,7 +289,7 @@
 <div class="section-page">
     <h2 class="section-header">{{ locale.hora_muhurta_title }}</h2>
 
-    <p style="font-size: 10.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
+    <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
       {{ locale.hora_desc }}
     </p>
 

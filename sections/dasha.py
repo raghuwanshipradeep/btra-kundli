@@ -44,6 +44,12 @@ def _extract_planet_name(val) -> str:
 
 _LEVEL_NAMES_HI = {
     "major": "महादशा",
+    # production API naming (major / minor / sub_minor / ...)
+    "minor": "अंतर्दशा",
+    "sub_minor": "प्रत्यंतर दशा",
+    "sub_sub_minor": "सूक्ष्म दशा",
+    "sub_sub_sub_minor": "प्राण दशा",
+    # demo / legacy naming (sub / sub_sub / ...)
     "sub": "अंतर्दशा",
     "sub_sub": "प्रत्यंतर दशा",
     "sub_sub_sub": "सूक्ष्म दशा",
