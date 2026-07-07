@@ -69,15 +69,16 @@
 
 @page {
     size: A4;
-    /* No top/side margins: heading sits flush at the top and the gold gradient
-       bleeds to every edge. A slim bottom strip is kept only so the page
-       number + branded footer (margin boxes) aren't clipped at the paper edge. */
-    margin: 0 0 9mm 0;
+    /* Slim top + bottom strips: the gold gradient shows as a margin above the
+       section content and below it, where the page number + branded footer
+       (margin boxes) sit without being clipped at the paper edge. */
+    margin: 9mm 0 9mm 0;
     background: linear-gradient(180deg, #E0B058 0%, #EED195 100%);
     @bottom-center {
         content: counter(page);
         font-family: 'Crimson Pro', serif;
         font-size: 10pt;
+        font-weight: 600;
         color: var(--maroon);
     }
 }
@@ -115,9 +116,25 @@
     height: 297mm;
     page-break-before: always;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+}
+.offer-heading {
+    width: 190mm;
+    text-align: center;
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
+    font-size: 19pt;
+    font-weight: 700;
+    color: #8B0000;                    /* theme maroon */
+    margin-bottom: 6mm;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid #D4AF37;  /* subtle gold underline accent */
+    padding-bottom: 3mm;
+}
+[lang="hi"] .offer-heading {
+    font-family: 'Noto Sans Devanagari', sans-serif;  /* Devanagari-first: correct conjunct/nukta shaping */
 }
 .offer-link { display: block; width: 190mm; }
 .offer-banner { width: 190mm; height: auto; display: block; }
@@ -612,6 +629,31 @@ tr.trikona td:first-child::after {
     margin-top: 2mm;
 }
 
+/* Premium rashi spotlight cards — warm maroon/bronze/gold set on the cream page */
+.dasha-current-card.rashi-card-saturn {
+    background: linear-gradient(135deg, #6B0F0F 0%, #B8860B 100%);
+    color: var(--table-header-text);   /* cream #F5E6C8 */
+}
+.dasha-current-card.rashi-card-moon {
+    background: linear-gradient(135deg, #7A4B00 0%, #C8860D 100%);
+    color: var(--table-header-text);
+}
+.dasha-current-card.rashi-card-lagna {
+    background: linear-gradient(135deg, #7A0F0F 0%, #C8860D 100%);   /* deep red → gold */
+    color: var(--table-header-text);
+}
+.dasha-current-card.rashi-card-nakshatra {
+    background: linear-gradient(135deg, #4A1E12 0%, #B8860B 100%);   /* mahogany → bronze */
+    color: var(--table-header-text);
+}
+.rashi-card-saturn .period-label,
+.rashi-card-moon .period-label,
+.rashi-card-lagna .period-label,
+.rashi-card-nakshatra .period-label {
+    color: var(--kendra-gold);         /* gold accent #F9A825 */
+    opacity: 1;
+}
+
 .dasha-sub-cards {
     margin-bottom: 5mm;
 }
@@ -1008,6 +1050,15 @@ tr.active-dasha td {
     line-height: 1.6;
     color: #3A2410;
     text-align: justify;
+}
+
+/* Lal Kitab Upay: per-planet name heading — red, with breathing room above. */
+.lalkitab-planet-name {
+    font-family: 'Playfair Display', 'Noto Sans Devanagari', serif;
+    font-size: 13pt;
+    color: var(--maroon);
+    margin-top: 6mm;
+    margin-bottom: 2mm;
 }
 
 /* ===== PANCHANG EXTENDED SECTIONS ===== */

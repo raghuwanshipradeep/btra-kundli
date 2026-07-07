@@ -29,6 +29,24 @@
   {% endif %}
 {% endmacro %}
 
+{% macro render_numero_report(val) %}
+  {% if val is mapping and val.get('description') %}
+    <div class="report-field-text">{{ val['description'] }}</div>
+  {% elif val is mapping and val.get('prediction') %}
+    <div class="report-field-text">{{ val['prediction'] }}</div>
+    <table class="kv-table">
+      {% for k, v in val.items() if k != 'prediction' and not k.endswith('_ms') and not k.endswith('_id') %}
+      <tr>
+        <td>{{ k | humanize_key(lang) }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    {{ render_value(val) }}
+  {% endif %}
+{% endmacro %}
+
 <div class="section-page">
   <h2 class="section-header">{{ locale.numerology_title }}</h2>
 
@@ -42,49 +60,49 @@
   {% if numero_report %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_report_title }}</h3>
-    {{ render_value(numero_report) }}
+    {{ render_numero_report(numero_report) }}
   </div>
   {% endif %}
 
   {% if numero_fav_time %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_fav_time_title }}</h3>
-    {{ render_value(numero_fav_time) }}
+    {{ render_numero_report(numero_fav_time) }}
   </div>
   {% endif %}
 
   {% if numero_place_vastu %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_place_vastu_title }}</h3>
-    {{ render_value(numero_place_vastu) }}
+    {{ render_numero_report(numero_place_vastu) }}
   </div>
   {% endif %}
 
   {% if numero_fasts %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_fasts_title }}</h3>
-    {{ render_value(numero_fasts) }}
+    {{ render_numero_report(numero_fasts) }}
   </div>
   {% endif %}
 
   {% if numero_fav_lord %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_fav_lord_title }}</h3>
-    {{ render_value(numero_fav_lord) }}
+    {{ render_numero_report(numero_fav_lord) }}
   </div>
   {% endif %}
 
   {% if numero_fav_mantra %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_fav_mantra_title }}</h3>
-    {{ render_value(numero_fav_mantra) }}
+    {{ render_numero_report(numero_fav_mantra) }}
   </div>
   {% endif %}
 
   {% if numero_daily %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_daily_title }}</h3>
-    {{ render_value(numero_daily) }}
+    {{ render_numero_report(numero_daily) }}
   </div>
   {% endif %}
 </div>

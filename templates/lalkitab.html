@@ -29,6 +29,34 @@
   {% endif %}
 {% endmacro %}
 
+{% macro render_remedy(val) %}
+  {% if val is mapping and (val.get('lal_kitab_desc') or val.get('lal_kitab_remedies')) %}
+    {% set desc_keys = ['lal_kitab_remedies', 'lal_kitab_desc'] %}
+    <table class="kv-table">
+      {% for k, v in val.items() if k not in desc_keys and not k.endswith('_ms') and not k.endswith('_id') and k != 'planet_small' %}
+      <tr>
+        <td>{{ k | humanize_key(lang) }}</td>
+        <td>{{ render_value(v) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% for dk in desc_keys if val.get(dk) %}
+    <div class="report-field">
+      <div class="report-field-label">{{ dk | humanize_key(lang) }}</div>
+      {% if val[dk] is string %}
+      <div class="report-field-text">{{ val[dk] }}</div>
+      {% else %}
+      <div class="report-field-text">
+        {% for item in val[dk] %}<p style="margin: 0 0 2mm 0;">{{ item }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    {{ render_value(val) }}
+  {% endif %}
+{% endmacro %}
+
 <div class="section-page">
   <h2 class="section-header">{{ locale.lalkitab_title }}</h2>
 
@@ -64,8 +92,8 @@
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.lalkitab_remedies_title }}</h3>
     {% for planet, remedy_data in remedies.items() %}
-      <h4>{{ planet }}</h4>
-      {{ render_value(remedy_data) }}
+      <h4 class="lalkitab-planet-name">{{ (remedy_data.get('planet') if remedy_data is mapping else None) or planet }}</h4>
+      {{ render_remedy(remedy_data) }}
     {% endfor %}
   </div>
   {% endif %}

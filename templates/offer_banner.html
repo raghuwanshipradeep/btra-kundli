@@ -1,4 +1,8 @@
 <div class="offer-page">
+  <div class="offer-heading">
+    {% if lang == 'hi' %}✨ विशेष ऑफ़र — अनलॉक करने के लिए इमेज पर क्लिक करें!
+    {% else %}✨ Exclusive Offer Inside — Click the image to unlock!{% endif %}
+  </div>
   <a href="{{ url }}" class="offer-link">
     <img class="offer-banner" src="images/{{ image }}" alt="">
   </a>

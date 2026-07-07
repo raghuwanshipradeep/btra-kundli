@@ -11,7 +11,7 @@ from models import KundliData
 from sections import _format_degree, _safe_time, humanize_key, to_hindi_value
 
 LITE_SKIP_SECTIONS = {
-    "extended_dosha", "panchada_maitri", "tatkalik_maitri",
+    "panchada_maitri", "tatkalik_maitri",
     "bhinnashtak", "shodashvarga_summary", "char_dasha", "yogini_dasha",
 }
 from sections.ashtakvarga import render_ashtakvarga
@@ -47,15 +47,12 @@ from sections.dignity import render_dignity
 from sections.chara_karaka import render_chara_karaka
 from sections.avakhada_chakra import render_avakhada_chakra
 from sections.tatkalik_maitri import render_tatkalik_maitri
-from sections.extended_dosha import render_extended_dosha
 from sections.yogas import render_yogas
 from sections.thematic_reports import render_thematic_reports
 from sections.shodashvarga_summary import render_shodashvarga_summary
 from sections.south_chart import render_south_chart
 from sections.north_chart import render_north_chart
 from sections.marriage_timing import render_marriage_timing
-from sections.life_forecast import render_life_forecast
-from sections.tarot import render_tarot
 from sections.front_matter import render_front_matter, render_front_matter_toc
 from sections.graha_profile import render_graha_profile
 from sections.graha_sanyog import render_graha_sanyog
@@ -199,13 +196,13 @@ SECTION_RENDERERS = [
     ("divider_numerology", make_divider_renderer("numrology.png")),
     ("numerology", render_numerology),
     ("numerology_personality", render_numerology_personality),
+    ("divider_lalkitab", make_divider_renderer("lal_kitab.png")),
     ("lalkitab", render_lalkitab),
     ("drishti", render_drishti),
     ("dignity", render_dignity),
     ("chara_karaka", render_chara_karaka),
     ("avakhada_chakra", render_avakhada_chakra),
     ("tatkalik_maitri", render_tatkalik_maitri),
-    ("extended_dosha", render_extended_dosha),
     ("rahu_ketu_analysis", render_rahu_ketu_analysis),
     ("yogas", render_yogas),
     ("raj_yoga_celebration", render_raj_yoga_celebration),
@@ -217,10 +214,8 @@ SECTION_RENDERERS = [
     ("marriage_timing", render_marriage_timing),
     ("love_marriage", render_love_marriage),
     ("material_comforts", render_material_comforts),
-    ("life_forecast", render_life_forecast),
     ("spiritual_potential", render_spiritual_potential),
     ("sade_sati_journey", render_sade_sati_journey),
-    ("tarot", render_tarot),
     ("closing_cta", render_closing_cta),
 ]
 

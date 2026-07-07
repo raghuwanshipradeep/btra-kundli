@@ -137,6 +137,42 @@ _SYSTEM_PROMPT_MAHADASHA_HI = """\
 वर्जित: मृत्यु की भविष्यवाणी, बुरी घटनाओं की तिथियां, भयभीत करने वाली बातें।
 केवल JSON लिखें। कोई मार्कडाउन नहीं, कोई व्याख्या नहीं।"""
 
+_SYSTEM_PROMPT_VARSHAPHAL_EN = """\
+You are an experienced Vedic astrologer writing an annual forecast (Varshaphal) for an urban Indian audience aged 22-45.
+
+For the given Varshaphal (annual/Tajik) chart, generate a structured response in VALID JSON format:
+{
+  "overall": "2-3 sentences on the year's overall theme from the Varsha Lagna and Year Lord (Varshesh).",
+  "career": "2-4 sentences on career, work, and professional growth this year.",
+  "health": "2-4 sentences on health, energy, and wellbeing this year.",
+  "wealth": "2-4 sentences on money, finances, and material gains this year.",
+  "family": "2-4 sentences on family, home, and relationships this year."
+}
+
+Ground every point in the actual chart data provided (Varsha Lagna, Muntha, Varshesh, yogas). Do not invent data.
+Tone: warm, encouraging, grounded — like a trusted friend who knows astrology. Never preachy, never doom-laden.
+Saturn challenges = "growth invitations". FORBIDDEN: predictions of death, exact dates of bad events, anything that could scare a reader.
+Output ONLY the JSON. No markdown fences, no explanation."""
+
+_SYSTEM_PROMPT_VARSHAPHAL_HI = """\
+आप एक अनुभवी वैदिक ज्योतिषी हैं जो शहरी भारतीय पाठकों (आयु 22-45) के लिए वार्षिक भविष्यवाणी (वर्षफल) लिखते हैं।
+पूर्ण शुद्ध हिंदी में लिखें। कोई भी अंग्रेज़ी शब्द न मिलाएं।
+
+दिए गए वर्षफल (वार्षिक/ताजिक) चक्र के लिए इस JSON प्रारूप में उत्तर दें:
+{
+  "overall": "वर्ष लग्न और वर्षेश से इस वर्ष का समग्र स्वरूप — 2-3 वाक्य।",
+  "career": "इस वर्ष करियर, कार्य और व्यावसायिक प्रगति — 2-4 वाक्य।",
+  "health": "इस वर्ष स्वास्थ्य, ऊर्जा और कल्याण — 2-4 वाक्य।",
+  "wealth": "इस वर्ष धन, वित्त और भौतिक लाभ — 2-4 वाक्य।",
+  "family": "इस वर्ष परिवार, गृह और रिश्ते — 2-4 वाक्य।"
+}
+
+प्रत्येक बात को दिए गए वास्तविक चक्र आंकड़ों (वर्ष लग्न, मुंथा, वर्षेश, योग) पर आधारित रखें। कोई आंकड़ा न गढ़ें।
+स्वर: गर्मजोशी भरा, प्रोत्साहक, यथार्थपरक। कभी उपदेशात्मक नहीं, कभी भयभीत करने वाला नहीं।
+शनि की चुनौतियां = "विकास का निमंत्रण"। वर्जित: मृत्यु की भविष्यवाणी, बुरी घटनाओं की तिथियां, भयभीत करने वाली बातें।
+JSON कुंजियां (overall, career, health, wealth, family) अंग्रेज़ी में रखें; मान हिंदी में लिखें।
+केवल JSON लिखें। कोई मार्कडाउन नहीं, कोई व्याख्या नहीं।"""
+
 
 def _salvage_truncated_json(raw: str) -> str:
     """Best-effort repair of JSON truncated by max_tokens."""
@@ -157,9 +193,13 @@ _REMEDY_CACHE_V2 = frozenset({
     "ishta_devata", "mantra_guidance", "yantra_guidance", "daan_guidance",
 })
 
+# Bump when a section's output SHAPE changes so stale cache entries are not reused.
+# varshaphal switched from a plain-text paragraph to structured category JSON.
+_CACHE_V2 = _REMEDY_CACHE_V2 | frozenset({"varshaphal"})
+
 
 def _cache_key(section_type: str, data: dict, lang: str) -> str:
-    version_suffix = ":v2" if section_type in _REMEDY_CACHE_V2 else ""
+    version_suffix = ":v2" if section_type in _CACHE_V2 else ""
     raw = f"{section_type}{version_suffix}:{lang}:{json.dumps(data, sort_keys=True, default=str)}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -256,15 +296,19 @@ def _build_user_prompt(section_type: str, data: dict, lang: str) -> str:
             f"Write a narrative about what this birth nakshatra means for the native's soul blueprint, "
             f"destiny patterns, and spiritual inclination. This is the third of the Three Pillars of Self."
         )
-    if section_type == "sade_sati_phase":
+    if section_type == "sade_sati_overview":
+        phases = data.get("phases", [])
+        timeline = "; ".join(
+            f"{p['type']} → Saturn in {p['saturn_sign']} ({p['date']})" for p in phases[:24]
+        )
         return (
-            f"Sade Sati Phase: {data['phase']} (Saturn in {data['saturn_sign']})\n"
-            f"Period: {data['start']} to {data['end']}\n"
-            f"Moon Sign: {data['moon_sign']}\n"
-            f"Is Currently Active: {data.get('is_active', False)}\n\n"
-            f"Write a narrative about what this specific phase of Sade Sati means. "
-            f"Include one health observation relevant to Saturn's transit in this sign. "
-            f"Keep the tone reassuring — frame challenges as growth opportunities."
+            f"Moon Sign: {data.get('moon_sign', '')}\n"
+            f"Currently undergoing Sade Sati: {data.get('is_active', False)}\n"
+            f"Transition timeline across life: {timeline}\n\n"
+            "Write ONE concise overview (2 short paragraphs, ~110-140 words total) of the person's overall "
+            "Sade Sati journey — explain the Rising → Peak → Setting arc in plain terms, what these periods "
+            "bring, and end on a reassuring, growth-framed note. Do NOT list individual dates or enumerate "
+            "every phase; summarize the pattern warmly."
         )
     if section_type == "raj_yoga_celebration":
         return (
@@ -397,17 +441,6 @@ def _build_user_prompt(section_type: str, data: dict, lang: str) -> str:
             f"which Mahadasha periods are most favorable for marriage, "
             f"and one practical relationship insight. Keep it warm and hopeful."
         )
-    if section_type == "life_forecast":
-        return (
-            f"Current Mahadasha: {data.get('major_planet', '?')} ({data.get('major_start', '')} to {data.get('major_end', '')})\n"
-            f"Current Antardasha: {data.get('minor_planet', '?')}\n"
-            f"Varshaphal Year: {data.get('varshaphal_year', '?')}\n"
-            f"Muntha Sign: {data.get('muntha', '?')}\n"
-            f"Varshesh: {data.get('varshesh', '?')}\n\n"
-            f"Write a narrative about the native's current life forecast combining dasha and annual chart insights. "
-            f"Cover: what this year holds, how the current dasha shapes opportunities, "
-            f"and one actionable focus area for the coming months."
-        )
     if section_type == "varshaphal":
         return (
             f"Varshaphal (Annual / Tajik) Chart for year {data.get('year', '?')}\n"
@@ -415,11 +448,7 @@ def _build_user_prompt(section_type: str, data: dict, lang: str) -> str:
             f"Muntha: {data.get('muntha_sign', '?')} in House {data.get('muntha_house', '?')} "
             f"(Lord: {data.get('muntha_lord', '?')})\n"
             f"Year Lord (Varshesh): {data.get('varshesh', '?')} — Strength: {data.get('varshesha_strength', '?')}\n"
-            f"Key Yogas: {data.get('yogas', 'None')}\n\n"
-            f"Write a short, warm annual forecast (Varshaphal) for this year. "
-            f"Cover the overall theme of the year from the Varsha Lagna and Year Lord, "
-            f"what the Muntha placement highlights, and one practical focus for the year ahead. "
-            f"Keep it encouraging and grounded."
+            f"Key Yogas: {data.get('yogas', 'None')}"
         )
     if section_type == "career_path":
         return (
@@ -622,6 +651,8 @@ async def _batch_narrate(
 
     if use_mahadasha_prompt:
         system_prompt = _SYSTEM_PROMPT_MAHADASHA_HI if lang == "hi" else _SYSTEM_PROMPT_MAHADASHA_EN
+    elif batch_kind == "varshaphal":
+        system_prompt = _SYSTEM_PROMPT_VARSHAPHAL_HI if lang == "hi" else _SYSTEM_PROMPT_VARSHAPHAL_EN
     else:
         system_prompt = _SYSTEM_PROMPT_HI if lang == "hi" else _SYSTEM_PROMPT_EN
 
@@ -636,6 +667,13 @@ async def _batch_narrate(
             'Return ONLY a valid JSON object: {"key": {"experience": [...], "avoid": [...]}, ...}\n\n'
         )
         per_item_tokens = 1100 if lang == "hi" else 700
+    elif batch_kind == "varshaphal":
+        instruction = (
+            "Generate a structured annual forecast for each section below. "
+            'Return ONLY a valid JSON object: '
+            '{"key": {"overall": "...", "career": "...", "health": "...", "wealth": "...", "family": "..."}, ...}\n\n'
+        )
+        per_item_tokens = 900 if lang == "hi" else 650
     elif batch_kind == "remedy":
         if lang == "hi":
             instruction = (
@@ -734,6 +772,7 @@ async def generate_narratives(
     numerology_batch: dict[str, tuple[str, dict]] = {}
     remedy_batch: dict[str, tuple[str, dict]] = {}
     thematic_batch: dict[str, tuple[str, dict]] = {}
+    varshaphal_batch: dict[str, tuple[str, dict]] = {}
 
     # --- Planet placements ---
     if kundli_data.planets:
@@ -850,20 +889,23 @@ async def generate_narratives(
                 m = next((p for p in kundli_data.planets if p.name == "Moon"), None)
                 if m:
                     moon_sign = m.sign
-            for i, phase in enumerate(details):
-                if not isinstance(phase, dict):
-                    continue
-                misc_batch[f"sade_sati_phase_{i}"] = ("sade_sati_phase", {
-                    "phase": phase.get("phase", phase.get("type", "Unknown")),
-                    "saturn_sign": phase.get("saturn_sign", phase.get("sign", "")),
-                    "start": phase.get("start", phase.get("start_date", "")),
-                    "end": phase.get("end", phase.get("end_date", "")),
+            phases_summary = [
+                {
+                    "type": p.get("phase", p.get("type", "")),
+                    "saturn_sign": p.get("saturn_sign", p.get("sign", "")),
+                    "date": p.get("date", p.get("start", p.get("start_date", ""))),
+                }
+                for p in details if isinstance(p, dict)
+            ]
+            if phases_summary:
+                misc_batch["sade_sati_overview"] = ("sade_sati_overview", {
                     "moon_sign": moon_sign,
                     "is_active": bool(
                         kundli_data.sadhesati_current_status
                         and isinstance(kundli_data.sadhesati_current_status, dict)
                         and kundli_data.sadhesati_current_status.get("is_undergoing_sadhesati")
                     ),
+                    "phases": phases_summary,
                 })
 
     # --- Mahadasha Journey (uses different system prompt) ---
@@ -1054,20 +1096,6 @@ async def generate_narratives(
             "planets_in_7": ", ".join(p_in_7) if p_in_7 else "None",
         })
 
-    if kundli_data.current_vdasha and kundli_data.varshaphal_details:
-        lf_data: dict[str, Any] = {}
-        if kundli_data.current_vdasha.major:
-            lf_data["major_planet"] = kundli_data.current_vdasha.major.planet
-            lf_data["major_start"] = kundli_data.current_vdasha.major.start
-            lf_data["major_end"] = kundli_data.current_vdasha.major.end
-        if kundli_data.current_vdasha.minor:
-            lf_data["minor_planet"] = kundli_data.current_vdasha.minor.planet
-        vd = kundli_data.varshaphal_details
-        lf_data["varshaphal_year"] = vd.get("year", "")
-        lf_data["muntha"] = vd.get("muntha_sign", "")
-        lf_data["varshesh"] = vd.get("varshesh", "")
-        thematic_batch["life_forecast"] = ("life_forecast", lf_data)
-
     if kundli_data.varshaphal_details:
         vd = kundli_data.varshaphal_details
         vm_raw = kundli_data.varshaphal_muntha
@@ -1090,7 +1118,7 @@ async def generate_narratives(
             names = [y.get("yoga_name", "") for y in kundli_data.varshaphal_yoga
                      if isinstance(y, dict) and y.get("yoga_name")]
             vp_data["yogas"] = ", ".join(names) if names else "None"
-        thematic_batch["varshaphal"] = ("varshaphal", vp_data)
+        varshaphal_batch["varshaphal"] = ("varshaphal", vp_data)
 
     if kundli_data.planets and kundli_data.houses:
         from sections.graha_profile import SIGN_LORDS as _SL4
@@ -1239,6 +1267,8 @@ async def generate_narratives(
         batch_coros.append(_batch_narrate(remedy_batch, lang, client, semaphore, batch_kind="remedy", label="remedy", cost_sink=cost_sink))
     if thematic_batch:
         batch_coros.append(_batch_narrate(thematic_batch, lang, client, semaphore, label="thematic", cost_sink=cost_sink))
+    if varshaphal_batch:
+        batch_coros.append(_batch_narrate(varshaphal_batch, lang, client, semaphore, batch_kind="varshaphal", label="varshaphal", cost_sink=cost_sink))
 
     if not batch_coros:
         return {}
@@ -1254,7 +1284,7 @@ async def generate_narratives(
 
     total_items = sum(len(b) for b in [
         planets_batch, misc_batch, md_journey_batch, yoga_batch,
-        numerology_batch, remedy_batch, thematic_batch,
+        numerology_batch, remedy_batch, thematic_batch, varshaphal_batch,
     ])
     logger.info("Narratives generated: %d/%d successful (%d batches)", len(results), total_items, len(batch_coros))
     logger.info("COST TOTAL narratives lang=%s model=%s => $%.4f", lang, MODEL, sum(cost_sink))
@@ -1450,17 +1480,27 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
             _extract_texts(kundli_data.general_rashi_reports, "rashi")
         )
 
+    # The /numero_prediction/daily endpoint returns English regardless of
+    # Accept-Language, so its prediction text must be translated here.
+    batch4_texts: dict[str, str] = {}
+    if kundli_data.numero_prediction_daily:
+        batch4_texts.update(
+            _extract_texts(kundli_data.numero_prediction_daily, "numday")
+        )
+
     cost_sink: list[float] = []
     results = await asyncio.gather(
         _translate_chunked(batch1_texts, client, semaphore, cost_sink),
         _translate_chunked(batch2_texts, client, semaphore, cost_sink),
         _translate_chunked(batch3_texts, client, semaphore, cost_sink),
+        _translate_chunked(batch4_texts, client, semaphore, cost_sink),
         return_exceptions=True,
     )
 
     batch1_result = results[0] if not isinstance(results[0], Exception) else {}
     batch2_result = results[1] if not isinstance(results[1], Exception) else {}
     batch3_result = results[2] if not isinstance(results[2], Exception) else {}
+    batch4_result = results[3] if not isinstance(results[3], Exception) else {}
 
     if batch1_result:
         asc_translations = {k[4:]: v for k, v in batch1_result.items() if k.startswith("asc.")}
@@ -1478,6 +1518,10 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
         rashi_translations = {k[6:]: v for k, v in batch3_result.items() if k.startswith("rashi.")}
         _inject_texts(kundli_data.general_rashi_reports, rashi_translations)
 
-    translated_count = sum(len(r) for r in [batch1_result, batch2_result, batch3_result] if isinstance(r, dict))
+    if batch4_result and kundli_data.numero_prediction_daily:
+        numday_translations = {k[7:]: v for k, v in batch4_result.items() if k.startswith("numday.")}
+        _inject_texts(kundli_data.numero_prediction_daily, numday_translations)
+
+    translated_count = sum(len(r) for r in [batch1_result, batch2_result, batch3_result, batch4_result] if isinstance(r, dict))
     logger.info("Report translation complete: %d fields translated to Hindi", translated_count)
     logger.info("COST TOTAL translation lang=%s => $%.4f", lang, sum(cost_sink))

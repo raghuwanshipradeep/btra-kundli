@@ -7,12 +7,12 @@
 
   {% if saturn and moon %}
   <div style="display: flex; gap: 4mm; margin-bottom: 5mm;">
-    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #37474F 0%, #546E7A 100%);">
+    <div class="dasha-current-card rashi-card-saturn" style="flex: 1;">
       <div class="period-label">{{ locale.planet_names.get("Saturn", "Saturn") }}</div>
       <div class="planet-name">{{ locale.sign_names.get(saturn.sign, saturn.sign) }}</div>
       <div class="period-dates">{{ locale.gp_house_prefix }} {{ saturn.house }}</div>
     </div>
-    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%);">
+    <div class="dasha-current-card rashi-card-moon" style="flex: 1;">
       <div class="period-label">{{ locale.planet_names.get("Moon", "Moon") }}</div>
       <div class="planet-name">{{ locale.sign_names.get(moon.sign, moon.sign) }}</div>
       <div class="period-dates">{{ locale.gp_house_prefix }} {{ moon.house }}</div>

@@ -64,7 +64,6 @@ TESTABLE_SECTIONS = [
     "spiritual_potential",
     "marriage_timing",
     "material_comforts",
-    "life_forecast",
 ]
 
 

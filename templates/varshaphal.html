@@ -1,9 +1,19 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.varshaphal_title }}</h2>
 
-  {% if narrative %}
+  {% if blocks %}
   <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
-    {% for para in narrative.split('\n') if para.strip() %}
+    {% if overall %}
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0 0 4mm 0;">{{ overall }}</p>
+    {% endif %}
+    {% for block in blocks %}
+    <h3 style="font-family: 'Playfair Display', serif; font-size: 12.5pt; color: var(--maroon); margin: 0 0 1.5mm 0;">{{ block.label }}</h3>
+    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0 0 4mm 0;">{{ block.text }}</p>
+    {% endfor %}
+  </div>
+  {% elif fallback %}
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+    {% for para in fallback.split('\n') if para.strip() %}
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0 0 3mm 0;">{{ para.strip() }}</p>
     {% endfor %}
   </div>

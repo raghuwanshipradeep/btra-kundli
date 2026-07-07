@@ -7,12 +7,12 @@
 
   {% if saturn and moon %}
   <div style="display: flex; gap: 4mm; margin-bottom: 5mm;">
-    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #37474F 0%, #546E7A 100%);">
+    <div class="dasha-current-card rashi-card-saturn" style="flex: 1;">
       <div class="period-label">{{ locale.planet_names.get("Saturn", "Saturn") }}</div>
       <div class="planet-name">{{ locale.sign_names.get(saturn.sign, saturn.sign) }}</div>
       <div class="period-dates">{{ locale.gp_house_prefix }} {{ saturn.house }}</div>
     </div>
-    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #1565C0 0%, #42A5F5 100%);">
+    <div class="dasha-current-card rashi-card-moon" style="flex: 1;">
       <div class="period-label">{{ locale.planet_names.get("Moon", "Moon") }}</div>
       <div class="planet-name">{{ locale.sign_names.get(moon.sign, moon.sign) }}</div>
       <div class="period-dates">{{ locale.gp_house_prefix }} {{ moon.house }}</div>
@@ -58,8 +58,7 @@
           <th>#</th>
           <th>{{ locale.ss_phase }}</th>
           <th>{{ locale.ss_sign }}</th>
-          <th>{{ locale.ss_start }}</th>
-          <th>{{ locale.ss_end }}</th>
+          <th>{{ locale.ss_date }}</th>
         </tr>
       </thead>
       <tbody>
@@ -80,12 +79,7 @@
           </td>
           <td>
             {% if entry is mapping %}
-              {{ entry.get("start", entry.get("start_date", "")) }}
-            {% endif %}
-          </td>
-          <td>
-            {% if entry is mapping %}
-              {{ entry.get("end", entry.get("end_date", "")) }}
+              {{ entry.get("date", entry.get("start", entry.get("start_date", ""))) }}
             {% endif %}
           </td>
         </tr>
@@ -93,22 +87,16 @@
       </tbody>
     </table>
 
-    {% for entry in life_details %}
-      {% set phase_key = "sade_sati_phase_" ~ loop.index0 %}
-      {% if narratives and narratives.get(phase_key) %}
-      <div class="report-card" style="margin-bottom: 4mm; border-left: 4px solid #37474F;">
-        <h4 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">
-          {% if entry is mapping %}
-            {{ entry.get("phase", "") }} — {{ entry.get("saturn_sign", "") }}
-            ({{ entry.get("start", "") }} → {{ entry.get("end", "") }})
-          {% endif %}
-        </h4>
-        <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">
-          {{ narratives.get(phase_key) }}
-        </p>
-      </div>
-      {% endif %}
-    {% endfor %}
+    {% if narratives and narratives.get("sade_sati_overview") %}
+    <div class="report-card" style="margin-bottom: 4mm; border-left: 4px solid var(--maroon);">
+      <h4 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">
+        {{ locale.ssj_overview_title }}
+      </h4>
+      <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">
+        {{ narratives.get("sade_sati_overview") }}
+      </p>
+    </div>
+    {% endif %}
   </div>
   {% endif %}
 </div>

@@ -448,12 +448,22 @@ SAMPLE_SADHESATI_STATUS = {
     "small_panoti_status": "Not undergoing Small Panoti",
 }
 
-SAMPLE_SADHESATI_LIFE = {
-    "sadhesati_details": [
-        {"start": "1997-04-15", "end": "2000-06-20", "phase": "Rising", "saturn_sign": "Aries"},
-        {"start": "2027-01-20", "end": "2029-03-25", "phase": "Peak", "saturn_sign": "Aquarius"},
-    ]
-}
+# Real /sadhesati_life_details returns a flat list of transition events, one per row,
+# each with a single `date` (not a start/end pair). Keys mirror the live API.
+SAMPLE_SADHESATI_LIFE = [
+    {"moon_sign": "Taurus", "saturn_sign": "Aries", "is_saturn_retrograde": False,
+     "type": "RISING_START", "millisecond": "892774800000", "date": "17-4-1998",
+     "summary": "The rising phase of Sade Sati begins."},
+    {"moon_sign": "Taurus", "saturn_sign": "Taurus", "is_saturn_retrograde": False,
+     "type": "PEAK_START", "millisecond": "960339600000", "date": "7-6-2000",
+     "summary": "The peak phase begins and the rising phase ends."},
+    {"moon_sign": "Taurus", "saturn_sign": "Gemini", "is_saturn_retrograde": False,
+     "type": "SETTING_START", "millisecond": "1027386000000", "date": "23-7-2002",
+     "summary": "The setting phase begins and the peak phase ends."},
+    {"moon_sign": "Taurus", "saturn_sign": "Gemini", "is_saturn_retrograde": False,
+     "type": "SETTING_END", "millisecond": "1090818000000", "date": "26-7-2004",
+     "summary": "The setting phase ends. Sade Sati is complete."},
+]
 
 SAMPLE_PITRA_DOSHA = {
     "is_pitra_dosha_present": False,

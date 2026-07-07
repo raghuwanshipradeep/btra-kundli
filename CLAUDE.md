@@ -99,7 +99,7 @@ AI-generated personalized narratives for 20+ section types using Claude Sonnet v
 - **Caching:** Async SQLite cache (`narrative_cache.db`) keyed by SHA-256 of section type + data + lang. Avoids re-generating identical narratives across runs.
 - **Bilingual:** Separate system prompts for English and Hindi. Hindi prompt enforces pure Devanagari with no English words.
 - **Tone:** Warm, conversational, non-preachy. Saturn challenges = "growth invitations", Manglik = "your inner fire", Sade Sati = "a 7.5-year masterclass". Forbidden: death predictions, exact bad-event dates, fear-inducing content.
-- **Section types:** planet placement, mahadasha period, raj yoga, three pillars (lagna/moon/nakshatra), sade sati phases, raj yoga celebration, mahadasha journey (structured JSON with experience/avoid bullets), numerology personality, rudraksha/gemstone/mantra/ishta devata/yantra/daan guidance, outer planet, marriage timing, career path, love marriage, spiritual potential, rahu-ketu analysis, life forecast.
+- **Section types:** planet placement, mahadasha period, raj yoga, three pillars (lagna/moon/nakshatra), sade sati phases, raj yoga celebration, mahadasha journey (structured JSON with experience/avoid bullets), numerology personality, rudraksha/gemstone/mantra/ishta devata/yantra/daan guidance, outer planet, marriage timing, career path, love marriage, spiritual potential, rahu-ketu analysis.
 - **Translation pipeline:** `translate_reports()` batch-translates English API report text (ascendant, nakshatra, house, rashi reports) to Hindi for `lang=hi` PDFs.
 
 ### Remedies journey
@@ -123,7 +123,7 @@ All return `None` / skip when settings are empty — no visual artifacts in the 
 
 Two disclaimer partials in `templates/partials/`:
 - `remedy_disclaimer.html` — remedy-specific, included in 6 remedy templates.
-- `section_disclaimer.html` — warm general analysis disclaimer, included in 8 major section templates (dosha, yogas, dasha, life_forecast, marriage_timing, career_path, love_marriage, spiritual_potential).
+- `section_disclaimer.html` — warm general analysis disclaimer, included in 7 major section templates (dosha, yogas, dasha, marriage_timing, career_path, love_marriage, spiritual_potential).
 
 ### Bilingual support
 
