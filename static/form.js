@@ -1,5 +1,18 @@
 let _paymentEnabled = false;
 let _priceDisplay = '';
+let _priceAmount = 0;          // price in rupees, used as Meta Pixel event value
+const _currency = 'INR';
+let _purchaseTracked = false;  // guard so Purchase fires at most once
+
+// Safe Meta Pixel wrapper — no-ops if the pixel is blocked or not yet loaded.
+function fbTrack(event, params) {
+    if (typeof fbq !== 'function') return;
+    try {
+        params ? fbq('track', event, params) : fbq('track', event);
+    } catch (e) {
+        /* pixel unavailable (ad-blocker etc.) — ignore */
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     populateSelects();
@@ -18,6 +31,7 @@ async function loadPaymentConfig() {
         if (_paymentEnabled) {
             const rupees = (cfg.amount / 100).toFixed(0);
             _priceDisplay = `₹${rupees}`;
+            _priceAmount = cfg.amount / 100;
             const btnText = document.querySelector('#submitBtn .btn-text');
             btnText.textContent = `Pay ${_priceDisplay} & Generate Kundli`;
         }
@@ -232,6 +246,9 @@ function setupFormSubmit() {
         btnLoader.style.display = 'inline-block';
         hideError();
 
+        // Meta Pixel: user submitted valid birth details
+        fbTrack('Lead', { content_name: 'Kundli Form', currency: _currency, value: _priceAmount });
+
         const payload = {
             name: document.getElementById('name').value.trim(),
             phone: phone,
@@ -312,6 +329,13 @@ async function handlePaidFlow(payload) {
                 },
             },
         };
+        // Meta Pixel: user reached the payment step
+        fbTrack('InitiateCheckout', {
+            value: order.amount / 100,
+            currency: order.currency || _currency,
+            content_name: 'Kundli Report',
+        });
+
         const rzp = new Razorpay(options);
         rzp.on('payment.failed', function (resp) {
             showError('Payment failed: ' + (resp.error?.description || 'unknown error'));
@@ -384,6 +408,18 @@ function setupGenerateAnother() {
 }
 
 function showThankYouPage(name, orderId, paymentId) {
+    // Meta Pixel: payment confirmed — fire the Purchase conversion once
+    if (!_purchaseTracked) {
+        _purchaseTracked = true;
+        fbTrack('Purchase', {
+            value: _priceAmount,
+            currency: _currency,
+            content_name: 'Kundli Report',
+            content_type: 'product',
+            order_id: orderId,
+        });
+    }
+
     const form = document.getElementById('kundliForm');
     if (form) form.style.display = 'none';
 
