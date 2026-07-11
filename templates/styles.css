@@ -353,9 +353,9 @@ body {
 .toc-row {
     background: #FDEED6;
     border-radius: 2mm;
-    padding: 2.2mm 6mm;
-    margin-bottom: 1.5mm;
-    font-size: 12pt;
+    padding: 1.6mm 6mm;
+    margin-bottom: 1mm;
+    font-size: 11pt;
     line-height: 1.4;
 }
 

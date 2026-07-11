@@ -330,9 +330,6 @@ class KundliData(BaseModel):
     basic_gem_suggestion: dict | None = None
     rudraksha_suggestion: dict | None = None
     sadhesati_remedies: dict | None = None
-    daily_nakshatra_prediction: dict | None = None
-    daily_nakshatra_prediction_next: dict | None = None
-    daily_nakshatra_prediction_previous: dict | None = None
     varshaphal_year_chart: Any | None = None
     varshaphal_month_chart: Any | None = None
     varshaphal_details: Any | None = None

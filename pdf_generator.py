@@ -20,7 +20,6 @@ from sections.bhav_madhya import render_bhav_madhya
 from sections.bhinnashtak import render_bhinnashtak
 from sections.chart import render_chart
 from sections.cover import render_cover
-from sections.daily_predictions import render_daily_predictions
 from sections.dasha import render_dasha
 from sections.divisional_charts import render_divisional_charts
 from sections.dosha import render_dosha
@@ -181,7 +180,6 @@ SECTION_RENDERERS = [
     ("remedy_ishta_devata", render_remedy_ishta_devata),
     ("remedy_yantra", render_remedy_yantra),
     ("remedy_daan", render_remedy_daan),
-    ("daily_predictions", render_daily_predictions),
     ("varshaphal", render_varshaphal),
     ("planets", render_planets),
     ("houses", render_houses),

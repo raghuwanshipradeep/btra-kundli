@@ -34,6 +34,7 @@
   {% endif %}
 </div>
 
+{% if rahu_house_report or rahu_rashi_report %}
 <div class="section-page">
   <h2 class="section-header">{{ locale.planet_names.get("Rahu", "Rahu") }} — {{ locale.rk_rahu_subtitle }}</h2>
 
@@ -55,7 +56,9 @@
   </div>
   {% endif %}
 </div>
+{% endif %}
 
+{% if ketu_house_report or ketu_rashi_report or rahu_lk_remedies or ketu_lk_remedies %}
 <div class="section-page">
   <h2 class="section-header">{{ locale.planet_names.get("Ketu", "Ketu") }} — {{ locale.rk_ketu_subtitle }}</h2>
 
@@ -113,3 +116,4 @@
   </div>
   {% endif %}
 </div>
+{% endif %}

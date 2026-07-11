@@ -563,27 +563,6 @@ class AstrologyAPIClient:
             logger.warning("sadhesati_remedies failed: %s", e)
             return None
 
-    async def get_daily_nakshatra_prediction(self, payload: dict) -> dict | None:
-        try:
-            return await self._post("/daily_nakshatra_prediction", payload)
-        except Exception as e:
-            logger.warning("daily_nakshatra_prediction failed: %s", e)
-            return None
-
-    async def get_daily_nakshatra_prediction_next(self, payload: dict) -> dict | None:
-        try:
-            return await self._post("/daily_nakshatra_prediction/next", payload)
-        except Exception as e:
-            logger.warning("daily_nakshatra_prediction/next failed: %s", e)
-            return None
-
-    async def get_daily_nakshatra_prediction_previous(self, payload: dict) -> dict | None:
-        try:
-            return await self._post("/daily_nakshatra_prediction/previous", payload)
-        except Exception as e:
-            logger.warning("daily_nakshatra_prediction/previous failed: %s", e)
-            return None
-
     async def get_varshaphal_year_chart(self, payload: dict) -> dict | None:
         try:
             return await self._post("/varshaphal_year_chart", payload)
@@ -1057,9 +1036,9 @@ class AstrologyAPIClient:
             self.get_basic_gem_suggestion(payload_with_ayan),  # 27
             self.get_rudraksha_suggestion(payload_with_ayan),  # 28
             self.get_sadhesati_remedies(payload),           # 29
-            self.get_daily_nakshatra_prediction(payload),   # 30
-            self.get_daily_nakshatra_prediction_next(payload),     # 31
-            self.get_daily_nakshatra_prediction_previous(payload), # 32
+            self._skip(),                                   # 30 (daily nakshatra removed)
+            self._skip(),                                   # 31 (daily nakshatra removed)
+            self._skip(),                                   # 32 (daily nakshatra removed)
             self.get_varshaphal_year_chart(varshaphal_payload),     # 33
             self.get_varshaphal_month_chart(varshaphal_payload),    # 34
             self.get_varshaphal_details(varshaphal_payload),        # 35
@@ -1289,9 +1268,6 @@ class AstrologyAPIClient:
             basic_gem_suggestion=safe(results[27]),
             rudraksha_suggestion=safe(results[28]),
             sadhesati_remedies=safe(results[29]),
-            daily_nakshatra_prediction=safe(results[30]),
-            daily_nakshatra_prediction_next=safe(results[31]),
-            daily_nakshatra_prediction_previous=safe(results[32]),
             varshaphal_year_chart=safe(results[33]),
             varshaphal_month_chart=safe(results[34]),
             varshaphal_details=safe(results[35]),

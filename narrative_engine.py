@@ -106,14 +106,14 @@ You are an experienced Vedic astrologer writing for an urban Indian audience age
 
 For the given Mahadasha period, generate a structured response in VALID JSON format:
 {
-  "experience": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"],
-  "avoid": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"]
+  "experience": ["bullet 1", "bullet 2", "bullet 3"],
+  "avoid": ["bullet 1", "bullet 2", "bullet 3"]
 }
 
-"experience": 4-6 one-sentence bullets about what the native will experience during this period.
-"avoid": 4-6 one-sentence bullets about what the native should avoid during this period.
+"experience": 3-4 one-sentence bullets about what the native will experience during this period.
+"avoid": 3-4 one-sentence bullets about what the native should avoid during this period.
 
-Each bullet: 15-25 words, warm conversational tone. Reference the actual planet, sign, and house.
+Each bullet: 12-18 words, warm conversational tone. Reference the actual planet, sign, and house.
 Tone: warm, relatable, like a best friend who knows astrology. Never preachy, never doom-laden.
 Saturn challenges = "growth invitations". Rahu = "desire amplifier". Ketu = "spiritual teacher".
 FORBIDDEN: predictions of death, exact dates of bad events, anything that could scare a reader.
@@ -125,14 +125,14 @@ _SYSTEM_PROMPT_MAHADASHA_HI = """\
 
 दी गई महादशा के लिए इस JSON प्रारूप में उत्तर दें:
 {
-  "experience": ["बुलेट 1", "बुलेट 2", "बुलेट 3", "बुलेट 4"],
-  "avoid": ["बुलेट 1", "बुलेट 2", "बुलेट 3", "बुलेट 4"]
+  "experience": ["बुलेट 1", "बुलेट 2", "बुलेट 3"],
+  "avoid": ["बुलेट 1", "बुलेट 2", "बुलेट 3"]
 }
 
-"experience": 4-6 एक-वाक्य बुलेट — इस काल में जातक क्या अनुभव करेगा।
-"avoid": 4-6 एक-वाक्य बुलेट — इस काल में जातक को किन बातों से बचना चाहिए।
+"experience": 3-4 एक-वाक्य बुलेट — इस काल में जातक क्या अनुभव करेगा।
+"avoid": 3-4 एक-वाक्य बुलेट — इस काल में जातक को किन बातों से बचना चाहिए।
 
-प्रत्येक बुलेट: 15-25 शब्द, गर्मजोशी भरा स्वर। वास्तविक ग्रह, राशि और भाव का उल्लेख करें।
+प्रत्येक बुलेट: 12-18 शब्द, गर्मजोशी भरा स्वर। वास्तविक ग्रह, राशि और भाव का उल्लेख करें।
 शनि की चुनौतियां = "विकास का निमंत्रण"। राहु = "इच्छा प्रवर्धक"। केतु = "आध्यात्मिक गुरु"।
 वर्जित: मृत्यु की भविष्यवाणी, बुरी घटनाओं की तिथियां, भयभीत करने वाली बातें।
 केवल JSON लिखें। कोई मार्कडाउन नहीं, कोई व्याख्या नहीं।"""
@@ -532,10 +532,10 @@ async def narrate(
 
     if section_type == "mahadasha_journey":
         system_prompt = _SYSTEM_PROMPT_MAHADASHA_HI if lang == "hi" else _SYSTEM_PROMPT_MAHADASHA_EN
-        max_tokens = 1024
+        max_tokens = 820
     else:
         system_prompt = _SYSTEM_PROMPT_HI if lang == "hi" else _SYSTEM_PROMPT_EN
-        max_tokens = 700
+        max_tokens = 560
     user_prompt = _build_user_prompt(section_type, data, lang)
 
     try:
@@ -666,7 +666,7 @@ async def _batch_narrate(
             "Generate responses for each section below. "
             'Return ONLY a valid JSON object: {"key": {"experience": [...], "avoid": [...]}, ...}\n\n'
         )
-        per_item_tokens = 1100 if lang == "hi" else 700
+        per_item_tokens = 850 if lang == "hi" else 560
     elif batch_kind == "varshaphal":
         instruction = (
             "Generate a structured annual forecast for each section below. "
@@ -677,7 +677,7 @@ async def _batch_narrate(
     elif batch_kind == "remedy":
         if lang == "hi":
             instruction = (
-                "नीचे दिए गए प्रत्येक उपाय के लिए एक संक्षिप्त वर्णन लिखें (2 अनुच्छेद, 70-100 शब्द प्रत्येक)। "
+                "नीचे दिए गए प्रत्येक उपाय के लिए एक संक्षिप्त वर्णन लिखें (2 अनुच्छेद, 55-80 शब्द प्रत्येक)। "
                 "ये सभी उपाय एक ही व्यक्ति के लिए एक एकीकृत उपचार योजना हैं — जहां प्राकृतिक हो, "
                 "एक दूसरे को संदर्भित करें (जैसे, यदि रत्न शुक्र के लिए है, मंत्र भी शुक्र-केंद्रित हो सकता है)। "
                 "प्रत्येक उपाय इस व्यक्ति के ग्रहों की विशिष्ट कमजोरियों के लिए विशिष्ट होना चाहिए, सामान्य नहीं। "
@@ -685,19 +685,19 @@ async def _batch_narrate(
             )
         else:
             instruction = (
-                "Generate a brief narrative for each remedy below (2 paragraphs, 90-120 words each). "
+                "Generate a brief narrative for each remedy below (2 paragraphs, 70-95 words each). "
                 "These remedies form ONE integrated plan for the same person — cross-reference where natural "
                 "(e.g., if the gemstone is for Venus, the mantra section can also be Venus-focused). "
                 "Each remedy should be specific to this person's actual planetary weaknesses, not generic. "
                 'Return ONLY valid JSON: {"key": "narrative...", ...}\n\n'
             )
-        per_item_tokens = 500 if lang == "hi" else 350
+        per_item_tokens = 400 if lang == "hi" else 280
     else:
         instruction = (
-            "Generate a narrative for each section below (3 paragraphs, 120-180 words each). "
+            "Generate a narrative for each section below (3 paragraphs, 95-145 words each). "
             'Return ONLY a valid JSON object: {"key": "narrative text...", ...}\n\n'
         )
-        per_item_tokens = 700 if lang == "hi" else 500
+        per_item_tokens = 560 if lang == "hi" else 400
 
     batch_prompt = instruction + "\n\n".join(parts)
     max_tokens = min(len(uncached) * per_item_tokens, 16000)

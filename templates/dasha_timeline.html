@@ -66,11 +66,10 @@
     {% include "partials/section_disclaimer.html" %}
 </div>
 
-{% if sub_vdasha or sub_sub_vdasha %}
+{% if current_vdasha_all_levels %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.dasha_title }} (cont.)</h2>
 
-    {% if current_vdasha_all_levels %}
     <div class="dasha-current-card">
         <div class="period-label">{{ locale.current_vdasha_all_title }}</div>
         {% for lvl in current_vdasha_all_levels %}
@@ -101,109 +100,5 @@
         </div>
         {% endfor %}
     </div>
-    <hr class="divider">
-    {% endif %}
-
-    {% if sub_vdasha %}
-    <h3 class="section-subheader">{{ locale.sub_dasha_title }}</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>{{ locale.planet_col }}</th>
-                <th>{{ locale.start_date }}</th>
-                <th>{{ locale.end_date }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in sub_vdasha %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
-                <td>{{ item.start|default(item.get('start_date','')) }}</td>
-                <td>{{ item.end|default(item.get('end_date','')) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-
-    {% if sub_sub_vdasha %}
-    <h3 class="section-subheader">{{ locale.sub_sub_dasha_title }}</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>{{ locale.planet_col }}</th>
-                <th>{{ locale.start_date }}</th>
-                <th>{{ locale.end_date }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in sub_sub_vdasha %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
-                <td>{{ item.start|default(item.get('start_date','')) }}</td>
-                <td>{{ item.end|default(item.get('end_date','')) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-</div>
-{% endif %}
-
-{% if sub_sub_sub_vdasha or sub_sub_sub_sub_vdasha %}
-<div class="section-page">
-    <h2 class="section-header">{{ locale.dasha_title }} (cont.)</h2>
-
-    {% if sub_sub_sub_vdasha %}
-    <h3 class="section-subheader">{{ locale.sub_sub_sub_dasha_title }}</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>{{ locale.planet_col }}</th>
-                <th>{{ locale.start_date }}</th>
-                <th>{{ locale.end_date }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in sub_sub_sub_vdasha %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
-                <td>{{ item.start|default(item.get('start_date','')) }}</td>
-                <td>{{ item.end|default(item.get('end_date','')) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-
-    {% if sub_sub_sub_sub_vdasha %}
-    <h3 class="section-subheader">{{ locale.sub_sub_sub_sub_dasha_title }}</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>{{ locale.planet_col }}</th>
-                <th>{{ locale.start_date }}</th>
-                <th>{{ locale.end_date }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in sub_sub_sub_sub_vdasha %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td><strong>{{ locale.planet_names.get(item.planet|default(item.get('name','')), item.planet|default(item.get('name',''))) }}</strong></td>
-                <td>{{ item.start|default(item.get('start_date','')) }}</td>
-                <td>{{ item.end|default(item.get('end_date','')) }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
 </div>
 {% endif %}

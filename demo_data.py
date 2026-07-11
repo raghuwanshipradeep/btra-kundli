@@ -499,36 +499,6 @@ SAMPLE_SADHESATI_REMEDIES = {
     ]
 }
 
-SAMPLE_DAILY_PREDICTION = {
-    "nakshatra": "Purva Bhadrapada",
-    "prediction": {
-        "personal": "A productive day with opportunities for growth.",
-        "health": "Take care of your diet today.",
-        "profession": "Good day for important meetings.",
-        "emotions": "Emotional stability will bring peace.",
-    }
-}
-
-SAMPLE_DAILY_PREDICTION_NEXT = {
-    "nakshatra": "Uttara Bhadrapada",
-    "prediction": {
-        "personal": "Tomorrow brings new beginnings.",
-        "health": "A good day for exercise.",
-        "profession": "Favorable for starting new projects.",
-        "emotions": "You will feel confident and optimistic.",
-    }
-}
-
-SAMPLE_DAILY_PREDICTION_PREV = {
-    "nakshatra": "Shatabhisha",
-    "prediction": {
-        "personal": "Yesterday was a day for reflection.",
-        "health": "Rest was needed and beneficial.",
-        "profession": "Past efforts are bearing fruit.",
-        "emotions": "Emotional healing was underway.",
-    }
-}
-
 SAMPLE_VARSHAPHAL_DETAILS = {
     "year": 2026,
     "varshaphal_ascendant": "Leo",
@@ -814,9 +784,6 @@ SAMPLE_KUNDLI_DATA = KundliData(
     basic_gem_suggestion=SAMPLE_GEMS,
     rudraksha_suggestion=SAMPLE_RUDRAKSHA,
     sadhesati_remedies=SAMPLE_SADHESATI_REMEDIES,
-    daily_nakshatra_prediction=SAMPLE_DAILY_PREDICTION,
-    daily_nakshatra_prediction_next=SAMPLE_DAILY_PREDICTION_NEXT,
-    daily_nakshatra_prediction_previous=SAMPLE_DAILY_PREDICTION_PREV,
     varshaphal_details=SAMPLE_VARSHAPHAL_DETAILS,
     varshaphal_planets=SAMPLE_VARSHAPHAL_PLANETS,
     varshaphal_muntha=SAMPLE_VARSHAPHAL_MUNTHA,
