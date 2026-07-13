@@ -2,11 +2,14 @@
    Lines are drawn in SVG; all cell text is rendered as absolutely-positioned
    HTML so WeasyPrint shapes Devanagari correctly and the font stays readable.
    Each house shows its rashi number (sign_id 1-12), the conventional North-Indian
-   presentation, instead of the sign name.
+   presentation, instead of the sign name. Houses run anti-clockwise from house 1
+   (top-center), matching the traditional layout — see HOUSE_CENTROIDS in north_chart.py.
    `houses` items expect: house, sign_id, sign_name, planets (list), cx, cy (0-400 space).
 
    12 house polygons (0-400 space) used for alternate-house shading — derived from the
-   diagonals + inner-diamond intersections and verified against HOUSE_CENTROIDS. #}
+   diagonals + inner-diamond intersections. Shading is by house parity; because horizontal
+   mirror pairs (2/12, 3/11, 4/10, 5/9, 6/8) share parity, the pattern is symmetric and
+   stays aligned with the anti-clockwise HOUSE_CENTROIDS. #}
 {% set house_polys = {
      1: "200,0 300,100 200,200 100,100",
      2: "200,0 400,0 300,100",

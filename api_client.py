@@ -68,6 +68,18 @@ PLANET_ID_TO_EN: dict[int, str] = {
     10: "Uranus", 11: "Neptune", 12: "Pluto",
 }
 
+# The /planets/extended endpoint uses a DIFFERENT id scheme from /planets: it
+# places the outer planets at ids 9-11 and pushes the Ascendant to id 12
+# (whereas /planets has the Ascendant at id 9 and no outer planets). Using the
+# wrong map here shifts every outer planet by one — the real Uranus gets labelled
+# "Ascendant" (and dropped) and the real Ascendant gets labelled "Pluto".
+PLANET_ID_TO_EN_EXTENDED: dict[int, str] = {
+    0: "Sun", 1: "Moon", 2: "Mars", 3: "Mercury",
+    4: "Jupiter", 5: "Venus", 6: "Saturn",
+    7: "Rahu", 8: "Ketu",
+    9: "Uranus", 10: "Neptune", 11: "Pluto", 12: "Ascendant",
+}
+
 
 SIGN_ID_TO_EN: dict[int, str] = {
     1: "Aries", 2: "Taurus", 3: "Gemini", 4: "Cancer",
@@ -83,11 +95,14 @@ _SIGN_NAME_NORMALIZE: dict[str, str] = {
 }
 
 
-def _normalize_planet_names(planets: list[PlanetData] | None) -> None:
+def _normalize_planet_names(
+    planets: list[PlanetData] | None,
+    id_map: dict[int, str] = PLANET_ID_TO_EN,
+) -> None:
     if not planets:
         return
     for p in planets:
-        en_name = PLANET_ID_TO_EN.get(p.id)
+        en_name = id_map.get(p.id)
         if en_name:
             p.name = en_name
         if p.sign and p.sign not in SIGN_LORDS:
@@ -1224,7 +1239,7 @@ class AstrologyAPIClient:
         planets = safe(results[1])
         planets_extended = safe(results[2])
         _normalize_planet_names(planets)
-        _normalize_planet_names(planets_extended)
+        _normalize_planet_names(planets_extended, PLANET_ID_TO_EN_EXTENDED)
 
         houses = safe(results[3])
         if houses is None and planets is not None:

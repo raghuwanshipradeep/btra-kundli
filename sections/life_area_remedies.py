@@ -18,7 +18,9 @@ from typing import TYPE_CHECKING
 from sections.dignity import DEBILITATION, EXALTATION, MOOLATRIKONA, OWN_SIGNS
 from sections.remedy_constants import (
     BEHAVIORAL_REMEDIES,
+    BEHAVIORAL_REMEDIES_HI,
     PLANET_DONATIONS,
+    PLANET_DONATIONS_HI,
     PLANET_MANTRAS,
     PLANET_MANTRAS_DEVANAGARI,
     PLANET_MANTRAS_MEANING,
@@ -83,7 +85,7 @@ def build_area_remedies(
 
         reasons = _weakness(name, sign, house, is_retro) if p else []
         gem = PLANET_TO_GEMSTONE.get(name, {})
-        donation = PLANET_DONATIONS.get(name, {})
+        donation = (PLANET_DONATIONS_HI if lang == "hi" else PLANET_DONATIONS).get(name, {})
 
         bundles.append({
             "planet": name,
@@ -98,7 +100,7 @@ def build_area_remedies(
             "gemstone": gem.get("hindi", "") if lang == "hi" else gem.get("name", ""),
             "donation_item": donation.get("item", ""),
             "donation_day": donation.get("day", ""),
-            "behavioral": BEHAVIORAL_REMEDIES.get(name, ""),
+            "behavioral": (BEHAVIORAL_REMEDIES_HI if lang == "hi" else BEHAVIORAL_REMEDIES).get(name, ""),
         })
 
     # Surface afflicted significators first; preserve input order otherwise.

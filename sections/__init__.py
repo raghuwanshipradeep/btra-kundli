@@ -1235,9 +1235,6 @@ LOCALES: dict[str, dict] = {
         "shodash_average": "Average",
         "shodash_weak": "Weak",
 
-        "south_chart_title": "South Indian Chart",
-        "south_chart_desc": "Lagna Chart — South Indian Style (fixed signs)",
-        "south_chart_center": "Rashi Chart",
 
         "north_chart_title": "North Indian Chart",
         "north_chart_desc": "Lagna Chart — North Indian Style (fixed houses)",
@@ -1250,6 +1247,16 @@ LOCALES: dict[str, dict] = {
         "marriage_planets_in_7": "Planets in 7th House",
         "marriage_favorable_title": "Favorable Marriage Periods (Dasha)",
         "marriage_reason": "Reason",
+        "mt_factor_7th_sign": "7th House Sign",
+        "mt_factor_7th_lord": "7th Lord",
+        "mt_factor_7th_lord_placement": "7th Lord Placement",
+        "mt_factor_venus": "Venus Position",
+        "mt_sig_7th_sign": "The sign in the 7th house shapes partnership dynamics.",
+        "mt_sig_7th_lord": "{planet} governs marriage prospects through its placement and strength.",
+        "mt_sig_7th_lord_placement": "Position of 7th lord indicates the nature and timing of marriage.",
+        "mt_sig_venus": "Venus as natural karaka of marriage influences romantic tendencies.",
+        "mt_placement_fmt": "House {house} in {sign}",
+        "mt_favorable_reason": "{planet} Mahadasha — connected to marriage significations.",
 
         "forecast_current_dasha": "Current Dasha Periods",
         "forecast_level": "Level",
@@ -1397,22 +1404,6 @@ LOCALES: dict[str, dict] = {
         "dn_enemy": "Enemy (Shatru)",
         "dn_neutral": "Neutral (Sama)",
 
-        # Love & Marriage
-        "lm_title": "Love & Marriage Analysis",
-        "lm_intro": "Vedic astrology reveals romantic and marital potential through key houses, planets, and special significators. The 5th house governs romance and emotional connections, the 7th house governs marriage and partnerships, Venus represents love and beauty, and the Darakaraka (spouse significator) reveals the nature of your life partner.",
-        "lm_5th_house_title": "5th House — Romance & Love",
-        "lm_5th_house_desc": "The 5th house represents romance, creativity, emotional expression, and the capacity for love. The sign on this house and planets present here shape how you approach love, what kind of romantic partner attracts you, and how you express affection.",
-        "lm_7th_house_title": "7th House — Marriage & Partnership",
-        "lm_7th_house_desc": "The 7th house is the primary house of marriage, partnerships, and committed relationships. It reveals the nature of your spouse, the quality of your married life, and how you approach partnerships.",
-        "lm_planets_present": "Planets Present",
-        "lm_in_5th": "in 5th House — Romantic Influence",
-        "lm_in_7th": "in 7th House — Marital Influence",
-        "lm_venus_title": "Venus — Planet of Love",
-        "lm_dk_title": "Darakaraka — Your Spouse Significator",
-        "lm_dk_intro": "In Jaimini astrology, the Darakaraka is the planet with the lowest degree among the seven Chara Karakas. It represents your spouse and the nature of your marital relationship. The house and sign where the Darakaraka is placed reveals deep insights about the kind of partner you attract and the dynamics of your marriage.",
-        "lm_dk_label": "Your Darakaraka",
-        "lm_dk_house_effect": "Darakaraka — House Placement Effect",
-        "lm_dk_rashi_effect": "Darakaraka — Sign Placement Effect",
 
         # Career Path
         "cp_title": "Career Path Analysis",
@@ -1525,13 +1516,6 @@ LOCALES: dict[str, dict] = {
         "ssj_not_active": "You are not currently in a Sade Sati period. Use this time to prepare and strengthen yourself for future cycles.",
 
         # Raj Yoga Celebration
-        "ryc_title": "Raj Yoga Celebration",
-        "ryc_header": "It's time to celebrate — you have {count} Raj Yoga(s) in your chart!",
-        "ryc_no_yogas": "Your chart shows a balanced planetary configuration. While no classical Raj Yogas are formed, your planets work together in unique ways that bring their own blessings.",
-        "ryc_intro": "Raj Yogas are special planetary combinations that bestow extraordinary blessings — wealth, fame, authority, wisdom, and success. Having even one is considered a great fortune. Here's what your chart reveals:",
-        "ryc_planets_col": "Planets",
-        "ryc_house_col": "House",
-        "ryc_effect_col": "Effect",
 
         # Mahadasha Journey
         "mj_title": "Mahadasha Life Journey",
@@ -2032,9 +2016,6 @@ LOCALES: dict[str, dict] = {
         "shodash_average": "सामान्य",
         "shodash_weak": "दुर्बल",
 
-        "south_chart_title": "दक्षिण भारतीय कुंडली",
-        "south_chart_desc": "लग्न कुंडली — दक्षिण भारतीय शैली (स्थिर राशियाँ)",
-        "south_chart_center": "राशि कुंडली",
 
         "north_chart_title": "उत्तर भारतीय कुंडली",
         "north_chart_desc": "लग्न कुंडली — उत्तर भारतीय शैली (स्थिर भाव)",
@@ -2047,6 +2028,16 @@ LOCALES: dict[str, dict] = {
         "marriage_planets_in_7": "सप्तम भाव में ग्रह",
         "marriage_favorable_title": "अनुकूल विवाह काल (दशा)",
         "marriage_reason": "कारण",
+        "mt_factor_7th_sign": "सप्तम भाव राशि",
+        "mt_factor_7th_lord": "सप्तम स्वामी",
+        "mt_factor_7th_lord_placement": "सप्तम स्वामी की स्थिति",
+        "mt_factor_venus": "शुक्र की स्थिति",
+        "mt_sig_7th_sign": "सप्तम भाव की राशि साझेदारी की प्रकृति को आकार देती है।",
+        "mt_sig_7th_lord": "{planet} अपनी स्थिति और बल के माध्यम से विवाह की संभावनाओं को नियंत्रित करता है।",
+        "mt_sig_7th_lord_placement": "सप्तम स्वामी की स्थिति विवाह की प्रकृति और समय का संकेत देती है।",
+        "mt_sig_venus": "शुक्र विवाह के नैसर्गिक कारक के रूप में रोमांटिक प्रवृत्तियों को प्रभावित करता है।",
+        "mt_placement_fmt": "भाव {house} — {sign}",
+        "mt_favorable_reason": "{planet} महादशा — विवाह कारकों से संबंधित।",
 
         "forecast_current_dasha": "वर्तमान दशा काल",
         "forecast_level": "स्तर",
@@ -2200,22 +2191,6 @@ LOCALES: dict[str, dict] = {
         "dn_enemy": "शत्रु",
         "dn_neutral": "सम",
 
-        # Love & Marriage
-        "lm_title": "प्रेम और विवाह विश्लेषण",
-        "lm_intro": "वैदिक ज्योतिष प्रमुख भावों, ग्रहों और विशेष कारकों के माध्यम से रोमांटिक और वैवाहिक क्षमता को प्रकट करता है। पांचवां भाव प्रेम और भावनात्मक जुड़ाव को नियंत्रित करता है, सातवां भाव विवाह और साझेदारी को, शुक्र प्रेम और सौंदर्य का प्रतिनिधित्व करता है, और दाराकारक (जीवनसाथी कारक) आपके जीवनसाथी की प्रकृति को प्रकट करता है।",
-        "lm_5th_house_title": "पांचवां भाव — प्रेम और रोमांस",
-        "lm_5th_house_desc": "पांचवां भाव प्रेम, रचनात्मकता, भावनात्मक अभिव्यक्ति और प्यार की क्षमता का प्रतिनिधित्व करता है। इस भाव पर राशि और यहां मौजूद ग्रह यह तय करते हैं कि आप प्रेम को कैसे देखते हैं और किस प्रकार के साथी आपको आकर्षित करते हैं।",
-        "lm_7th_house_title": "सातवां भाव — विवाह और साझेदारी",
-        "lm_7th_house_desc": "सातवां भाव विवाह, साझेदारी और प्रतिबद्ध रिश्तों का प्राथमिक भाव है। यह आपके जीवनसाथी की प्रकृति, वैवाहिक जीवन की गुणवत्ता और साझेदारी के प्रति आपके दृष्टिकोण को प्रकट करता है।",
-        "lm_planets_present": "मौजूद ग्रह",
-        "lm_in_5th": "पांचवें भाव में — रोमांटिक प्रभाव",
-        "lm_in_7th": "सातवें भाव में — वैवाहिक प्रभाव",
-        "lm_venus_title": "शुक्र — प्रेम का ग्रह",
-        "lm_dk_title": "दाराकारक — आपका जीवनसाथी कारक",
-        "lm_dk_intro": "जैमिनी ज्योतिष में, दाराकारक सात चर कारकों में सबसे कम अंश वाला ग्रह होता है। यह आपके जीवनसाथी और वैवाहिक संबंध की प्रकृति का प्रतिनिधित्व करता है। दाराकारक जिस भाव और राशि में स्थित है, वह आपके साथी के बारे में गहन अंतर्दृष्टि प्रकट करता है।",
-        "lm_dk_label": "आपका दाराकारक",
-        "lm_dk_house_effect": "दाराकारक — भाव स्थिति प्रभाव",
-        "lm_dk_rashi_effect": "दाराकारक — राशि स्थिति प्रभाव",
 
         # Career Path
         "cp_title": "करियर पथ विश्लेषण",
@@ -2328,13 +2303,6 @@ LOCALES: dict[str, dict] = {
         "ssj_not_active": "आप वर्तमान में साढ़े साती काल में नहीं हैं। इस समय का उपयोग भविष्य के चक्रों के लिए तैयारी और आत्म-सुदृढ़ीकरण में करें।",
 
         # Raj Yoga Celebration
-        "ryc_title": "राज योग उत्सव",
-        "ryc_header": "उत्सव का समय है — आपकी कुंडली में {count} राज योग हैं!",
-        "ryc_no_yogas": "आपकी कुंडली संतुलित ग्रह विन्यास दर्शाती है। यद्यपि कोई शास्त्रीय राज योग नहीं बना है, आपके ग्रह अपने अनूठे तरीके से मिलकर कार्य करते हैं जो अपना आशीर्वाद लाते हैं।",
-        "ryc_intro": "राज योग विशेष ग्रह संयोजन हैं जो असाधारण आशीर्वाद प्रदान करते हैं — धन, यश, अधिकार, बुद्धि और सफलता। एक भी राज योग का होना महान सौभाग्य माना जाता है। यहाँ आपकी कुंडली क्या बताती है:",
-        "ryc_planets_col": "ग्रह",
-        "ryc_house_col": "भाव",
-        "ryc_effect_col": "प्रभाव",
 
         # Mahadasha Journey
         "mj_title": "महादशा जीवन यात्रा",

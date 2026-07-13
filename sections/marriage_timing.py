@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 
-from sections import LOCALES, make_env
+from sections import LOCALES, make_env, planet_to_en
 from sections.life_area_remedies import build_area_remedies
 
 if TYPE_CHECKING:
@@ -24,46 +24,77 @@ def render_marriage_timing(data: KundliData, lang: str = "en") -> str | None:
     seventh_lord = h7.sign_lord
     venus = next((p for p in data.planets if p.name == "Venus"), None)
 
+    locale = LOCALES.get(lang, LOCALES["en"])
+    sign_names = locale.get("sign_names", {})
+    planet_names = locale.get("planet_names", {})
+
+    def loc_sign(s: str) -> str:
+        return sign_names.get(s, s)
+
+    def loc_planet(p: str) -> str:
+        return planet_names.get(p, p)
+
+    placement_fmt = locale.get("mt_placement_fmt", "House {house} in {sign}")
+    seventh_lord_loc = loc_planet(seventh_lord)
+
     factors = []
     factors.append({
-        "factor": "7th House Sign",
-        "value": h7.sign,
-        "significance": "The sign in the 7th house shapes partnership dynamics.",
+        "factor": locale.get("mt_factor_7th_sign", "7th House Sign"),
+        "value": loc_sign(h7.sign),
+        "significance": locale.get(
+            "mt_sig_7th_sign",
+            "The sign in the 7th house shapes partnership dynamics.",
+        ),
     })
     factors.append({
-        "factor": "7th Lord",
-        "value": seventh_lord,
-        "significance": f"{seventh_lord} governs marriage prospects through its placement and strength.",
+        "factor": locale.get("mt_factor_7th_lord", "7th Lord"),
+        "value": seventh_lord_loc,
+        "significance": locale.get(
+            "mt_sig_7th_lord",
+            "{planet} governs marriage prospects through its placement and strength.",
+        ).format(planet=seventh_lord_loc),
     })
 
     seventh_lord_planet = next((p for p in data.planets if p.name == seventh_lord), None)
     if seventh_lord_planet:
         factors.append({
-            "factor": "7th Lord Placement",
-            "value": f"House {seventh_lord_planet.house} in {seventh_lord_planet.sign}",
-            "significance": "Position of 7th lord indicates the nature and timing of marriage.",
+            "factor": locale.get("mt_factor_7th_lord_placement", "7th Lord Placement"),
+            "value": placement_fmt.format(
+                house=seventh_lord_planet.house, sign=loc_sign(seventh_lord_planet.sign)
+            ),
+            "significance": locale.get(
+                "mt_sig_7th_lord_placement",
+                "Position of 7th lord indicates the nature and timing of marriage.",
+            ),
         })
 
     if venus:
         factors.append({
-            "factor": "Venus Position",
-            "value": f"House {venus.house} in {venus.sign}",
-            "significance": "Venus as natural karaka of marriage influences romantic tendencies.",
+            "factor": locale.get("mt_factor_venus", "Venus Position"),
+            "value": placement_fmt.format(house=venus.house, sign=loc_sign(venus.sign)),
+            "significance": locale.get(
+                "mt_sig_venus",
+                "Venus as natural karaka of marriage influences romantic tendencies.",
+            ),
         })
 
+    reason_fmt = locale.get(
+        "mt_favorable_reason",
+        "{planet} Mahadasha — connected to marriage significations.",
+    )
     favorable_periods = []
     for dasha in data.major_vdasha:
-        if dasha.planet in (seventh_lord, "Venus", "Jupiter"):
+        planet_en = planet_to_en(dasha.planet)
+        if planet_en in (seventh_lord, "Venus", "Jupiter"):
             favorable_periods.append({
-                "planet": dasha.planet,
+                "planet": planet_en,
                 "start": dasha.start,
                 "end": dasha.end,
-                "reason": f"{dasha.planet} Mahadasha — connected to marriage significations.",
+                "reason": reason_fmt.format(planet=loc_planet(planet_en)),
             })
 
     planets_in_7 = [p.name for p in data.planets if p.house == 7 and p.name != "Ascendant"]
 
-    locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()
     template = env.get_template("marriage_timing.html")
     return template.render(

@@ -34,7 +34,7 @@
     {% if entry.experience %}
     <div style="margin-bottom: 3mm;">
       <h5 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">{{ locale.mj_experience }}</h5>
-      <ul style="font-size: 10pt; line-height: 1.7; margin: 0; padding-left: 5mm;">
+      <ul style="font-size: 11.5pt; line-height: 1.7; margin: 0; padding-left: 5mm;">
         {% for bullet in entry.experience %}
         <li>{{ bullet }}</li>
         {% endfor %}
@@ -45,7 +45,7 @@
     {% if entry.avoid %}
     <div>
       <h5 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">{{ locale.mj_avoid }}</h5>
-      <ul style="font-size: 10pt; line-height: 1.7; margin: 0; padding-left: 5mm; color: #555;">
+      <ul style="font-size: 11.5pt; line-height: 1.7; margin: 0; padding-left: 5mm;">
         {% for bullet in entry.avoid %}
         <li>{{ bullet }}</li>
         {% endfor %}

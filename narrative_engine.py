@@ -66,10 +66,9 @@ _SYSTEM_PROMPT_EN = """\
 You are an experienced Vedic astrologer writing for an urban Indian audience aged 22-45.
 Write in warm, conversational English. Keep Sanskrit terms as-is (Mahadasha, Lagna, Nakshatra).
 
-Structure: exactly 3 short paragraphs, 120-180 words total.
+Structure: exactly 2 short paragraphs, 70-95 words total.
 Paragraph 1: What this placement/period/yoga means in everyday-life terms with a vivid modern metaphor.
-Paragraph 2: How it shows up in career, relationships, money, or health (pick what is most relevant).
-Paragraph 3: One watch-out or balance lesson, ending on a warm note.
+Paragraph 2: How it shows up in career, relationships, money, or health (pick what is most relevant), plus one watch-out or balance lesson, ending on a warm note.
 
 Tone: warm, relatable, like a best friend who knows astrology. Never preachy, never doom-laden.
 - Saturn challenges become "growth invitations".
@@ -86,10 +85,9 @@ _SYSTEM_PROMPT_HI = """\
 पूर्ण शुद्ध हिंदी में लिखें। कोई भी अंग्रेज़ी शब्द न मिलाएं। ज्योतिषीय शब्द संस्कृत/हिंदी में रखें
 (महादशा, लग्न, नक्षत्र, राशि, भाव, ग्रह)।
 
-संरचना: ठीक 3 छोटे अनुच्छेद, कुल 90-130 शब्द।
+संरचना: ठीक 2 छोटे अनुच्छेद, कुल 60-85 शब्द।
 अनुच्छेद 1: इस स्थिति/काल/योग का दैनिक जीवन में क्या अर्थ है — एक सजीव आधुनिक उपमा के साथ।
-अनुच्छेद 2: करियर, रिश्तों, धन या स्वास्थ्य में यह कैसे प्रकट होता है (जो सबसे प्रासंगिक हो)।
-अनुच्छेद 3: एक सावधानी या संतुलन का सबक, गर्मजोशी से समाप्त करें।
+अनुच्छेद 2: करियर, रिश्तों, धन या स्वास्थ्य में यह कैसे प्रकट होता है (जो सबसे प्रासंगिक हो), साथ ही एक सावधानी या संतुलन का सबक, गर्मजोशी से समाप्त करें।
 
 स्वर: गर्मजोशी भरा, मित्रवत, जैसे कोई करीबी मित्र जो ज्योतिष जानता हो। कभी उपदेशात्मक नहीं, कभी भयभीत करने वाला नहीं।
 - शनि की चुनौतियों को "विकास का निमंत्रण" कहें।
@@ -110,10 +108,10 @@ For the given Mahadasha period, generate a structured response in VALID JSON for
   "avoid": ["bullet 1", "bullet 2", "bullet 3"]
 }
 
-"experience": 3-4 one-sentence bullets about what the native will experience during this period.
-"avoid": 3-4 one-sentence bullets about what the native should avoid during this period.
+"experience": exactly 3 one-sentence bullets about what the native will experience during this period.
+"avoid": exactly 3 one-sentence bullets about what the native should avoid during this period.
 
-Each bullet: 12-18 words, warm conversational tone. Reference the actual planet, sign, and house.
+Each bullet: 10-14 words, warm conversational tone. Reference the actual planet, sign, and house.
 Tone: warm, relatable, like a best friend who knows astrology. Never preachy, never doom-laden.
 Saturn challenges = "growth invitations". Rahu = "desire amplifier". Ketu = "spiritual teacher".
 FORBIDDEN: predictions of death, exact dates of bad events, anything that could scare a reader.
@@ -129,10 +127,10 @@ _SYSTEM_PROMPT_MAHADASHA_HI = """\
   "avoid": ["बुलेट 1", "बुलेट 2", "बुलेट 3"]
 }
 
-"experience": 3-4 एक-वाक्य बुलेट — इस काल में जातक क्या अनुभव करेगा।
-"avoid": 3-4 एक-वाक्य बुलेट — इस काल में जातक को किन बातों से बचना चाहिए।
+"experience": ठीक 3 एक-वाक्य बुलेट — इस काल में जातक क्या अनुभव करेगा।
+"avoid": ठीक 3 एक-वाक्य बुलेट — इस काल में जातक को किन बातों से बचना चाहिए।
 
-प्रत्येक बुलेट: 12-18 शब्द, गर्मजोशी भरा स्वर। वास्तविक ग्रह, राशि और भाव का उल्लेख करें।
+प्रत्येक बुलेट: 10-14 शब्द, गर्मजोशी भरा स्वर। वास्तविक ग्रह, राशि और भाव का उल्लेख करें।
 शनि की चुनौतियां = "विकास का निमंत्रण"। राहु = "इच्छा प्रवर्धक"। केतु = "आध्यात्मिक गुरु"।
 वर्जित: मृत्यु की भविष्यवाणी, बुरी घटनाओं की तिथियां, भयभीत करने वाली बातें।
 केवल JSON लिखें। कोई मार्कडाउन नहीं, कोई व्याख्या नहीं।"""
@@ -666,7 +664,7 @@ async def _batch_narrate(
             "Generate responses for each section below. "
             'Return ONLY a valid JSON object: {"key": {"experience": [...], "avoid": [...]}, ...}\n\n'
         )
-        per_item_tokens = 850 if lang == "hi" else 560
+        per_item_tokens = 600 if lang == "hi" else 420
     elif batch_kind == "varshaphal":
         instruction = (
             "Generate a structured annual forecast for each section below. "
@@ -694,10 +692,10 @@ async def _batch_narrate(
         per_item_tokens = 400 if lang == "hi" else 280
     else:
         instruction = (
-            "Generate a narrative for each section below (3 paragraphs, 95-145 words each). "
+            "Generate a narrative for each section below (2 paragraphs, 70-95 words each). "
             'Return ONLY a valid JSON object: {"key": "narrative text...", ...}\n\n'
         )
-        per_item_tokens = 560 if lang == "hi" else 400
+        per_item_tokens = 400 if lang == "hi" else 300
 
     batch_prompt = instruction + "\n\n".join(parts)
     max_tokens = min(len(uncached) * per_item_tokens, 16000)
@@ -849,8 +847,6 @@ async def generate_narratives(
                 "description": yoga["description"],
             }
             yoga_batch[f"yoga_{yoga['name']}"] = ("raj_yoga", yoga_data)
-            if yoga["effect"] in ("Benefic", "Highly Benefic", "Panch Mahapurusha"):
-                yoga_batch[f"raj_yoga_celeb_{yoga['name']}"] = ("raj_yoga_celebration", yoga_data)
 
     # --- Three Pillars of Self ---
     if kundli_data.planets:
@@ -1022,13 +1018,6 @@ async def generate_narratives(
 
         if twelfth_lord:
             ishta_info = _TLI.get(twelfth_lord, {})
-            moon = next((p for p in kundli_data.planets if p.name == "Moon"), None)
-            remedy_batch["ishta_devata"] = ("ishta_devata", {
-                "deity": ishta_info.get("deity", ""),
-                "twelfth_lord": twelfth_lord,
-                "twelfth_sign": twelfth_sign,
-                "moon_sign": moon.sign if moon else "",
-            })
 
         weak_planets = []
         weakest_score = 0
@@ -1172,31 +1161,6 @@ async def generate_narratives(
             "venus_sign": venus_mc.sign if venus_mc else "",
             "mars_house": mars_mc.house if mars_mc else "",
             "mars_sign": mars_mc.sign if mars_mc else "",
-        })
-
-    if kundli_data.planets and kundli_data.houses:
-        from sections.graha_profile import SIGN_LORDS as _SL5
-        h5_sign = ""
-        h7_sign_lm = ""
-        for h in kundli_data.houses:
-            hid = getattr(h, "house_id", None) or getattr(h, "house", 0)
-            if isinstance(h, dict):
-                hid = h.get("house_id", h.get("house", 0))
-            if hid == 5:
-                h5_sign = getattr(h, "sign", "") or (h.get("sign", "") if isinstance(h, dict) else "")
-            if hid == 7:
-                h7_sign_lm = getattr(h, "sign", "") or (h.get("sign", "") if isinstance(h, dict) else "")
-        venus_lm = next((p for p in kundli_data.planets if p.name == "Venus"), None)
-        from sections.love_marriage import _compute_darakaraka
-        dk = _compute_darakaraka(kundli_data.planets)
-        thematic_batch["love_marriage"] = ("love_marriage", {
-            "fifth_sign": h5_sign,
-            "fifth_lord": _SL5.get(h5_sign, ""),
-            "seventh_sign": h7_sign_lm,
-            "seventh_lord": _SL5.get(h7_sign_lm, ""),
-            "venus_house": venus_lm.house if venus_lm else "",
-            "venus_sign": venus_lm.sign if venus_lm else "",
-            "darakaraka": f"{dk['name']} in {dk['sign']} (House {dk['house']})" if dk else "Not computed",
         })
 
     if kundli_data.planets and kundli_data.houses:

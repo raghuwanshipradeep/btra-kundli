@@ -21,19 +21,22 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# House positions in the 0-400 chart space. Traditional North Indian layout:
+# house 1 fixed at top-center and houses run ANTI-CLOCKWISE (house 2 top-left,
+# house 12 top-right), so rashi numbers and their planets increase anti-clockwise.
 HOUSE_CENTROIDS = {
     1: (200, 75),
-    2: (300, 33),
-    3: (367, 100),
-    4: (325, 200),
-    5: (367, 300),
-    6: (300, 367),
+    2: (100, 33),
+    3: (33, 100),
+    4: (75, 200),
+    5: (33, 300),
+    6: (100, 367),
     7: (200, 325),
-    8: (100, 367),
-    9: (33, 300),
-    10: (75, 200),
-    11: (33, 100),
-    12: (100, 33),
+    8: (300, 367),
+    9: (367, 300),
+    10: (325, 200),
+    11: (367, 100),
+    12: (300, 33),
 }
 
 

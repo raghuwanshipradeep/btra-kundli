@@ -12,7 +12,7 @@ from sections import _format_degree, _safe_time, humanize_key, to_hindi_value
 
 LITE_SKIP_SECTIONS = {
     "panchada_maitri", "tatkalik_maitri",
-    "bhinnashtak", "shodashvarga_summary", "char_dasha", "yogini_dasha",
+    "bhinnashtak", "char_dasha", "yogini_dasha",
 }
 from sections.ashtakvarga import render_ashtakvarga
 from sections.astro_details import render_astro_details
@@ -33,7 +33,6 @@ from sections.planets import render_planets
 from sections.remedy_rudraksha import render_remedy_rudraksha
 from sections.remedy_gemstones import render_remedy_gemstones
 from sections.remedy_mantras import render_remedy_mantras
-from sections.remedy_ishta_devata import render_remedy_ishta_devata
 from sections.remedy_yantra import render_remedy_yantra
 from sections.remedy_daan import render_remedy_daan
 from sections.varshaphal import render_varshaphal
@@ -48,8 +47,6 @@ from sections.avakhada_chakra import render_avakhada_chakra
 from sections.tatkalik_maitri import render_tatkalik_maitri
 from sections.yogas import render_yogas
 from sections.thematic_reports import render_thematic_reports
-from sections.shodashvarga_summary import render_shodashvarga_summary
-from sections.south_chart import render_south_chart
 from sections.north_chart import render_north_chart
 from sections.marriage_timing import render_marriage_timing
 from sections.front_matter import render_front_matter, render_front_matter_toc
@@ -59,7 +56,6 @@ from sections.outer_planets import render_outer_planets
 from sections.authors_note import render_authors_note
 from sections.closing_cta import render_closing_cta
 from sections.dasha_narrative import render_dasha_narrative
-from sections.love_marriage import render_love_marriage
 from sections.career_path import render_career_path
 from sections.material_comforts import render_material_comforts
 from sections.rahu_ketu_analysis import render_rahu_ketu_analysis
@@ -67,7 +63,6 @@ from sections.spiritual_potential import render_spiritual_potential
 from sections.sadhesati_enhanced import render_sadhesati_enhanced
 from sections.three_pillars import render_three_pillars
 from sections.sade_sati_journey import render_sade_sati_journey
-from sections.raj_yoga_celebration import render_raj_yoga_celebration
 from sections.mahadasha_journey import render_mahadasha_journey
 from sections.numerology_personality import render_numerology_personality
 from sections.divider_images import make_divider_renderer, make_link_banner_renderer
@@ -177,7 +172,6 @@ SECTION_RENDERERS = [
     ("remedy_gemstones", render_remedy_gemstones),
     ("remedy_mantras", render_remedy_mantras),
     ("offer_banner", make_link_banner_renderer("Artboard_offer.png", "https://gemsguruji.com/")),
-    ("remedy_ishta_devata", render_remedy_ishta_devata),
     ("remedy_yantra", render_remedy_yantra),
     ("remedy_daan", render_remedy_daan),
     ("varshaphal", render_varshaphal),
@@ -203,14 +197,10 @@ SECTION_RENDERERS = [
     ("tatkalik_maitri", render_tatkalik_maitri),
     ("rahu_ketu_analysis", render_rahu_ketu_analysis),
     ("yogas", render_yogas),
-    ("raj_yoga_celebration", render_raj_yoga_celebration),
     ("graha_sanyog", render_graha_sanyog),
     ("thematic_reports", render_thematic_reports),
     ("career_path", render_career_path),
-    ("shodashvarga_summary", render_shodashvarga_summary),
-    ("south_chart", render_south_chart),
     ("marriage_timing", render_marriage_timing),
-    ("love_marriage", render_love_marriage),
     ("material_comforts", render_material_comforts),
     ("spiritual_potential", render_spiritual_potential),
     ("sade_sati_journey", render_sade_sati_journey),

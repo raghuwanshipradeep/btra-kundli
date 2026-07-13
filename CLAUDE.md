@@ -104,7 +104,7 @@ AI-generated personalized narratives for 20+ section types using Claude Sonnet v
 
 ### Remedies journey
 
-Six dedicated remedy sections: `remedy_rudraksha`, `remedy_gemstones`, `remedy_mantras`, `remedy_ishta_devata`, `remedy_yantra`, `remedy_daan`. Each has its own narrative and shares `templates/partials/remedy_disclaimer.html`. The daan section cross-references dosha API data (Manglik, Sadhesati, Pitra, Kalsarpa, planet_nature BAD/KILLER, Angarak, Shrapit, Guru-Chandal, Grahan doshas) alongside dignity-based weak planet detection. Shared constants live in `sections/remedy_constants.py`.
+Five dedicated remedy sections: `remedy_rudraksha`, `remedy_gemstones`, `remedy_mantras`, `remedy_yantra`, `remedy_daan`. (The Ishta Devata deity/shloka is shown inside `remedy_mantras`, not as its own section.) Each has its own narrative and shares `templates/partials/remedy_disclaimer.html`. The daan section cross-references dosha API data (Manglik, Sadhesati, Pitra, Kalsarpa, planet_nature BAD/KILLER, Angarak, Shrapit, Guru-Chandal, Grahan doshas) alongside dignity-based weak planet detection. Shared constants live in `sections/remedy_constants.py`.
 
 ### Outer planets
 
@@ -123,7 +123,7 @@ All return `None` / skip when settings are empty — no visual artifacts in the 
 
 Two disclaimer partials in `templates/partials/`:
 - `remedy_disclaimer.html` — remedy-specific, included in 6 remedy templates.
-- `section_disclaimer.html` — warm general analysis disclaimer, included in 7 major section templates (dosha, yogas, dasha, marriage_timing, career_path, love_marriage, spiritual_potential).
+- `section_disclaimer.html` — warm general analysis disclaimer, included in 6 major section templates (dosha, yogas, dasha, marriage_timing, career_path, spiritual_potential).
 
 ### Bilingual support
 
