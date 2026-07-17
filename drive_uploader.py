@@ -86,6 +86,9 @@ def _upload_sync(pdf_bytes: bytes, filename: str, folder_id: str, description: s
                 body=file_metadata,
                 media_body=media,
                 fields="id, name, webViewLink, createdTime",
+                # Required when the parent is inside a Shared Drive (Team Drive); harmless for
+                # a My Drive folder. Without it, a Shared Drive parent returns 404.
+                supportsAllDrives=True,
             )
             response = None
             while response is None:

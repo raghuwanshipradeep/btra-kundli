@@ -1092,8 +1092,8 @@ class AstrologyAPIClient:
             self.get_numero_fav_mantra(numero_payload),            # 66
             self.get_numero_prediction_daily(numero_payload),      # 67
             # --- New: Lal Kitab ---
-            self.get_lalkitab_horoscope(payload_with_ayan),        # 68
-            self.get_lalkitab_planets(payload_with_ayan),          # 69
+            self._skip(),                                          # 68 (lalkitab horoscope — removed from PDF)
+            self._skip(),                                          # 69 (lalkitab planets — removed from PDF)
             self.get_lalkitab_houses(payload_with_ayan),           # 70
             self.get_lalkitab_debts(payload_with_ayan),            # 71
             # --- KP Extended (removed) ---

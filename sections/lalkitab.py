@@ -11,9 +11,7 @@ if TYPE_CHECKING:
 
 def render_lalkitab(data: KundliData, lang: str = "en") -> str | None:
     if (
-        not data.lalkitab_horoscope
-        and not data.lalkitab_planets
-        and not data.lalkitab_houses
+        not data.lalkitab_houses
         and not data.lalkitab_debts
         and not data.lalkitab_remedies
     ):
@@ -23,8 +21,6 @@ def render_lalkitab(data: KundliData, lang: str = "en") -> str | None:
     env = make_env()
     template = env.get_template("lalkitab.html")
     return template.render(
-        horoscope=data.lalkitab_horoscope,
-        planets=data.lalkitab_planets,
         houses=data.lalkitab_houses,
         debts=data.lalkitab_debts,
         remedies=data.lalkitab_remedies,

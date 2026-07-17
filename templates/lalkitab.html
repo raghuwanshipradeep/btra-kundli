@@ -60,20 +60,6 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.lalkitab_title }}</h2>
 
-  {% if horoscope %}
-  <div class="yogini-card">
-    <h3 class="sub-header">{{ locale.lalkitab_horoscope_title }}</h3>
-    {{ render_value(horoscope) }}
-  </div>
-  {% endif %}
-
-  {% if planets %}
-  <div class="yogini-card">
-    <h3 class="sub-header">{{ locale.lalkitab_planets_title }}</h3>
-    {{ render_value(planets) }}
-  </div>
-  {% endif %}
-
   {% if houses %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.lalkitab_houses_title }}</h3>
