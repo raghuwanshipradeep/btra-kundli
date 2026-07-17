@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     use_haiku_for_simple_narratives: bool = True
     api_concurrency: int = 10
     narrative_concurrency: int = 5
+    # Max kundli PDFs rendered concurrently. Bursts of simultaneous paid orders
+    # queue on this gate so they can't starve the shared API semaphore / OOM the
+    # box. See DEPLOYMENT.md §4.1 (5 => ~2.5 GB peak on the 6 GB box).
+    generation_concurrency: int = 5
 
     google_drive_folder_id: str = ""
     google_oauth_credentials_path: str = "oauth_credentials.json"
@@ -63,6 +67,12 @@ class Settings(BaseSettings):
     supabase_url: str = ""            # https://<ref>.supabase.co
     supabase_service_key: str = ""    # service_role secret
     supabase_table: str = "kundli_orders"
+
+    # Sheet-driven kundli generation. The worker (POST /admin/process-sheet-orders) reads
+    # SUCCESSFUL rows from this table, generates each PDF, and archives it to Drive. Retries a
+    # failed row until kundli_attempts hits the cap, then parks it as 'failed_permanent'.
+    sheet_orders_table: str = "sheet_orders"
+    sheet_orders_kundli_max_attempts: int = 3
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
