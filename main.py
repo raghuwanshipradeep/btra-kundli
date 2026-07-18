@@ -21,7 +21,7 @@ from config import settings
 from models import KundliRequest, MatchRequest
 from narrative_engine import generate_narratives, translate_reports
 from pdf_generator import PDFGenerator
-from drive_uploader import upload_kundli_pdf
+from drive_uploader import folder_for_amount, upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
 from pabbly_notifier import notify_payment_success
 from supabase_repo import record_order_created, record_order_paid, record_job_status
@@ -136,12 +136,21 @@ def _start_fulfillment(
         order_id=order_id,
         payment_id=payment_id,
     )
-    background_tasks.add_task(
-        _generate_and_archive,
-        request=request,
-        order_id=order_id,
-        payment_id=payment_id,
-    )
+    if settings.inline_generation_enabled:
+        background_tasks.add_task(
+            _generate_and_archive,
+            request=request,
+            order_id=order_id,
+            payment_id=payment_id,
+        )
+    else:
+        # Generation is handled by the sheet_orders DB worker; skip inline generation so the
+        # same order isn't produced twice. Payment + Pabbly notify + audit still ran above.
+        logger.info(
+            "Inline generation disabled (INLINE_GENERATION_ENABLED=false) — order=%s "
+            "recorded + notified; PDF deferred to the sheet_orders worker",
+            order_id,
+        )
     return True
 
 
@@ -891,12 +900,22 @@ async def _process_sheet_orders(limit: int = 50) -> dict:
                         _build_kundli_pdf(request, order_id),
                         timeout=settings.generation_timeout_seconds,
                     )
+                # Route by order value: orders above the premium threshold archive to the
+                # premium folder, the rest to the default folder (folder_for_amount handles
+                # null/unparseable amounts by falling back to the default).
+                amount = row.get("order_total_amount")
+                target_folder = folder_for_amount(amount)
+                logger.info(
+                    "SHEET routing: order=%s amount=%s -> folder=%s",
+                    order_id, amount, target_folder,
+                )
                 drive_result = await upload_kundli_pdf(
                     pdf_bytes=pdf_bytes,
                     filename=filename,
                     customer_name=request.name,
                     order_id=order_id,
                     payment_id="",
+                    folder_id=target_folder,
                 )
                 if not drive_result:
                     permanent = attempts + 1 >= cap

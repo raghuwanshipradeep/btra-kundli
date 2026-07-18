@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     kundli_price_paise: int = 9900
     payment_currency: str = "INR"
     allow_free_generation: bool = False
+    # When False, the paid form/Razorpay flow records the order + notifies Pabbly but does
+    # NOT generate the PDF inline — generation is deferred to the sheet_orders DB worker.
+    # Prevents double-generation once the order lands in sheet_orders. Reversible via env.
+    inline_generation_enabled: bool = True
     use_haiku_for_translation: bool = True
     # Cost optimization: route formulaic narrative batches (planets, numerology)
     # to cheaper Haiku 4.5. Kill-switch: set False to revert ALL narratives to Sonnet.
@@ -37,6 +41,11 @@ class Settings(BaseSettings):
     generation_concurrency: int = 5
 
     google_drive_folder_id: str = ""
+    # Amount-based routing: sheet orders with order_total_amount above
+    # drive_premium_amount_threshold archive here instead of google_drive_folder_id.
+    # Empty => routing disabled, everything goes to google_drive_folder_id.
+    google_drive_folder_id_premium: str = ""
+    drive_premium_amount_threshold: int = 499
     google_oauth_credentials_path: str = "oauth_credentials.json"
     google_token_path: str = "token.json"
     drive_archive_enabled: bool = True

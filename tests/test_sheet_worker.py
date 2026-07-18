@@ -2,8 +2,35 @@ from __future__ import annotations
 
 import pytest
 
+import drive_uploader
 import main
 from config import settings
+
+
+# --- amount-based Drive folder routing -------------------------------------
+
+def test_folder_for_amount_routes_by_threshold(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "google_drive_folder_id", "DEFAULT")
+    monkeypatch.setattr(settings, "google_drive_folder_id_premium", "PREMIUM")
+    monkeypatch.setattr(settings, "drive_premium_amount_threshold", 499)
+
+    # At/below the threshold (and null/unparseable) -> default folder.
+    assert drive_uploader.folder_for_amount(499) == "DEFAULT"
+    assert drive_uploader.folder_for_amount("499") == "DEFAULT"
+    assert drive_uploader.folder_for_amount(299) == "DEFAULT"
+    assert drive_uploader.folder_for_amount(None) == "DEFAULT"
+    assert drive_uploader.folder_for_amount("abc") == "DEFAULT"
+    # Above the threshold -> premium folder.
+    assert drive_uploader.folder_for_amount(500) == "PREMIUM"
+    assert drive_uploader.folder_for_amount(999) == "PREMIUM"
+    assert drive_uploader.folder_for_amount("799.0") == "PREMIUM"
+
+
+def test_folder_for_amount_default_when_premium_unset(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "google_drive_folder_id", "DEFAULT")
+    monkeypatch.setattr(settings, "google_drive_folder_id_premium", "")
+    # Routing disabled: even a big amount stays on the default folder.
+    assert drive_uploader.folder_for_amount(9999) == "DEFAULT"
 
 
 # --- pure helpers ----------------------------------------------------------
@@ -169,6 +196,50 @@ async def test_process_sheet_orders_dedups_and_is_sequential(monkeypatch) -> Non
         "claim:A", "build:A", "upload:A", "done:A",
         "claim:B", "build:B", "upload:B", "done:B",
     ]
+
+
+@pytest.mark.asyncio
+async def test_process_sheet_orders_routes_folder_by_amount(monkeypatch) -> None:
+    """A >499 order archives to the premium folder; a 499 order to the default folder."""
+    monkeypatch.setattr(settings, "google_drive_folder_id", "DEFAULT")
+    monkeypatch.setattr(settings, "google_drive_folder_id_premium", "PREMIUM")
+    monkeypatch.setattr(settings, "drive_premium_amount_threshold", 499)
+
+    uploads: dict[str, str] = {}
+
+    async def fake_fetch(limit):
+        return [
+            dict(_row(), order_id="hi", order_total_amount=999),
+            dict(_row(), order_id="lo", order_total_amount=499),
+        ]
+
+    async def fake_noop(*a, **k):
+        return None
+
+    async def fake_ok(*a, **k):
+        return True
+
+    async def fake_tzone(*a, **k):
+        return 5.5
+
+    async def fake_build(request, order_id):
+        return b"%PDF-", f"{order_id}.pdf"
+
+    async def fake_upload(**kwargs):
+        uploads[kwargs["order_id"]] = kwargs["folder_id"]
+        return {"id": f"file_{kwargs['order_id']}", "webViewLink": "link"}
+
+    monkeypatch.setattr(main.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(main.sheet_repo, "reclaim_stale", fake_noop)
+    monkeypatch.setattr(main.sheet_repo, "claim", fake_ok)
+    monkeypatch.setattr(main.sheet_repo, "mark_done", fake_ok)
+    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
+    monkeypatch.setattr(main, "_build_kundli_pdf", fake_build)
+    monkeypatch.setattr(main, "upload_kundli_pdf", fake_upload)
+
+    summary = await main._process_sheet_orders(limit=50)
+    assert summary["processed"] == 2
+    assert uploads == {"hi": "PREMIUM", "lo": "DEFAULT"}
 
 
 @pytest.mark.asyncio

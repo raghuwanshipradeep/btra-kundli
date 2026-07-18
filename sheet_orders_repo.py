@@ -47,6 +47,7 @@ _SELECT = ",".join(
         "longitude",
         "report_language",
         "report_name",
+        "order_total_amount",
         "addons_name",
         "payment_status",
         "sheet_row",
