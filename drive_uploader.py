@@ -23,10 +23,21 @@ _drive_service = None
 
 def _load_credentials() -> Credentials:
     token_path = Path(settings.google_token_path)
+
+    # token.json is git-ignored, so it is NOT baked into the built image. On hosts that
+    # inject the token as an env var instead of a file mount (e.g. compose-based Coolify),
+    # materialize the file once from GOOGLE_TOKEN_JSON so Drive auth works after a fresh deploy.
+    if not token_path.exists() and settings.google_token_json:
+        try:
+            token_path.write_text(settings.google_token_json)
+            logger.info("Wrote Drive token to %s from GOOGLE_TOKEN_JSON", token_path)
+        except OSError:
+            logger.exception("Failed to materialize Drive token from GOOGLE_TOKEN_JSON")
+
     if not token_path.exists():
         raise FileNotFoundError(
-            f"Token file not found at {token_path}. "
-            "Run 'python get_drive_token.py' first to authorize."
+            f"Token file not found at {token_path}. Set GOOGLE_TOKEN_JSON (or mount the file), "
+            "or run 'python get_drive_token.py' first to authorize."
         )
 
     creds = Credentials.from_authorized_user_file(str(token_path), _SCOPES)
