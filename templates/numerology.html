@@ -31,9 +31,9 @@
 
 {% macro render_numero_report(val) %}
   {% if val is mapping and val.get('description') %}
-    <div class="report-field-text">{{ val['description'] }}</div>
+    <div class="report-field-text">{{ val['description'] | truncate_sentences(6) }}</div>
   {% elif val is mapping and val.get('prediction') %}
-    <div class="report-field-text">{{ val['prediction'] }}</div>
+    <div class="report-field-text">{{ val['prediction'] | truncate_sentences(6) }}</div>
     <table class="kv-table">
       {% for k, v in val.items() if k != 'prediction' and not k.endswith('_ms') and not k.endswith('_id') %}
       <tr>
@@ -96,13 +96,6 @@
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.numero_fav_mantra_title }}</h3>
     {{ render_numero_report(numero_fav_mantra) }}
-  </div>
-  {% endif %}
-
-  {% if numero_daily %}
-  <div class="yogini-card">
-    <h3 class="sub-header">{{ locale.numero_daily_title }}</h3>
-    {{ render_numero_report(numero_daily) }}
   </div>
   {% endif %}
 </div>

@@ -16,7 +16,6 @@ def render_numerology(data: KundliData, lang: str = "en") -> str | None:
         and not data.numero_fav_time
         and not data.numero_fav_lord
         and not data.numero_fav_mantra
-        and not data.numero_prediction_daily
     ):
         return None
 
@@ -31,7 +30,6 @@ def render_numerology(data: KundliData, lang: str = "en") -> str | None:
         numero_fasts=data.numero_fasts_report,
         numero_fav_lord=data.numero_fav_lord,
         numero_fav_mantra=data.numero_fav_mantra,
-        numero_daily=data.numero_prediction_daily,
         locale=locale,
         lang=lang,
     )
