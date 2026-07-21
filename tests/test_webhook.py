@@ -129,3 +129,32 @@ def test_webhook_ignores_unrelated_events(client: TestClient) -> None:
     )
     assert resp.status_code == 200
     assert resp.json()["status"] == "ignored"
+
+
+# --- inline-generation kill switch ------------------------------------------
+
+def _fulfillment_task_funcs(order_id: str) -> list:
+    """Run _start_fulfillment against a real BackgroundTasks and return the scheduled funcs."""
+    from fastapi import BackgroundTasks
+
+    main._FULFILLED_ORDERS.clear()
+    main._store_order(order_id, _sample_request())
+    bg = BackgroundTasks()
+    ok = main._start_fulfillment(bg, _sample_request(), order_id, "pay_x")
+    assert ok is True
+    return [t.func for t in bg.tasks]
+
+
+def test_inline_generation_disabled_skips_generation(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "inline_generation_enabled", False)
+    funcs = _fulfillment_task_funcs("order_flag_off")
+    # Payment audit + Pabbly notify still scheduled; generation is NOT.
+    assert main.notify_payment_success in funcs
+    assert main.record_order_paid in funcs
+    assert main._generate_and_archive not in funcs
+
+
+def test_inline_generation_enabled_still_generates(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "inline_generation_enabled", True)
+    funcs = _fulfillment_task_funcs("order_flag_on")
+    assert main._generate_and_archive in funcs

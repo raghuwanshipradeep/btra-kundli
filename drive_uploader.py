@@ -86,6 +86,9 @@ def _upload_sync(pdf_bytes: bytes, filename: str, folder_id: str, description: s
                 body=file_metadata,
                 media_body=media,
                 fields="id, name, webViewLink, createdTime",
+                # Required when the parent is inside a Shared Drive (Team Drive); harmless for
+                # a My Drive folder. Without it, a Shared Drive parent returns 404.
+                supportsAllDrives=True,
             )
             response = None
             while response is None:
@@ -102,19 +105,41 @@ def _upload_sync(pdf_bytes: bytes, filename: str, folder_id: str, description: s
     raise last_exc
 
 
+def folder_for_amount(amount) -> str:
+    """Pick the archive folder for an order's rupee total.
+
+    Orders above ``drive_premium_amount_threshold`` go to the premium folder; the default
+    folder catches everything else — the threshold value itself, lower amounts, and any
+    null/unparseable value. Falls back to the default folder whenever the premium folder
+    isn't configured, so the routing can never send a PDF to an empty folder id.
+    """
+    default = settings.google_drive_folder_id
+    premium = settings.google_drive_folder_id_premium
+    if not premium:
+        return default
+    try:
+        amt = float(amount)
+    except (TypeError, ValueError):
+        return default
+    return premium if amt > settings.drive_premium_amount_threshold else default
+
+
 async def upload_kundli_pdf(
     pdf_bytes: bytes,
     filename: str,
     customer_name: str = "",
     order_id: str = "",
     payment_id: str = "",
+    folder_id: str | None = None,
 ) -> dict | None:
     if not settings.drive_archive_enabled:
         logger.info("Drive archive disabled; skipping upload for %s", filename)
         return None
 
-    if not settings.google_drive_folder_id:
-        logger.error("GOOGLE_DRIVE_FOLDER_ID not configured; cannot archive %s", filename)
+    # Explicit folder_id (e.g. amount-based routing) wins; otherwise the default folder.
+    target_folder = folder_id or settings.google_drive_folder_id
+    if not target_folder:
+        logger.error("No Drive folder configured; cannot archive %s", filename)
         return None
 
     description = (
@@ -128,18 +153,18 @@ async def upload_kundli_pdf(
             _upload_sync,
             pdf_bytes,
             filename,
-            settings.google_drive_folder_id,
+            target_folder,
             description,
         )
         logger.info(
-            "Drive upload OK: file_id=%s name=%s customer=%s",
-            result.get("id"), result.get("name"), customer_name,
+            "Drive upload OK: file_id=%s name=%s customer=%s folder=%s",
+            result.get("id"), result.get("name"), customer_name, target_folder,
         )
         return result
     except Exception:
         logger.exception(
-            "Drive upload FAILED for order_id=%s filename=%s "
+            "Drive upload FAILED for order_id=%s filename=%s folder=%s "
             "— payment still valid, PDF needs manual recovery",
-            order_id, filename,
+            order_id, filename, target_folder,
         )
         return None

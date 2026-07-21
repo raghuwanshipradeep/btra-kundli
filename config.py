@@ -25,14 +25,27 @@ class Settings(BaseSettings):
     kundli_price_paise: int = 9900
     payment_currency: str = "INR"
     allow_free_generation: bool = False
+    # When False, the paid form/Razorpay flow records the order + notifies Pabbly but does
+    # NOT generate the PDF inline — generation is deferred to the sheet_orders DB worker.
+    # Prevents double-generation once the order lands in sheet_orders. Reversible via env.
+    inline_generation_enabled: bool = True
     use_haiku_for_translation: bool = True
     # Cost optimization: route formulaic narrative batches (planets, numerology)
     # to cheaper Haiku 4.5. Kill-switch: set False to revert ALL narratives to Sonnet.
     use_haiku_for_simple_narratives: bool = True
     api_concurrency: int = 10
     narrative_concurrency: int = 5
+    # Max kundli PDFs rendered concurrently. Bursts of simultaneous paid orders
+    # queue on this gate so they can't starve the shared API semaphore / OOM the
+    # box. See DEPLOYMENT.md §4.1 (5 => ~2.5 GB peak on the 6 GB box).
+    generation_concurrency: int = 5
 
     google_drive_folder_id: str = ""
+    # Amount-based routing: sheet orders with order_total_amount above
+    # drive_premium_amount_threshold archive here instead of google_drive_folder_id.
+    # Empty => routing disabled, everything goes to google_drive_folder_id.
+    google_drive_folder_id_premium: str = ""
+    drive_premium_amount_threshold: int = 499
     google_oauth_credentials_path: str = "oauth_credentials.json"
     google_token_path: str = "token.json"
     drive_archive_enabled: bool = True
@@ -45,6 +58,13 @@ class Settings(BaseSettings):
     drive_recovery_dir: str = "recovery"
     generation_timeout_seconds: int = 600
     admin_key: str = ""
+
+    # Standalone sheet_orders sweeper (run: python run_sweeper.py as a SEPARATE single
+    # process). sheet_sweeper_enabled is a kill switch for the 24/7 loop; disabling it
+    # idles the loop without a restart. sheet_sweep_interval_seconds is the poll cadence
+    # between drains. The manual endpoint POST /admin/process-sheet-orders is unaffected.
+    sheet_sweeper_enabled: bool = True
+    sheet_sweep_interval_seconds: int = 60
 
     # Post-generation filler images: overlay a promotional image into any page
     # (after filler_skip_pages) whose bottom empty space exceeds filler_gap_threshold.
@@ -63,6 +83,12 @@ class Settings(BaseSettings):
     supabase_url: str = ""            # https://<ref>.supabase.co
     supabase_service_key: str = ""    # service_role secret
     supabase_table: str = "kundli_orders"
+
+    # Sheet-driven kundli generation. The worker (POST /admin/process-sheet-orders) reads
+    # SUCCESSFUL rows from this table, generates each PDF, and archives it to Drive. Retries a
+    # failed row until kundli_attempts hits the cap, then parks it as 'failed_permanent'.
+    sheet_orders_table: str = "sheet_orders"
+    sheet_orders_kundli_max_attempts: int = 3
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 

@@ -72,3 +72,16 @@ create trigger kundli_orders_set_updated_at
 -- Private by default: enable RLS, add no policies. The service_role key the
 -- backend uses bypasses RLS; anon/public keys get no access at all.
 alter table public.kundli_orders enable row level security;
+
+-- Admit the writer. Supabase no longer auto-grants new public tables to the API roles —
+-- exposure is opt-in as of 2026-05-30 for new projects, 2026-10-30 for existing ones. The
+-- live table predates this and keeps its old grants, so this line changes nothing today;
+-- it is what makes a fresh project built from this file actually work.
+--
+-- Privileges are checked before RLS, so this GRANT — not a policy — is what admits the
+-- backend; service_role bypasses RLS anyway. anon and authenticated get nothing.
+--
+-- update is required, unlike sheet_orders: _upsert() POSTs with
+-- resolution=merge-duplicates on order_id (supabase_repo.py), i.e. ON CONFLICT DO UPDATE,
+-- which is how a row moves created -> paid -> archived. Nothing ever deletes.
+grant select, insert, update on public.kundli_orders to service_role;

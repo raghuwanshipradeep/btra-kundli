@@ -1,3 +1,4 @@
+{% from "lalkitab.html" import render_remedy with context %}
 <div class="section-page">
   <h2 class="section-header">{{ locale.rk_title }}</h2>
 
@@ -88,29 +89,13 @@
     {% if rahu_lk_remedies %}
     <div class="dosha-card" style="margin-bottom: 3mm;">
       <h4>{{ locale.planet_names.get("Rahu", "Rahu") }} {{ locale.rk_remedy_for }}</h4>
-      {% if rahu_lk_remedies is mapping %}
-        {% for key, val in rahu_lk_remedies.items() %}
-          {% if val %}
-          <p style="font-size: 10pt; margin-bottom: 2mm;"><strong>{{ key | replace('_', ' ') | title }}:</strong> {{ val }}</p>
-          {% endif %}
-        {% endfor %}
-      {% else %}
-        <p style="font-size: 10pt;">{{ rahu_lk_remedies }}</p>
-      {% endif %}
+      {{ render_remedy(rahu_lk_remedies) }}
     </div>
     {% endif %}
     {% if ketu_lk_remedies %}
     <div class="dosha-card">
       <h4>{{ locale.planet_names.get("Ketu", "Ketu") }} {{ locale.rk_remedy_for }}</h4>
-      {% if ketu_lk_remedies is mapping %}
-        {% for key, val in ketu_lk_remedies.items() %}
-          {% if val %}
-          <p style="font-size: 10pt; margin-bottom: 2mm;"><strong>{{ key | replace('_', ' ') | title }}:</strong> {{ val }}</p>
-          {% endif %}
-        {% endfor %}
-      {% else %}
-        <p style="font-size: 10pt;">{{ ketu_lk_remedies }}</p>
-      {% endif %}
+      {{ render_remedy(ketu_lk_remedies) }}
     </div>
     {% endif %}
   </div>

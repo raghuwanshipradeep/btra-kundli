@@ -24,6 +24,9 @@ from drive_uploader import upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
 from pabbly_notifier import notify_payment_success
 from supabase_repo import record_order_created, record_order_paid, record_job_status
+import sheet_orders_repo as sheet_repo
+from pipeline import _build_kundli_pdf, _save_recovery_pdf, _get_generation_slots
+import sheet_worker
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -134,12 +137,21 @@ def _start_fulfillment(
         order_id=order_id,
         payment_id=payment_id,
     )
-    background_tasks.add_task(
-        _generate_and_archive,
-        request=request,
-        order_id=order_id,
-        payment_id=payment_id,
-    )
+    if settings.inline_generation_enabled:
+        background_tasks.add_task(
+            _generate_and_archive,
+            request=request,
+            order_id=order_id,
+            payment_id=payment_id,
+        )
+    else:
+        # Generation is handled by the sheet_orders DB worker; skip inline generation so the
+        # same order isn't produced twice. Payment + Pabbly notify + audit still ran above.
+        logger.info(
+            "Inline generation disabled (INLINE_GENERATION_ENABLED=false) — order=%s "
+            "recorded + notified; PDF deferred to the sheet_orders worker",
+            order_id,
+        )
     return True
 
 
@@ -161,24 +173,6 @@ def _get_job_state(order_id: str) -> dict | None:
     return _JOB_STATE.get(order_id)
 
 
-def _save_recovery_pdf(order_id: str, filename: str, pdf_bytes: bytes) -> str | None:
-    """Persist a paid PDF to disk when the Drive upload failed, so it's
-    recoverable instead of lost. Returns the path written, or None if disabled
-    or the write itself failed (already-bad situation — never raise)."""
-    if not settings.drive_recovery_dir:
-        return None
-    try:
-        recovery_dir = pathlib.Path(settings.drive_recovery_dir)
-        recovery_dir.mkdir(parents=True, exist_ok=True)
-        # Prefix with order_id so the file is unambiguous and collision-free.
-        dest = recovery_dir / f"{order_id}__{filename}"
-        dest.write_bytes(pdf_bytes)
-        return str(dest)
-    except OSError:
-        logger.exception("Failed to write recovery PDF for order=%s", order_id)
-        return None
-
-
 def _list_recent_jobs(limit: int = 50) -> list[dict]:
     items = [{"order_id": oid, **state} for oid, state in _JOB_STATE.items()]
     items.sort(key=lambda x: x.get("updated_at", 0), reverse=True)
@@ -186,6 +180,19 @@ def _list_recent_jobs(limit: int = 50) -> list[dict]:
 
 
 async def _generate_and_archive(
+    request: KundliRequest,
+    order_id: str,
+    payment_id: str,
+):
+    """Gate concurrent generations, then run the pipeline. Jobs beyond the
+    concurrency cap wait here in ``queued`` state; the per-job timeout wall only
+    starts once a slot is acquired inside ``_generate_and_archive_inner``."""
+    _set_job_state(order_id, "queued", customer=request.name, lang=request.lang)
+    async with _get_generation_slots():
+        await _generate_and_archive_inner(request, order_id, payment_id)
+
+
+async def _generate_and_archive_inner(
     request: KundliRequest,
     order_id: str,
     payment_id: str,
@@ -295,61 +302,6 @@ async def _generate_and_archive(
         "BG COMPLETE: order=%s customer=%s elapsed=%.1fs drive_link=%s",
         order_id, request.name, time.time() - start, drive_result.get("webViewLink"),
     )
-
-
-# ---------------------------------------------------------------------------
-# Reusable PDF pipeline
-# ---------------------------------------------------------------------------
-async def _build_kundli_pdf(request: KundliRequest, order_id: str = "") -> tuple[bytes, str]:
-    """Run the full pipeline: fetch astrology data, narrate, translate, render PDF.
-    Returns (pdf_bytes, filename). This is where the PAID API calls happen.
-    """
-    try:
-        async with AstrologyAPIClient(lang=request.lang) as client:
-            kundli_data = await client.fetch_all(request)
-    except Exception:
-        logger.exception("API fetch failed")
-        raise HTTPException(status_code=502, detail="Failed to fetch astrology data")
-
-    try:
-        kundli_data.narratives = await generate_narratives(kundli_data, request.lang)
-    except Exception:
-        logger.exception("Narrative generation failed, proceeding without narratives")
-        kundli_data.narratives = {}
-
-    try:
-        await translate_reports(kundli_data, request.lang)
-    except Exception:
-        logger.exception("Report translation failed, proceeding with English text")
-
-    try:
-        pdf_bytes = await asyncio.to_thread(
-            pdf_gen.generate, kundli_data, request.lang,
-            report_tier=request.report_tier,
-        )
-    except Exception:
-        logger.exception("PDF generation failed")
-        raise HTTPException(status_code=500, detail="PDF generation failed")
-
-    filename = _build_filename(request, order_id)
-    return pdf_bytes, filename
-
-
-def _build_filename(request: KundliRequest, order_id: str = "") -> str:
-    """Build the archive filename as First##Phone##Email##OrderId.pdf.
-
-    Only the first name word is used (e.g. "Pradeep Raghuwanshi" -> "Pradeep"),
-    then phone, email, and the order id are appended with '##'. Empty fields
-    are skipped (e.g. the free/dev flow has no order id).
-    """
-    def _clean(value: str) -> str:
-        return "".join(c for c in value if c.isalnum() or c in "@._-").strip()
-
-    name_parts = [_clean(w) for w in request.name.split() if _clean(w)]
-    first_name = name_parts[0] if name_parts else ""
-    parts = [first_name, _clean(request.phone), _clean(request.email), _clean(order_id)]
-    base = "##".join(p for p in parts if p) or "kundli"
-    return f"{base}.pdf"
 
 
 # ---------------------------------------------------------------------------
@@ -696,3 +648,34 @@ async def get_job(
     if not state:
         raise HTTPException(status_code=404, detail="Job not found")
     return state
+
+
+# ---------------------------------------------------------------------------
+# Sheet-driven kundli generation (manual/backfill trigger)
+#
+# The worker itself lives in sheet_worker.py and normally runs continuously as a separate
+# process (run_sweeper.py). This endpoint is a manual/backfill trigger for the same
+# sweep_once() — useful for draining on demand or testing a single order (?limit=1).
+# ---------------------------------------------------------------------------
+@app.post("/admin/process-sheet-orders")
+async def process_sheet_orders_endpoint(
+    x_admin_key: str | None = Header(None),
+    limit: int = 50,
+) -> dict:
+    """Generate kundli PDFs for pending SUCCESSFUL sheet_orders rows and archive to Drive.
+    A manual trigger for the same worker the standalone sweeper runs. Gated by X-Admin-Key."""
+    if not settings.admin_key or x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return await sheet_worker.sweep_once(limit)
+
+
+@app.get("/admin/sheet-jobs")
+async def sheet_jobs_endpoint(
+    x_admin_key: str | None = Header(None),
+    limit: int = 100,
+) -> dict:
+    """Failed/parked sheet_orders rows (kundli_status in failed/failed_permanent), newest first.
+    Gated by X-Admin-Key like /admin/jobs. Each row's sheet_row points back to the source cell."""
+    if not settings.admin_key or x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"jobs": await sheet_repo.fetch_failed(limit)}
