@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     drive_premium_amount_threshold: int = 499
     google_oauth_credentials_path: str = "oauth_credentials.json"
     google_token_path: str = "token.json"
+    # Full contents of token.json as a string. token.json is git-ignored (never in the
+    # built image), so on hosts without a file mount (e.g. compose-based Coolify) set this
+    # env var to the authorized-user JSON and the app materializes the file at load time.
+    google_token_json: str = ""
     drive_archive_enabled: bool = True
     # Per-attempt socket timeout (seconds) for Drive uploads. The underlying
     # httplib2 default (~60s) was killing legitimately-slow uploads from the
