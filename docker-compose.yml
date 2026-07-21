@@ -5,8 +5,13 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      # Must match the recovery volume mount below (DEPLOYMENT.md §6). The paid flow
+      # writes a PDF here when its Drive upload fails, so it survives redeploys.
+      - DRIVE_RECOVERY_DIR=/app/recovery
     volumes:
       - narrative_cache:/app/narrative_cache.db
+      - recovery:/app/recovery
     restart: unless-stopped
 
   # Standalone sheet_orders sweeper: reads pending rows -> generates PDF -> archives to Drive.
@@ -27,3 +32,4 @@ services:
 volumes:
   narrative_cache:
   sweeper_narrative_cache:
+  recovery:
