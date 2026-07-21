@@ -128,6 +128,27 @@ async def fetch_pending(limit: int) -> list[dict]:
         return []
 
 
+async def fetch_failed(limit: int = 100) -> list[dict]:
+    """Rows the worker gave up on or must retry, newest first — for GET /admin/sheet-jobs.
+
+    Includes retryable 'failed' and terminal 'failed_permanent'. ``sheet_row`` lets the
+    operator jump straight to the bad cell in the source Google Sheet.
+    """
+    if not _enabled():
+        return []
+    params = {
+        "select": "order_id,sheet_row,name,phone,kundli_status,kundli_attempts,kundli_error,order_at",
+        "kundli_status": "in.(failed,failed_permanent)",
+        "order": "order_at.desc.nullslast",
+        "limit": str(limit),
+    }
+    try:
+        return await _get(params)
+    except Exception:
+        logger.exception("sheet_orders fetch_failed failed")
+        return []
+
+
 async def reclaim_stale(timeout_s: int) -> None:
     """Return rows stuck in 'generating' past the timeout to 'failed' so they retry.
 

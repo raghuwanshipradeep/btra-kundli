@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     generation_timeout_seconds: int = 600
     admin_key: str = ""
 
+    # Standalone sheet_orders sweeper (run: python run_sweeper.py as a SEPARATE single
+    # process). sheet_sweeper_enabled is a kill switch for the 24/7 loop; disabling it
+    # idles the loop without a restart. sheet_sweep_interval_seconds is the poll cadence
+    # between drains. The manual endpoint POST /admin/process-sheet-orders is unaffected.
+    sheet_sweeper_enabled: bool = True
+    sheet_sweep_interval_seconds: int = 60
+
     # Post-generation filler images: overlay a promotional image into any page
     # (after filler_skip_pages) whose bottom empty space exceeds filler_gap_threshold.
     filler_images_enabled: bool = True

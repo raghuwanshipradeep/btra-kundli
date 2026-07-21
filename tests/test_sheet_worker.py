@@ -4,6 +4,7 @@ import pytest
 
 import drive_uploader
 import main
+import sheet_worker
 from config import settings
 
 
@@ -33,39 +34,7 @@ def test_folder_for_amount_default_when_premium_unset(monkeypatch) -> None:
     assert drive_uploader.folder_for_amount(9999) == "DEFAULT"
 
 
-# --- pure helpers ----------------------------------------------------------
-
-def test_parse_dob_ok() -> None:
-    assert main._parse_dob("1990-08-15") == (1990, 8, 15)
-    assert main._parse_dob("2001-1-5") == (2001, 1, 5)
-
-
-@pytest.mark.parametrize("bad", [None, "", "not-a-date", "1990-13-01", "1990-08-40"])
-def test_parse_dob_skips(bad) -> None:
-    with pytest.raises(main._SkipRow):
-        main._parse_dob(bad)
-
-
-def test_parse_tob_ok() -> None:
-    assert main._parse_tob("14:30:00") == (14, 30)
-    assert main._parse_tob("2:05") == (2, 5)
-
-
-@pytest.mark.parametrize("bad", [None, "", "noon", "25:00", "12:99"])
-def test_parse_tob_skips(bad) -> None:
-    with pytest.raises(main._SkipRow):
-        main._parse_tob(bad)
-
-
-@pytest.mark.parametrize(
-    "value,expected",
-    [("Hindi", "hi"), ("hindi", "hi"), ("HINDI", "hi"),
-     ("English", "en"), ("english", "en"), ("", "en"), (None, "en"),
-     ("Marathi", "en")],
-)
-def test_lang_from_report_language(value, expected) -> None:
-    assert main._lang_from_report_language(value) == expected
-
+# --- pure helper ------------------------------------------------------------
 
 def test_dedup_by_order_id() -> None:
     rows = [
@@ -75,12 +44,10 @@ def test_dedup_by_order_id() -> None:
         {"order_id": None, "name": "no id"},   # no order_id -> dropped
         {"order_id": "", "name": "blank id"},  # blank -> dropped
     ]
-    out = main._dedup_by_order_id(rows)
+    out = sheet_worker._dedup_by_order_id(rows)
     assert [r["order_id"] for r in out] == ["A", "B"]
     assert out[0]["name"] == "first"  # keeps the first row for an id
 
-
-# --- row -> KundliRequest ---------------------------------------------------
 
 def _row() -> dict:
     return {
@@ -102,52 +69,10 @@ def _row() -> dict:
     }
 
 
-@pytest.mark.asyncio
-async def test_sheet_row_to_request_maps_fields(monkeypatch) -> None:
-    async def fake_tzone(*a, **k):
-        return 5.5
-    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
-
-    req = await main._sheet_row_to_request(_row())
-    assert (req.year, req.month, req.day) == (1990, 8, 15)
-    assert (req.hour, req.min) == (14, 30)
-    assert req.lat == 23.1765 and req.lon == 75.7885
-    assert req.tzone == 5.5
-    assert req.lang == "hi"
-    assert req.name == "Asha Devi"
-    assert req.place == "Ujjain"
-    assert req.pincode == "456001"
-    assert req.report_tier == "detailed"
-
-
-@pytest.mark.asyncio
-async def test_sheet_row_to_request_skips_missing_time(monkeypatch) -> None:
-    async def fake_tzone(*a, **k):
-        return 5.5
-    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
-
-    row = _row()
-    row["time_of_birth"] = None
-    with pytest.raises(main._SkipRow):
-        await main._sheet_row_to_request(row)
-
-
-@pytest.mark.asyncio
-async def test_sheet_row_to_request_skips_missing_latlon(monkeypatch) -> None:
-    async def fake_tzone(*a, **k):
-        return 5.5
-    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
-
-    row = _row()
-    row["latitude"] = None
-    with pytest.raises(main._SkipRow):
-        await main._sheet_row_to_request(row)
-
-
 # --- orchestration ----------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_process_sheet_orders_dedups_and_is_sequential(monkeypatch) -> None:
+async def test_sweep_dedups_and_is_sequential(monkeypatch) -> None:
     calls: list[str] = []
 
     two_A = [dict(_row(), order_id="A"), dict(_row(), order_id="A", name="edited")]
@@ -178,15 +103,15 @@ async def test_process_sheet_orders_dedups_and_is_sequential(monkeypatch) -> Non
         calls.append(f"done:{order_id}")
         return True
 
-    monkeypatch.setattr(main.sheet_repo, "fetch_pending", fake_fetch)
-    monkeypatch.setattr(main.sheet_repo, "reclaim_stale", fake_reclaim)
-    monkeypatch.setattr(main.sheet_repo, "claim", fake_claim)
-    monkeypatch.setattr(main.sheet_repo, "mark_done", fake_done)
-    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
-    monkeypatch.setattr(main, "_build_kundli_pdf", fake_build)
-    monkeypatch.setattr(main, "upload_kundli_pdf", fake_upload)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "reclaim_stale", fake_reclaim)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "claim", fake_claim)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "mark_done", fake_done)
+    monkeypatch.setattr(sheet_worker, "_lookup_tzone", fake_tzone)
+    monkeypatch.setattr(sheet_worker, "_build_kundli_pdf", fake_build)
+    monkeypatch.setattr(sheet_worker, "upload_kundli_pdf", fake_upload)
 
-    summary = await main._process_sheet_orders(limit=50)
+    summary = await sheet_worker.sweep_once(limit=50)
 
     assert summary["processed"] == 2
     assert summary["skipped"] == 0
@@ -199,7 +124,7 @@ async def test_process_sheet_orders_dedups_and_is_sequential(monkeypatch) -> Non
 
 
 @pytest.mark.asyncio
-async def test_process_sheet_orders_routes_folder_by_amount(monkeypatch) -> None:
+async def test_sweep_routes_folder_by_amount(monkeypatch) -> None:
     """A >499 order archives to the premium folder; a 499 order to the default folder."""
     monkeypatch.setattr(settings, "google_drive_folder_id", "DEFAULT")
     monkeypatch.setattr(settings, "google_drive_folder_id_premium", "PREMIUM")
@@ -229,26 +154,27 @@ async def test_process_sheet_orders_routes_folder_by_amount(monkeypatch) -> None
         uploads[kwargs["order_id"]] = kwargs["folder_id"]
         return {"id": f"file_{kwargs['order_id']}", "webViewLink": "link"}
 
-    monkeypatch.setattr(main.sheet_repo, "fetch_pending", fake_fetch)
-    monkeypatch.setattr(main.sheet_repo, "reclaim_stale", fake_noop)
-    monkeypatch.setattr(main.sheet_repo, "claim", fake_ok)
-    monkeypatch.setattr(main.sheet_repo, "mark_done", fake_ok)
-    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
-    monkeypatch.setattr(main, "_build_kundli_pdf", fake_build)
-    monkeypatch.setattr(main, "upload_kundli_pdf", fake_upload)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "reclaim_stale", fake_noop)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "claim", fake_ok)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "mark_done", fake_ok)
+    monkeypatch.setattr(sheet_worker, "_lookup_tzone", fake_tzone)
+    monkeypatch.setattr(sheet_worker, "_build_kundli_pdf", fake_build)
+    monkeypatch.setattr(sheet_worker, "upload_kundli_pdf", fake_upload)
 
-    summary = await main._process_sheet_orders(limit=50)
+    summary = await sheet_worker.sweep_once(limit=50)
     assert summary["processed"] == 2
     assert uploads == {"hi": "PREMIUM", "lo": "DEFAULT"}
 
 
 @pytest.mark.asyncio
-async def test_process_sheet_orders_marks_skip_permanent(monkeypatch) -> None:
+async def test_sweep_marks_bad_data_permanent_without_spend(monkeypatch) -> None:
     marks: list[tuple] = []
+    built: list[str] = []
 
     async def fake_fetch(limit):
         bad = dict(_row(), order_id="X")
-        bad["date_of_birth"] = None  # unparseable -> _SkipRow
+        bad["date_of_birth"] = None  # unparseable -> map_sheet_row error
         return [bad]
 
     async def fake_noop(*a, **k):
@@ -261,14 +187,20 @@ async def test_process_sheet_orders_marks_skip_permanent(monkeypatch) -> None:
         marks.append((order_id, permanent))
         return True
 
-    monkeypatch.setattr(main.sheet_repo, "fetch_pending", fake_fetch)
-    monkeypatch.setattr(main.sheet_repo, "reclaim_stale", fake_noop)
-    monkeypatch.setattr(main.sheet_repo, "claim", fake_claim)
-    monkeypatch.setattr(main.sheet_repo, "mark_failed", fake_failed)
+    async def fake_build(request, order_id):
+        built.append(order_id)
+        return b"%PDF-", "x.pdf"
 
-    summary = await main._process_sheet_orders(limit=50)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "reclaim_stale", fake_noop)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "claim", fake_claim)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "mark_failed", fake_failed)
+    monkeypatch.setattr(sheet_worker, "_build_kundli_pdf", fake_build)
+
+    summary = await sheet_worker.sweep_once(limit=50)
     assert summary["skipped"] == 1
     assert marks == [("X", True)]  # bad data -> permanent, never retried
+    assert built == []             # zero API spend
 
 
 @pytest.mark.asyncio
@@ -290,12 +222,12 @@ async def test_claim_failure_skips_generation(monkeypatch) -> None:
         built.append(order_id)
         return b"%PDF-", f"{order_id}.pdf"
 
-    monkeypatch.setattr(main.sheet_repo, "fetch_pending", fake_fetch)
-    monkeypatch.setattr(main.sheet_repo, "reclaim_stale", fake_noop)
-    monkeypatch.setattr(main.sheet_repo, "claim", fake_claim_fail)
-    monkeypatch.setattr(main, "_build_kundli_pdf", fake_build)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "reclaim_stale", fake_noop)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "claim", fake_claim_fail)
+    monkeypatch.setattr(sheet_worker, "_build_kundli_pdf", fake_build)
 
-    summary = await main._process_sheet_orders(limit=50)
+    summary = await sheet_worker.sweep_once(limit=50)
     assert built == []  # generation never ran
     assert summary["processed"] == 0
     assert summary["failed"] == 1
@@ -303,7 +235,7 @@ async def test_claim_failure_skips_generation(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_mark_done_failure_is_not_reported_as_processed(monkeypatch) -> None:
+async def test_mark_done_failure_is_archived_unmarked(monkeypatch) -> None:
     """A PDF that uploads but can't be recorded must surface as archived_unmarked, never as a
     silent success — otherwise the summary lies and the row regenerates."""
     async def fake_fetch(limit):
@@ -327,26 +259,38 @@ async def test_mark_done_failure_is_not_reported_as_processed(monkeypatch) -> No
     async def fake_mark_done_fail(order_id, file_id, link):
         return False  # write refused after the upload already succeeded
 
-    monkeypatch.setattr(main.sheet_repo, "fetch_pending", fake_fetch)
-    monkeypatch.setattr(main.sheet_repo, "reclaim_stale", fake_noop)
-    monkeypatch.setattr(main.sheet_repo, "claim", fake_ok)
-    monkeypatch.setattr(main.sheet_repo, "mark_done", fake_mark_done_fail)
-    monkeypatch.setattr(main, "_lookup_tzone", fake_tzone)
-    monkeypatch.setattr(main, "_build_kundli_pdf", fake_build)
-    monkeypatch.setattr(main, "upload_kundli_pdf", fake_upload)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "reclaim_stale", fake_noop)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "claim", fake_ok)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "mark_done", fake_mark_done_fail)
+    monkeypatch.setattr(sheet_worker, "_lookup_tzone", fake_tzone)
+    monkeypatch.setattr(sheet_worker, "_build_kundli_pdf", fake_build)
+    monkeypatch.setattr(sheet_worker, "upload_kundli_pdf", fake_upload)
 
-    summary = await main._process_sheet_orders(limit=50)
+    summary = await sheet_worker.sweep_once(limit=50)
     assert summary["processed"] == 0
     assert summary["failed"] == 1
     assert summary["details"][0]["result"] == "archived_unmarked"
     assert summary["details"][0]["drive_link"] == "link/A"
 
 
+# --- endpoints --------------------------------------------------------------
+
 @pytest.mark.asyncio
-async def test_endpoint_requires_admin_key(monkeypatch) -> None:
+async def test_process_endpoint_requires_admin_key(monkeypatch) -> None:
     from fastapi import HTTPException
 
     monkeypatch.setattr(settings, "admin_key", "secret")
     with pytest.raises(HTTPException) as exc:
         await main.process_sheet_orders_endpoint(x_admin_key="wrong", limit=10)
+    assert exc.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_sheet_jobs_endpoint_requires_admin_key(monkeypatch) -> None:
+    from fastapi import HTTPException
+
+    monkeypatch.setattr(settings, "admin_key", "secret")
+    with pytest.raises(HTTPException) as exc:
+        await main.sheet_jobs_endpoint(x_admin_key="wrong", limit=10)
     assert exc.value.status_code == 401

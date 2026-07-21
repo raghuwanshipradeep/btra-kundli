@@ -86,7 +86,19 @@ Production flow is paid, asynchronous, and fire-and-forget for the customer:
 
 **Caveat:** `_ORDER_STORE`, `_FULFILLED_ORDERS`, and `_JOB_STATE` are process-local dicts — they do not survive a restart and break under multiple workers. The code comments flag Redis/SQLite as the production fix.
 
-Archive filenames are `First##Phone##Email##OrderId.pdf` (`_build_filename()`; order id is appended in the paid flow and omitted in the free/dev flow).
+Archive filenames are `First##Phone##Email##OrderId.pdf` (`_build_filename()` in `pipeline.py`; order id is appended in the paid flow and omitted in the free/dev flow).
+
+The reusable pipeline (`_build_kundli_pdf`, `_build_filename`, `_save_recovery_pdf`, `_get_generation_slots`) lives in `pipeline.py` so both `main.py` and the standalone sheet sweeper import it **without** importing the FastAPI `app`.
+
+### Sheet-driven kundli generation (standalone sweeper)
+
+A second producer alongside the paid Razorpay flow. A Google Apps Script (`scripts/sheet_to_supabase.gs`) syncs orders into Supabase `sheet_orders` (schema: `sheet_orders_schema.sql`). The worker `sheet_worker.sweep_once()` reads SUCCESSFUL rows, maps each via the pure `sheet_mapper.map_sheet_row()`, runs the shared `pipeline._build_kundli_pdf()`, and archives to Drive with amount-based routing (`folder_for_amount`). Status lives in the `sheet_orders.kundli_*` columns; `kundli_orders` and the paid flow are untouched.
+
+- **How it runs:** `run_sweeper.py` is a dedicated 24/7 async loop (`start_sweeper.bat`) that calls `sweep_once()` every `SHEET_SWEEP_INTERVAL_SECONDS`. Run **exactly one** instance — never replicas — because the in-process `_SHEET_WORKER_LOCK` + the `kundli_*` columns are what prevent double-generation. The web app stays `--workers 4`; the sweeper is a separate process.
+- **Manual trigger:** `POST /admin/process-sheet-orders` (X-Admin-Key) calls the same `sweep_once()` for on-demand drains or single-order tests (`?limit=1`).
+- **Idempotency/recovery:** a claimed row stuck in `generating` is reclaimed by `reclaim_stale()` after `generation_timeout_seconds`; bad birth data is parked `failed_permanent` (no retry) *before* any API spend; transient failures retry up to `SHEET_ORDERS_KUNDLI_MAX_ATTEMPTS`.
+- **Kill switch:** `SHEET_SWEEPER_ENABLED=false` idles the loop without a restart. **Observability:** `GET /admin/sheet-jobs` (X-Admin-Key) lists failed/parked rows with `sheet_row` to trace back to the sheet cell.
+- **Relationship to `INLINE_GENERATION_ENABLED`:** set it `false` so the paid form flow only records + notifies and lets this sweeper generate, avoiding double-generation.
 
 - **Drive archive** (`drive_uploader.py`): `upload_kundli_pdf()` uploads to `google_drive_folder_id` via OAuth (`token.json` / `oauth_credentials.json`). Returns `None` on any failure (never raises into fulfillment). `get_drive_token.py` mints the token; see the Coolify/Drive memory and `DEPLOYMENT.md` for the prod re-auth flow.
 - **Pabbly** (`pabbly_notifier.py`): `notify_payment_success()` POSTs a payment-success payload to `pabbly_webhook_url` for downstream automation (WhatsApp/CRM/sheets). Disabled when the URL is empty.
@@ -143,9 +155,11 @@ Key optional settings:
 - `CTA_CONSULT_URL`, `CTA_POOJA_URL` — enables Closing CTA page.
 - `BRAND_FOOTER_ENABLED`, `BRAND_FOOTER_NAME`, `BRAND_FOOTER_URL`, `BRAND_FOOTER_PHONE` — enables branded footer on every page.
 - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `KUNDLI_PRICE_PAISE` — enables the paid generation flow. `ALLOW_FREE_GENERATION=true` re-opens the unauthenticated `/generate-kundli` endpoint (off in prod).
-- `GOOGLE_DRIVE_FOLDER_ID`, `DRIVE_ARCHIVE_ENABLED`, `DRIVE_RECOVERY_DIR` — Drive archive of paid PDFs.
+- `GOOGLE_DRIVE_FOLDER_ID`, `GOOGLE_DRIVE_FOLDER_ID_PREMIUM`, `DRIVE_PREMIUM_AMOUNT_THRESHOLD`, `DRIVE_ARCHIVE_ENABLED`, `DRIVE_RECOVERY_DIR` — Drive archive of paid PDFs (premium routing by order amount).
 - `PABBLY_WEBHOOK_URL` — downstream payment-success automation.
-- `ADMIN_KEY` — required to access `/admin/jobs*`.
+- `ADMIN_KEY` — required to access `/admin/jobs*` and `/admin/sheet-jobs`.
+- `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` — enable the Supabase audit layer and the sheet-driven worker (both required).
+- `SHEET_SWEEPER_ENABLED` (kill switch), `SHEET_SWEEP_INTERVAL_SECONDS`, `SHEET_ORDERS_TABLE`, `SHEET_ORDERS_KUNDLI_MAX_ATTEMPTS` — the standalone `run_sweeper.py` process.
 
 **Important:** Settings must be in `.env` (not `.env.example`) to take effect. `.env.example` is documentation only. See `DEPLOYMENT.md` for the Coolify production setup (Drive OAuth via file mounts, re-auth flow).
 

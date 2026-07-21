@@ -6,7 +6,6 @@ import hmac
 import json
 import logging
 import pathlib
-import re
 import time
 from io import BytesIO
 
@@ -21,11 +20,13 @@ from config import settings
 from models import KundliRequest, MatchRequest
 from narrative_engine import generate_narratives, translate_reports
 from pdf_generator import PDFGenerator
-from drive_uploader import folder_for_amount, upload_kundli_pdf
+from drive_uploader import upload_kundli_pdf
 from match_pdf_generator import MatchPDFGenerator
 from pabbly_notifier import notify_payment_success
 from supabase_repo import record_order_created, record_order_paid, record_job_status
 import sheet_orders_repo as sheet_repo
+from pipeline import _build_kundli_pdf, _save_recovery_pdf, _get_generation_slots
+import sheet_worker
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -159,20 +160,6 @@ def _start_fulfillment(
 # ---------------------------------------------------------------------------
 _JOB_STATE: dict[str, dict] = {}
 
-# Gate on concurrent PDF generations. A burst of simultaneous paid orders would
-# otherwise all start at once, starve the shared AstrologyAPI Semaphore(10), and
-# blow past the per-job timeout wall (only a handful finishing). This caps how
-# many render concurrently; the rest queue and complete moments later. Lazily
-# created on the running loop so tests importing this module don't bind a loop.
-_GENERATION_SLOTS: asyncio.Semaphore | None = None
-
-
-def _get_generation_slots() -> asyncio.Semaphore:
-    global _GENERATION_SLOTS
-    if _GENERATION_SLOTS is None:
-        _GENERATION_SLOTS = asyncio.Semaphore(settings.generation_concurrency)
-    return _GENERATION_SLOTS
-
 
 def _set_job_state(order_id: str, status: str, **details):
     _JOB_STATE[order_id] = {
@@ -184,24 +171,6 @@ def _set_job_state(order_id: str, status: str, **details):
 
 def _get_job_state(order_id: str) -> dict | None:
     return _JOB_STATE.get(order_id)
-
-
-def _save_recovery_pdf(order_id: str, filename: str, pdf_bytes: bytes) -> str | None:
-    """Persist a paid PDF to disk when the Drive upload failed, so it's
-    recoverable instead of lost. Returns the path written, or None if disabled
-    or the write itself failed (already-bad situation — never raise)."""
-    if not settings.drive_recovery_dir:
-        return None
-    try:
-        recovery_dir = pathlib.Path(settings.drive_recovery_dir)
-        recovery_dir.mkdir(parents=True, exist_ok=True)
-        # Prefix with order_id so the file is unambiguous and collision-free.
-        dest = recovery_dir / f"{order_id}__{filename}"
-        dest.write_bytes(pdf_bytes)
-        return str(dest)
-    except OSError:
-        logger.exception("Failed to write recovery PDF for order=%s", order_id)
-        return None
 
 
 def _list_recent_jobs(limit: int = 50) -> list[dict]:
@@ -333,61 +302,6 @@ async def _generate_and_archive_inner(
         "BG COMPLETE: order=%s customer=%s elapsed=%.1fs drive_link=%s",
         order_id, request.name, time.time() - start, drive_result.get("webViewLink"),
     )
-
-
-# ---------------------------------------------------------------------------
-# Reusable PDF pipeline
-# ---------------------------------------------------------------------------
-async def _build_kundli_pdf(request: KundliRequest, order_id: str = "") -> tuple[bytes, str]:
-    """Run the full pipeline: fetch astrology data, narrate, translate, render PDF.
-    Returns (pdf_bytes, filename). This is where the PAID API calls happen.
-    """
-    try:
-        async with AstrologyAPIClient(lang=request.lang) as client:
-            kundli_data = await client.fetch_all(request)
-    except Exception:
-        logger.exception("API fetch failed")
-        raise HTTPException(status_code=502, detail="Failed to fetch astrology data")
-
-    try:
-        kundli_data.narratives = await generate_narratives(kundli_data, request.lang)
-    except Exception:
-        logger.exception("Narrative generation failed, proceeding without narratives")
-        kundli_data.narratives = {}
-
-    try:
-        await translate_reports(kundli_data, request.lang)
-    except Exception:
-        logger.exception("Report translation failed, proceeding with English text")
-
-    try:
-        pdf_bytes = await asyncio.to_thread(
-            pdf_gen.generate, kundli_data, request.lang,
-            report_tier=request.report_tier,
-        )
-    except Exception:
-        logger.exception("PDF generation failed")
-        raise HTTPException(status_code=500, detail="PDF generation failed")
-
-    filename = _build_filename(request, order_id)
-    return pdf_bytes, filename
-
-
-def _build_filename(request: KundliRequest, order_id: str = "") -> str:
-    """Build the archive filename as First##Phone##Email##OrderId.pdf.
-
-    Only the first name word is used (e.g. "Pradeep Raghuwanshi" -> "Pradeep"),
-    then phone, email, and the order id are appended with '##'. Empty fields
-    are skipped (e.g. the free/dev flow has no order id).
-    """
-    def _clean(value: str) -> str:
-        return "".join(c for c in value if c.isalnum() or c in "@._-").strip()
-
-    name_parts = [_clean(w) for w in request.name.split() if _clean(w)]
-    first_name = name_parts[0] if name_parts else ""
-    parts = [first_name, _clean(request.phone), _clean(request.email), _clean(order_id)]
-    base = "##".join(p for p in parts if p) or "kundli"
-    return f"{base}.pdf"
 
 
 # ---------------------------------------------------------------------------
@@ -737,241 +651,31 @@ async def get_job(
 
 
 # ---------------------------------------------------------------------------
-# Sheet-driven kundli generation
+# Sheet-driven kundli generation (manual/backfill trigger)
 #
-# A second producer alongside the paid Razorpay flow: read SUCCESSFUL rows from the
-# Supabase `sheet_orders` table (fed by the hourly Apps Script sync), build a KundliRequest
-# from each, and run the SAME pipeline (`_build_kundli_pdf` -> `upload_kundli_pdf`). Status
-# lives in sheet_orders' kundli_* columns; kundli_orders and the paid flow are untouched.
-# Triggered by POST /admin/process-sheet-orders (point a scheduler at it).
+# The worker itself lives in sheet_worker.py and normally runs continuously as a separate
+# process (run_sweeper.py). This endpoint is a manual/backfill trigger for the same
+# sweep_once() — useful for draining on demand or testing a single order (?limit=1).
 # ---------------------------------------------------------------------------
-_SHEET_WORKER_LOCK = asyncio.Lock()
-
-
-class _SkipRow(Exception):
-    """The row can't produce a kundli (missing/invalid birth data). Park it, don't retry —
-    retrying bad data just burns attempts."""
-
-
-def _lang_from_report_language(value: str | None) -> str:
-    """report_language holds full words (Hindi / English). Map to the PDF lang code."""
-    v = (value or "").strip().lower()
-    if v.startswith("hin") or "हिन" in v or "देवन" in v:
-        return "hi"
-    if v.startswith("eng"):
-        return "en"
-    if v:
-        logger.warning("sheet_orders: unrecognized report_language %r -> defaulting to en", value)
-    return "en"
-
-
-def _parse_dob(value: str | None) -> tuple[int, int, int]:
-    """'YYYY-MM-DD' -> (year, month, day). The column is a Postgres date, so the format is
-    fixed; a null means the sync couldn't parse it (kept only in date_of_birth_raw)."""
-    m = re.match(r"^\s*(\d{4})-(\d{1,2})-(\d{1,2})", value or "")
-    if not m:
-        raise _SkipRow(f"missing/unparseable date_of_birth: {value!r}")
-    year, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
-    if not (1 <= month <= 12 and 1 <= day <= 31):
-        raise _SkipRow(f"invalid date_of_birth: {value!r}")
-    return year, month, day
-
-
-def _parse_tob(value: str | None) -> tuple[int, int]:
-    """'HH:MM[:SS]' -> (hour, minute). Birth time drives the whole chart, so a missing value
-    is skipped rather than defaulted to noon (which would emit a confidently-wrong kundli)."""
-    m = re.match(r"^\s*(\d{1,2}):(\d{2})", value or "")
-    if not m:
-        raise _SkipRow(f"missing/unparseable time_of_birth: {value!r}")
-    hour, minute = int(m.group(1)), int(m.group(2))
-    if not (0 <= hour <= 23 and 0 <= minute <= 59):
-        raise _SkipRow(f"invalid time_of_birth: {value!r}")
-    return hour, minute
-
-
-async def _lookup_tzone(day, month, year, hour, minute, lat, lon) -> float:
-    """Derive the DST-aware timezone offset the way the web form does — sheet_orders has no
-    timezone column. Falls back to IST (5.5) if the lookup is unavailable."""
-    payload = {
-        "day": day, "month": month, "year": year, "hour": hour, "min": minute,
-        "lat": lat, "lon": lon, "tzone": 5.5,
-    }
-    try:
-        async with AstrologyAPIClient() as client:
-            result = await client.get_timezone_with_dst(payload)
-        if result and result.get("timezone") is not None:
-            return float(result["timezone"])
-    except Exception:
-        logger.exception("tzone lookup failed; defaulting to 5.5 IST")
-    return 5.5
-
-
-async def _sheet_row_to_request(row: dict) -> KundliRequest:
-    """Map one sheet_orders row onto a KundliRequest — the same shape the paid flow feeds the
-    pipeline. Raises _SkipRow when required birth fields are missing or unparseable."""
-    year, month, day = _parse_dob(row.get("date_of_birth"))
-    hour, minute = _parse_tob(row.get("time_of_birth"))
-
-    lat, lon = row.get("latitude"), row.get("longitude")
-    if lat is None or lon is None:
-        raise _SkipRow("missing latitude/longitude")
-    lat, lon = float(lat), float(lon)
-
-    tzone = await _lookup_tzone(day, month, year, hour, minute, lat, lon)
-
-    return KundliRequest(
-        name=(row.get("name") or "Native").strip() or "Native",
-        day=day, month=month, year=year, hour=hour, min=minute,
-        lat=lat, lon=lon, tzone=tzone,
-        lang=_lang_from_report_language(row.get("report_language")),
-        place=row.get("place_of_birth") or "",
-        phone=str(row.get("phone") or ""),
-        email=row.get("email") or "",
-        gender=row.get("gender") or "",
-        state=row.get("state") or "",
-        pincode=str(row.get("pin_code") or ""),
-        report_tier="detailed",
-    )
-
-
-def _dedup_by_order_id(rows: list[dict]) -> list[dict]:
-    """First row per order_id — an edited sheet row can insert a second row with the same id,
-    and requirement is one kundli per order. Rows with no order_id are dropped."""
-    seen: set[str] = set()
-    out: list[dict] = []
-    for row in rows:
-        oid = row.get("order_id")
-        if not oid or oid in seen:
-            continue
-        seen.add(oid)
-        out.append(row)
-    return out
-
-
-async def _process_sheet_orders(limit: int = 50) -> dict:
-    """Sequentially generate + archive a kundli for each pending SUCCESSFUL sheet order.
-
-    One order is fully generated and saved before the next starts. The module lock makes
-    overlapping scheduler ticks a no-op; the kundli_* columns make it idempotent across runs.
-    """
-    if _SHEET_WORKER_LOCK.locked():
-        logger.info("sheet worker already running; skipping this invocation")
-        return {"status": "already_running"}
-
-    cap = settings.sheet_orders_kundli_max_attempts
-    summary: dict = {"status": "ok", "processed": 0, "skipped": 0, "failed": 0, "details": []}
-
-    async with _SHEET_WORKER_LOCK:
-        await sheet_repo.reclaim_stale(settings.generation_timeout_seconds)
-        rows = _dedup_by_order_id(await sheet_repo.fetch_pending(limit))
-        logger.info("sheet worker: %d pending order(s)", len(rows))
-
-        for row in rows:
-            order_id = row["order_id"]
-            attempts = int(row.get("kundli_attempts") or 0)
-
-            # Gate on the claim landing. If we can't even write kundli_status='generating',
-            # the DB is unwritable for this row — so mark_done would fail too, and we'd produce
-            # a PDF we can't record (guaranteed duplicate next run). Skip before spending any
-            # API calls. This is what stops a broken grant from silently piling up orphan PDFs.
-            if not await sheet_repo.claim(order_id, attempts):
-                summary["failed"] += 1
-                summary["details"].append({
-                    "order_id": order_id, "result": "claim_failed",
-                    "reason": "could not write kundli_status (DB not writable?); skipped to avoid an orphan PDF",
-                })
-                logger.error("SHEET CLAIM FAILED: order=%s — skipping generation (check UPDATE grant)", order_id)
-                continue
-
-            try:
-                request = await _sheet_row_to_request(row)
-            except _SkipRow as exc:
-                await sheet_repo.mark_failed(order_id, str(exc), permanent=True)
-                summary["skipped"] += 1
-                summary["details"].append({"order_id": order_id, "result": "skipped", "reason": str(exc)})
-                logger.warning("sheet order %s skipped: %s", order_id, exc)
-                continue
-
-            start = time.time()
-            logger.info("SHEET BG START: order=%s customer=%s", order_id, request.name)
-            try:
-                async with _get_generation_slots():
-                    pdf_bytes, filename = await asyncio.wait_for(
-                        _build_kundli_pdf(request, order_id),
-                        timeout=settings.generation_timeout_seconds,
-                    )
-                # Route by order value: orders above the premium threshold archive to the
-                # premium folder, the rest to the default folder (folder_for_amount handles
-                # null/unparseable amounts by falling back to the default).
-                amount = row.get("order_total_amount")
-                target_folder = folder_for_amount(amount)
-                logger.info(
-                    "SHEET routing: order=%s amount=%s -> folder=%s",
-                    order_id, amount, target_folder,
-                )
-                drive_result = await upload_kundli_pdf(
-                    pdf_bytes=pdf_bytes,
-                    filename=filename,
-                    customer_name=request.name,
-                    order_id=order_id,
-                    payment_id="",
-                    folder_id=target_folder,
-                )
-                if not drive_result:
-                    permanent = attempts + 1 >= cap
-                    await sheet_repo.mark_failed(order_id, "drive upload failed", permanent=permanent)
-                    summary["failed"] += 1
-                    summary["details"].append({"order_id": order_id, "result": "failed", "reason": "drive upload failed"})
-                    logger.error("SHEET DRIVE FAILED: order=%s customer=%s", order_id, request.name)
-                    continue
-
-                drive_link = drive_result.get("webViewLink", "")
-                # The PDF is in Drive now. If recording that fails, do NOT report success —
-                # the row stays pending and would regenerate (duplicate). Surface it loudly as
-                # a distinct state so the operator knows a real file exists but is unrecorded.
-                if not await sheet_repo.mark_done(order_id, drive_result.get("id"), drive_link):
-                    summary["failed"] += 1
-                    summary["details"].append({
-                        "order_id": order_id, "result": "archived_unmarked",
-                        "drive_link": drive_link,
-                        "reason": "PDF uploaded to Drive but DB write failed; will regenerate unless fixed",
-                    })
-                    logger.error(
-                        "SHEET ARCHIVED BUT UNMARKED: order=%s — PDF at %s but kundli_status not written "
-                        "(check UPDATE grant); row will regenerate until fixed",
-                        order_id, drive_link,
-                    )
-                    continue
-
-                summary["processed"] += 1
-                summary["details"].append({
-                    "order_id": order_id, "result": "archived", "drive_link": drive_link,
-                })
-                logger.info(
-                    "SHEET BG COMPLETE: order=%s customer=%s elapsed=%.1fs",
-                    order_id, request.name, time.time() - start,
-                )
-            except Exception as exc:  # noqa: BLE001 — one bad order must not stop the batch
-                permanent = attempts + 1 >= cap
-                await sheet_repo.mark_failed(order_id, f"{type(exc).__name__}: {exc}", permanent=permanent)
-                summary["failed"] += 1
-                summary["details"].append({"order_id": order_id, "result": "failed", "reason": str(exc)})
-                logger.exception("SHEET BG FAILED: order=%s customer=%s", order_id, request.name)
-
-    logger.info(
-        "sheet worker run done: processed=%d skipped=%d failed=%d",
-        summary["processed"], summary["skipped"], summary["failed"],
-    )
-    return summary
-
-
 @app.post("/admin/process-sheet-orders")
 async def process_sheet_orders_endpoint(
     x_admin_key: str | None = Header(None),
     limit: int = 50,
 ) -> dict:
     """Generate kundli PDFs for pending SUCCESSFUL sheet_orders rows and archive to Drive.
-    Point a scheduler (server cron) at this. Gated by X-Admin-Key like /admin/jobs."""
+    A manual trigger for the same worker the standalone sweeper runs. Gated by X-Admin-Key."""
     if not settings.admin_key or x_admin_key != settings.admin_key:
         raise HTTPException(status_code=401, detail="Unauthorized")
-    return await _process_sheet_orders(limit)
+    return await sheet_worker.sweep_once(limit)
+
+
+@app.get("/admin/sheet-jobs")
+async def sheet_jobs_endpoint(
+    x_admin_key: str | None = Header(None),
+    limit: int = 100,
+) -> dict:
+    """Failed/parked sheet_orders rows (kundli_status in failed/failed_permanent), newest first.
+    Gated by X-Admin-Key like /admin/jobs. Each row's sheet_row points back to the source cell."""
+    if not settings.admin_key or x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"jobs": await sheet_repo.fetch_failed(limit)}

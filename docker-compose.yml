@@ -9,5 +9,21 @@ services:
       - narrative_cache:/app/narrative_cache.db
     restart: unless-stopped
 
+  # Standalone sheet_orders sweeper: reads pending rows -> generates PDF -> archives to Drive.
+  # Same image as `app` (Pango/Cairo already installed), just a different command; no HTTP port.
+  # IMPORTANT: run EXACTLY ONE instance — the no-double-generation guarantee is an in-process
+  # lock (sheet_worker._SHEET_WORKER_LOCK), so never scale/replicate this service.
+  # Its own narrative-cache volume avoids two containers writing the same SQLite file.
+  # Set SHEET_SWEEPER_ENABLED=false in .env to keep it idle without stopping the container.
+  sweeper:
+    build: .
+    command: python run_sweeper.py
+    env_file:
+      - .env
+    volumes:
+      - sweeper_narrative_cache:/app/narrative_cache.db
+    restart: unless-stopped
+
 volumes:
   narrative_cache:
+  sweeper_narrative_cache:
