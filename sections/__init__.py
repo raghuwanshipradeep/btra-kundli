@@ -30,6 +30,20 @@ def _safe_time(value) -> str:
     return s
 
 
+def truncate_sentences(text, max_sentences: int = 6):
+    """Keep the first N sentences of a string, split on the Devanagari danda (।) or . ! ?.
+    Used to shorten long raw-API report text (e.g. numero_report). Non-strings pass through."""
+    if not isinstance(text, str) or not text.strip():
+        return text
+    count = 0
+    for i, ch in enumerate(text):
+        if ch in "।.!?":
+            count += 1
+            if count >= max_sentences:
+                return text[: i + 1].strip()
+    return text
+
+
 def make_env() -> Environment:
     env = Environment(loader=FileSystemLoader("templates"))
     env.filters["safe_time"] = _safe_time
@@ -38,6 +52,7 @@ def make_env() -> Environment:
     env.filters["humanize_key"] = humanize_key
     env.filters["to_hindi_value"] = to_hindi_value
     env.filters["format_degree"] = _format_degree
+    env.filters["truncate_sentences"] = truncate_sentences
     return env
 
 

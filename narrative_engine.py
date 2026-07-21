@@ -1415,6 +1415,24 @@ async def _translate_chunked(
     return merged
 
 
+# API report fields (ascendant विवरण, nakshatra चरित्र/शिक्षा…) run 10-12 lines. Keep only
+# the first few sentences before translating so Haiku processes and returns far fewer tokens.
+_REPORT_MAX_SENTENCES = 4
+
+
+def _truncate_sentences(text: str, max_sentences: int) -> str:
+    """First N sentences of English text (terminator-delimited), or the whole text if shorter."""
+    if not text or max_sentences <= 0:
+        return text
+    count = 0
+    for i, ch in enumerate(text):
+        if ch in ".!?":
+            count += 1
+            if count >= max_sentences:
+                return text[: i + 1].strip()
+    return text
+
+
 async def translate_reports(kundli_data: KundliData, lang: str) -> None:
     if lang != "hi" or not settings.anthropic_api_key:
         return
@@ -1431,6 +1449,10 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
         batch1_texts.update(
             _extract_texts(kundli_data.general_nakshatra_report, "nak")
         )
+    # Shorten these verbose report fields before translation (cost + length).
+    batch1_texts = {
+        k: _truncate_sentences(v, _REPORT_MAX_SENTENCES) for k, v in batch1_texts.items()
+    }
 
     batch2_texts: dict[str, str] = {}
     if kundli_data.general_house_reports:
@@ -1444,27 +1466,17 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
             _extract_texts(kundli_data.general_rashi_reports, "rashi")
         )
 
-    # The /numero_prediction/daily endpoint returns English regardless of
-    # Accept-Language, so its prediction text must be translated here.
-    batch4_texts: dict[str, str] = {}
-    if kundli_data.numero_prediction_daily:
-        batch4_texts.update(
-            _extract_texts(kundli_data.numero_prediction_daily, "numday")
-        )
-
     cost_sink: list[float] = []
     results = await asyncio.gather(
         _translate_chunked(batch1_texts, client, semaphore, cost_sink),
         _translate_chunked(batch2_texts, client, semaphore, cost_sink),
         _translate_chunked(batch3_texts, client, semaphore, cost_sink),
-        _translate_chunked(batch4_texts, client, semaphore, cost_sink),
         return_exceptions=True,
     )
 
     batch1_result = results[0] if not isinstance(results[0], Exception) else {}
     batch2_result = results[1] if not isinstance(results[1], Exception) else {}
     batch3_result = results[2] if not isinstance(results[2], Exception) else {}
-    batch4_result = results[3] if not isinstance(results[3], Exception) else {}
 
     if batch1_result:
         asc_translations = {k[4:]: v for k, v in batch1_result.items() if k.startswith("asc.")}
@@ -1481,10 +1493,6 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
     if batch3_result and kundli_data.general_rashi_reports:
         rashi_translations = {k[6:]: v for k, v in batch3_result.items() if k.startswith("rashi.")}
         _inject_texts(kundli_data.general_rashi_reports, rashi_translations)
-
-    if batch4_result and kundli_data.numero_prediction_daily:
-        numday_translations = {k[7:]: v for k, v in batch4_result.items() if k.startswith("numday.")}
-        _inject_texts(kundli_data.numero_prediction_daily, numday_translations)
 
     translated_count = sum(len(r) for r in [batch1_result, batch2_result, batch3_result, batch4_result] if isinstance(r, dict))
     logger.info("Report translation complete: %d fields translated to Hindi", translated_count)
