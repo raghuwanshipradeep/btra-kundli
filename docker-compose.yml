@@ -13,6 +13,8 @@ services:
       - narrative_cache:/app/narrative_cache.db
       - recovery:/app/recovery
     restart: unless-stopped
+    # Backstop only (not a reservation): a runaway spike kills this container, not the box.
+    mem_limit: 3g
 
   # Standalone sheet_orders sweeper: reads pending rows -> generates PDF -> archives to Drive.
   # Same image as `app` (Pango/Cairo already installed), just a different command; no HTTP port.
@@ -28,6 +30,8 @@ services:
     volumes:
       - sweeper_narrative_cache:/app/narrative_cache.db
     restart: unless-stopped
+    # Primary PDF generator (WeasyPrint peaks ~2.5g at generation_concurrency=5); backstop only.
+    mem_limit: 6g
 
 volumes:
   narrative_cache:
