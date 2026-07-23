@@ -36,6 +36,21 @@ def _get_generation_slots() -> asyncio.Semaphore:
     return _GENERATION_SLOTS
 
 
+def touch_heartbeat() -> None:
+    """Refresh the sweeper liveness file (mtime is the signal). The container
+    healthcheck flags the sweeper unhealthy when this file goes stale, so it's
+    touched every loop tick and after every processed order. No-op when
+    SWEEPER_HEARTBEAT_FILE is unset (local dev); never raises."""
+    if not settings.sweeper_heartbeat_file:
+        return
+    try:
+        path = pathlib.Path(settings.sweeper_heartbeat_file)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    except OSError:
+        logger.exception("Failed to touch heartbeat file %s", settings.sweeper_heartbeat_file)
+
+
 def _save_recovery_pdf(order_id: str, filename: str, pdf_bytes: bytes) -> str | None:
     """Persist a paid PDF to disk when the Drive upload failed, so it's
     recoverable instead of lost. Returns the path written, or None if disabled

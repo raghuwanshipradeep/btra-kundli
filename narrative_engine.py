@@ -19,7 +19,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = pathlib.Path(__file__).parent / "narrative_cache.db"
+DB_PATH = (
+    pathlib.Path(settings.narrative_cache_path)
+    if settings.narrative_cache_path
+    else pathlib.Path(__file__).parent / "narrative_cache.db"
+)
 # Flagship narratives now run on Haiku 4.5 (cost cut). Sonnet is no longer the default,
 # so the use_haiku_for_* switches below resolve to Haiku on both branches.
 NARRATIVE_MODEL = "claude-haiku-4-5-20251001"
@@ -209,6 +213,7 @@ async def _ensure_db() -> None:
     async with _db_lock:
         if _db_ready:
             return
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         async with aiosqlite.connect(DB_PATH) as db:
             await db.execute("PRAGMA journal_mode=WAL")
             await db.execute(

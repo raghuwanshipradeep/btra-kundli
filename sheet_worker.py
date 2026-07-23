@@ -19,7 +19,7 @@ import time
 from api_client import AstrologyAPIClient
 from config import settings
 from drive_uploader import folder_for_amount, upload_kundli_pdf
-from pipeline import _build_kundli_pdf, _get_generation_slots
+from pipeline import _build_kundli_pdf, _get_generation_slots, touch_heartbeat
 from sheet_mapper import map_sheet_row
 import sheet_orders_repo as sheet_repo
 
@@ -78,20 +78,24 @@ async def sweep_once(limit: int = 50) -> dict:
         logger.info("sheet worker: %d pending order(s)", len(rows))
 
         for row in rows:
+            # A big backlog can keep this loop busy for hours; refresh liveness
+            # per order so the healthcheck doesn't flag a working sweeper as dead.
+            touch_heartbeat()
             order_id = row["order_id"]
             attempts = int(row.get("kundli_attempts") or 0)
 
-            # Gate on the claim landing. If we can't even write kundli_status='generating',
-            # the DB is unwritable for this row — so mark_done would fail too, and we'd produce
-            # a PDF we can't record (guaranteed duplicate next run). Skip before spending any
-            # API calls. This is what stops a broken grant from silently piling up orphan PDFs.
+            # Gate on the claim landing. The claim is a conditional UPDATE (row must still
+            # be claimable), so False means either another process claimed it first — a safe
+            # skip, not an error — or the DB is unwritable, in which case mark_done would fail
+            # too and we'd produce a PDF we can't record (guaranteed duplicate next run).
+            # Either way, skip before spending any API calls.
             if not await sheet_repo.claim(order_id, attempts):
                 summary["failed"] += 1
                 summary["details"].append({
                     "order_id": order_id, "result": "claim_failed",
-                    "reason": "could not write kundli_status (DB not writable?); skipped to avoid an orphan PDF",
+                    "reason": "already claimed by another process, or kundli_status not writable; skipped to avoid a duplicate PDF",
                 })
-                logger.error("SHEET CLAIM FAILED: order=%s — skipping generation (check UPDATE grant)", order_id)
+                logger.warning("SHEET CLAIM NOT WON: order=%s — skipping (claimed elsewhere or DB not writable)", order_id)
                 continue
 
             request, err = map_sheet_row(row)

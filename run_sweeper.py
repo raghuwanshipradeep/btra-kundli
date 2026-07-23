@@ -15,6 +15,7 @@ import logging
 import signal
 
 from config import settings
+from pipeline import touch_heartbeat
 import sheet_worker
 
 logging.basicConfig(
@@ -39,15 +40,24 @@ async def main() -> None:
         settings.sheet_sweep_interval_seconds,
         settings.generation_timeout_seconds,
     )
+    consecutive_failures = 0
     while not _stop.is_set():
+        # Touched even when the kill switch idles the loop: an intentionally idle
+        # sweeper is alive, and must not trip the container healthcheck.
+        touch_heartbeat()
         if settings.sheet_sweeper_enabled:
             try:
                 await sheet_worker.sweep_once()
+                consecutive_failures = 0
             except Exception:
-                logger.exception("sweep tick failed")
-        # Interruptible sleep: wakes immediately on shutdown, else after the interval.
+                consecutive_failures += 1
+                logger.exception("sweep tick failed (%d in a row)", consecutive_failures)
+        # Exponential backoff on repeated failures (capped at 10x the interval) so a
+        # persistently broken dependency doesn't spam an error every single interval.
+        delay = settings.sheet_sweep_interval_seconds * min(2 ** consecutive_failures, 10)
+        # Interruptible sleep: wakes immediately on shutdown, else after the delay.
         try:
-            await asyncio.wait_for(_stop.wait(), timeout=settings.sheet_sweep_interval_seconds)
+            await asyncio.wait_for(_stop.wait(), timeout=delay)
         except asyncio.TimeoutError:
             pass
     logger.info("Sheet sweeper stopped")

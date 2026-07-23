@@ -4,11 +4,21 @@ __pycache__
 *.pyc
 .env
 *.db
+*.db-wal
+*.db-shm
 tests/
 .claude/
 .vscode/
+docs/
 start.bat
-demo.pdf
-demo_test.pdf
-test_alignment.pdf
 qa_check.py
+
+# Secrets — must NEVER enter image layers. Injected at runtime instead
+# (GOOGLE_TOKEN_JSON env var or a Coolify file mount; see DEPLOYMENT.md).
+token.json
+oauth_credentials.json
+service_account.json
+
+# Customer PDFs (PII) and any local test renders.
+recovery/
+*.pdf
