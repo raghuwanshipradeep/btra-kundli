@@ -18,6 +18,9 @@ start.bat
 set PATH=C:\msys64\mingw64\bin;%PATH%
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
+# Run prod-style server (4 workers, no reload)
+start_prod.bat
+
 # Run all tests
 pytest tests/ -v
 
@@ -35,7 +38,7 @@ python qa_check.py demo.pdf
 
 ### Two PDF pipelines
 
-1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (~65 section renderers in `SECTION_RENDERERS`)
+1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (57 entries in `SECTION_RENDERERS`: 49 content renderers + 8 divider/banner image renderers)
 2. **Match-making:** `POST /generate-match` -> `AstrologyAPIClient.fetch_match()` -> `MatchData` -> `MatchPDFGenerator` (single `render_matching` section)
 
 Both share `base.html` + `styles.css` for final HTML->PDF conversion via WeasyPrint.
@@ -49,7 +52,7 @@ Both share `base.html` + `styles.css` for final HTML->PDF conversion via WeasyPr
 ### API data fetching (`api_client.py`)
 
 `fetch_all()` runs in 3 phases to respect data dependencies:
-- **Phase 1:** 81 independent parallel API calls via `asyncio.gather()` (birth details, planets, panchang, dasha, doshas, remedies, numerology, Lal Kitab, biorhythm, etc.)
+- **Phase 1:** ~61 independent parallel API calls via one `asyncio.gather()` (75 slots, 14 of which are `_skip()` placeholders for retired sections) (birth details, planets, panchang, dasha, doshas, remedies, numerology, Lal Kitab, biorhythm, etc.)
 - **Phase 2:** Per-planet and per-chart parallel calls (7 planet ashtakvarga + 17 divisional charts + chart images + 9 house/rashi reports + 9 Lal Kitab remedies)
 - **Phase 3:** Sub-dasha calls that depend on Phase 1 results (Vimshottari sub-periods need current dasha planet names; Char Dasha sub-periods need current sign)
 
@@ -60,7 +63,8 @@ Concurrency is bounded by an `asyncio.Semaphore(10)` — at most 10 API calls in
 - **Graceful degradation:** Every API call is individually try/excepted; if one fails, that section is skipped but the PDF still generates with remaining sections.
 - `_houses_from_planets()` derives house data from planet positions when the `/houses` endpoint fails — a fallback, not a redundancy.
 - `_normalize_planet_names()` overrides API-returned planet names with English canonical names from `PLANET_ID_TO_EN` (the API returns Hindi names when `lang=hi`).
-- PDF generation runs in `asyncio.to_thread()` because WeasyPrint is blocking.
+- PDF generation runs in `asyncio.to_thread()` because WeasyPrint is blocking, and simultaneous renders are capped by `generation_concurrency` (`_get_generation_slots()` in `pipeline.py`).
+- **Filler images:** `_fill_gap_pages()` in `pdf_generator.py` overlays promo images on pages that come out mostly blank. Controlled by `filler_images_enabled`, `filler_gap_threshold`, `filler_skip_pages`.
 - Two payload variants: `payload` (basic birth params) and `payload_with_ayan` (adds `ayanamsha: "LAHIRI"`). Numerology uses a separate `numero_payload` (day/month/year/name, no coordinates).
 
 ### Section rendering pattern
@@ -77,7 +81,7 @@ Each file in `sections/` exports a `render_<name>(data: KundliData, lang: str) -
 
 Production flow is paid, asynchronous, and fire-and-forget for the customer:
 
-1. `POST /create-order` — creates a Razorpay order, stores the `KundliRequest` in the in-memory `_ORDER_STORE` (30-min TTL) keyed by `order_id`. Returns checkout params to the browser.
+1. `POST /create-order` — creates a Razorpay order, stores the `KundliRequest` in the in-memory `_ORDER_STORE` (30-min TTL) keyed by `order_id`. Returns checkout params to the browser. (`GET /api/payment-config` exposes the Razorpay key id + price to the frontend.)
 2. Payment confirmation arrives via **two** independent paths: the in-page `POST /verify-and-generate` callback (best-effort fast path, verifies the checkout HMAC signature) and `POST /razorpay-webhook` (reliable server-to-server, verifies the webhook HMAC over the raw body — a *different* secret). Both call `_start_fulfillment()`.
 3. `_start_fulfillment()` is idempotent via `_claim_order()` (a `set` check-and-add with no `await` between, so atomic in one worker) — whichever path arrives first wins, the other is a no-op. It schedules two `BackgroundTasks`: `notify_payment_success` (Pabbly, registered first so downstream automation fires immediately) then `_generate_and_archive`.
 4. `_generate_and_archive()` runs `_build_kundli_pdf()` under a `generation_timeout_seconds` wall, uploads to Google Drive, and records progress in the in-memory `_JOB_STATE` dict (`generating` -> `archived` / `timeout` / `pdf_failed` / `drive_failed` / `generated_no_archive`). On Drive failure it writes the paid PDF to `drive_recovery_dir` so it's never lost.
@@ -92,7 +96,7 @@ The reusable pipeline (`_build_kundli_pdf`, `_build_filename`, `_save_recovery_p
 
 ### Sheet-driven kundli generation (standalone sweeper)
 
-A second producer alongside the paid Razorpay flow. A Google Apps Script (`scripts/sheet_to_supabase.gs`) syncs orders into Supabase `sheet_orders` (schema: `sheet_orders_schema.sql`). The worker `sheet_worker.sweep_once()` reads SUCCESSFUL rows, maps each via the pure `sheet_mapper.map_sheet_row()`, runs the shared `pipeline._build_kundli_pdf()`, and archives to Drive with amount-based routing (`folder_for_amount`). Status lives in the `sheet_orders.kundli_*` columns; `kundli_orders` and the paid flow are untouched.
+A second producer alongside the paid Razorpay flow. A Google Apps Script (`scripts/sheet_to_supabase.gs`) syncs orders into Supabase `sheet_orders` (schema: `sheet_orders_schema.sql`). The worker `sheet_worker.sweep_once()` reads SUCCESSFUL rows, maps each via the pure `sheet_mapper.map_sheet_row()`, runs the shared `pipeline._build_kundli_pdf()`, and archives to Drive with amount-based routing (`folder_for_amount()` in `drive_uploader.py`). Status lives in the `sheet_orders.kundli_*` columns; `kundli_orders` and the paid flow are untouched.
 
 - **How it runs:** `run_sweeper.py` is a dedicated 24/7 async loop (`start_sweeper.bat`) that calls `sweep_once()` every `SHEET_SWEEP_INTERVAL_SECONDS`. Run **exactly one** instance — never replicas — because the in-process `_SHEET_WORKER_LOCK` + the `kundli_*` columns are what prevent double-generation. The web app stays `--workers 4`; the sweeper is a separate process.
 - **Manual trigger:** `POST /admin/process-sheet-orders` (X-Admin-Key) calls the same `sweep_once()` for on-demand drains or single-order tests (`?limit=1`).
@@ -102,10 +106,11 @@ A second producer alongside the paid Razorpay flow. A Google Apps Script (`scrip
 
 - **Drive archive** (`drive_uploader.py`): `upload_kundli_pdf()` uploads to `google_drive_folder_id` via OAuth (`token.json` / `oauth_credentials.json`). Returns `None` on any failure (never raises into fulfillment). `get_drive_token.py` mints the token; see the Coolify/Drive memory and `DEPLOYMENT.md` for the prod re-auth flow.
 - **Pabbly** (`pabbly_notifier.py`): `notify_payment_success()` POSTs a payment-success payload to `pabbly_webhook_url` for downstream automation (WhatsApp/CRM/sheets). Disabled when the URL is empty.
+- **Supabase audit** (`supabase_repo.py`): records each paid order's lifecycle (created -> paid -> generating -> archived/failed) in the `kundli_orders` table via the PostgREST API with the service key — a durable complement to the in-memory stores. Best-effort like Drive/Pabbly: never raises into fulfillment; disabled unless both `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` are set.
 
 ### Narrative engine (`narrative_engine.py`)
 
-AI-generated personalized narratives for 20+ section types using Claude Sonnet via the Anthropic SDK (`AsyncAnthropic`). Requires `ANTHROPIC_API_KEY` in `.env` — skips gracefully if not set. Cost optimization: `use_haiku_for_translation` and `use_haiku_for_simple_narratives` route formulaic batches (translation, planets, numerology) to cheaper Haiku 4.5; both are kill-switches that revert to Sonnet when `False`. See `docs/cost-optimization-results.md`.
+AI-generated personalized narratives for 20+ section types via the Anthropic SDK (`AsyncAnthropic`). Requires `ANTHROPIC_API_KEY` in `.env` — skips gracefully if not set. All three model constants (`NARRATIVE_MODEL`, `TRANSLATION_MODEL`, `SIMPLE_NARRATIVE_MODEL`) are now hardcoded to Haiku 4.5 (`claude-haiku-4-5-20251001`) for cost — Sonnet is no longer used, so the `use_haiku_for_translation` / `use_haiku_for_simple_narratives` settings are vestigial (both branches resolve to Haiku). See `docs/cost-optimization-results.md`.
 
 - **Concurrency:** `asyncio.Semaphore(5)` limits parallel API calls, each with 30s timeout.
 - **Caching:** Async SQLite cache (`narrative_cache.db`) keyed by SHA-256 of section type + data + lang. Avoids re-generating identical narratives across runs.
@@ -171,9 +176,11 @@ WeasyPrint requires MSYS2 Pango (`C:\msys64\mingw64\bin` must be in PATH). The `
 
 Tests use `pytest` + `pytest-asyncio`. API client tests use `respx` to mock httpx. The `/demo` endpoint uses hardcoded sample data from `demo_data.py` and requires no API key — `test_demo_pdf` validates end-to-end PDF generation.
 
-`tests/test_pdf_generator.py` has 44 tests:
+`tests/test_pdf_generator.py` has 36 tests:
 - Full PDF generation (en + hi) and subset section tests.
-- Parametrized per-section rendering: 19 sections × 2 languages (en + hi) — each section rendered individually with demo data.
+- Parametrized per-section rendering: 15 sections × 2 languages (en + hi) — each section rendered individually with demo data.
 - Conditional skip tests: `authors_note` returns `None` without `AUTHOR_NAME`, `closing_cta` returns `None` without CTA URLs.
+
+Other suites in `tests/`: `test_dignity`, `test_pdf_qa`, `test_drive_uploader`, `test_supabase_repo`, `test_webhook` (payment paths), `test_sheet_mapper`, `test_sheet_worker`, `test_sheet_orders_repo`. `test_pabbly.py` sits at the repo root, outside the pytest default path.
 
 **Note on Windows:** When running pytest, ensure MSYS2 Pango is in PATH but the system Python comes first (append `C:\msys64\mingw64\bin` to end of PATH, not beginning).

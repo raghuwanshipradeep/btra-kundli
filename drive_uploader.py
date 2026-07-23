@@ -24,9 +24,10 @@ _drive_service = None
 def _load_credentials() -> Credentials:
     token_path = Path(settings.google_token_path)
 
-    # token.json is git-ignored, so it is NOT baked into the built image. On hosts that
-    # inject the token as an env var instead of a file mount (e.g. compose-based Coolify),
-    # materialize the file once from GOOGLE_TOKEN_JSON so Drive auth works after a fresh deploy.
+    # token.json is excluded from the built image via .dockerignore (being git-ignored
+    # alone would NOT keep it out of `COPY . .`). On hosts that inject the token as an
+    # env var instead of a file mount (e.g. compose-based Coolify), materialize the file
+    # once from GOOGLE_TOKEN_JSON so Drive auth works after a fresh deploy.
     if not token_path.exists() and settings.google_token_json:
         try:
             token_path.write_text(settings.google_token_json)

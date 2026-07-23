@@ -155,10 +155,21 @@ Two volumes must survive redeploys (Coolify → **Persistent Storage**):
 
 ## 9. Monitoring, Logging & Backups
 
-- **Logs:** Coolify log viewer. Watch for `DRIVE ARCHIVE MISSING`, `BG TIMEOUT`, `BG PDF FAILED`.
-- **Job status:** `/admin/jobs` tracks `archived` / `drive_failed` / `timeout` / `pdf_failed` per order — the operational dashboard.
+- **Logs:** Coolify log viewer. Watch for `DRIVE ARCHIVE MISSING`, `BG TIMEOUT`, `BG PDF FAILED`, `SHEET BG FAILED`, `SHEET CLAIM NOT WON`.
+- **Job status:** `/admin/jobs` tracks `archived` / `drive_failed` / `timeout` / `pdf_failed` per order — the operational dashboard. `/admin/sheet-jobs` lists failed/parked sheet orders.
+- **Sweeper liveness:** the sweeper touches `SWEEPER_HEARTBEAT_FILE` every tick and after every processed order; the compose healthcheck marks the container unhealthy when the file is >30 min stale (hung or dead loop). Coolify surfaces the unhealthy state — alert on it.
 - **Server backups:** Hetzner automated backups (~20% of server cost) or weekly volume snapshots. Critical for the recovery volume + Drive token mount.
 - **Uptime monitoring:** free **UptimeRobot** pinging `/` → alerts on downtime.
+
+### 9.1 While the Razorpay checkout is paused (current state, Jul 2026)
+
+All orders flow Sheet → Supabase `sheet_orders` → sweeper; the web `app` service serves no
+customer traffic and can be **stopped in Coolify** (`docker compose stop app` on a compose
+deploy) to close its public endpoints (`/generate-match`, `/demo` burn paid API / Anthropic
+tokens if left reachable). The sweeper is fully standalone and unaffected. Note that stopping
+the app also stops `/admin/sheet-jobs`, the manual drain endpoint, and `/health` — start it
+temporarily when those are needed. Before re-enabling checkout, fix the multi-worker
+`_ORDER_STORE` order-loss issue first (see the `razorpay-flow-paused` project memory).
 
 ---
 

@@ -48,9 +48,10 @@ class Settings(BaseSettings):
     drive_premium_amount_threshold: int = 499
     google_oauth_credentials_path: str = "oauth_credentials.json"
     google_token_path: str = "token.json"
-    # Full contents of token.json as a string. token.json is git-ignored (never in the
-    # built image), so on hosts without a file mount (e.g. compose-based Coolify) set this
-    # env var to the authorized-user JSON and the app materializes the file at load time.
+    # Full contents of token.json as a string. token.json is excluded from git
+    # (.gitignore) AND from the built image (.dockerignore), so on hosts without a
+    # file mount (e.g. compose-based Coolify) set this env var to the authorized-user
+    # JSON and the app materializes the file at load time.
     google_token_json: str = ""
     drive_archive_enabled: bool = True
     # Per-attempt socket timeout (seconds) for Drive uploads. The underlying
@@ -69,6 +70,16 @@ class Settings(BaseSettings):
     # between drains. The manual endpoint POST /admin/process-sheet-orders is unaffected.
     sheet_sweeper_enabled: bool = True
     sheet_sweep_interval_seconds: int = 60
+    # Liveness heartbeat: the sweeper touches this file after every tick and every
+    # processed order, so a container healthcheck can flag a hung/dead sweeper by the
+    # file's age. Empty = disabled (local dev).
+    sweeper_heartbeat_file: str = ""
+
+    # Where the SQLite narrative cache lives. Empty = narrative_cache.db next to the
+    # code (local dev). In containers point it INSIDE a mounted volume DIRECTORY
+    # (e.g. /app/data/narrative_cache.db) — mounting a named volume directly onto the
+    # .db file path creates a directory and silently disables the cache.
+    narrative_cache_path: str = ""
 
     # Post-generation filler images: overlay a promotional image into any page
     # (after filler_skip_pages) whose bottom empty space exceeds filler_gap_threshold.

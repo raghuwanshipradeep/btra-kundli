@@ -25,6 +25,7 @@ def configured(monkeypatch: pytest.MonkeyPatch):
     # Strip tenacity backoff so retry tests run instantly.
     monkeypatch.setattr(sheet_orders_repo._get.retry, "wait", wait_none())
     monkeypatch.setattr(sheet_orders_repo._patch.retry, "wait", wait_none())
+    monkeypatch.setattr(sheet_orders_repo._patch_returning.retry, "wait", wait_none())
 
 
 @pytest.fixture
@@ -62,16 +63,48 @@ async def test_fetch_pending_unconfigured(unconfigured) -> None:
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_claim_patches_by_order_id_and_bumps_attempts(configured) -> None:
-    route = respx.patch(ENDPOINT).mock(return_value=Response(204))
+async def test_claim_is_conditional_and_bumps_attempts(configured) -> None:
+    route = respx.patch(ENDPOINT).mock(return_value=Response(200, json=[{"order_id": "order_9"}]))
     ok = await sheet_orders_repo.claim("order_9", attempts=1)
 
     assert ok is True
     req = route.calls.last.request
     assert req.url.params["order_id"] == "eq.order_9"
+    # The claimable-status precondition is what makes the claim atomic across processes.
+    assert req.url.params["or"] == "(kundli_status.is.null,kundli_status.eq.failed)"
+    assert req.headers["prefer"] == "return=representation"
     body = json.loads(req.content)
     assert body["kundli_status"] == "generating"
     assert body["kundli_attempts"] == 2
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_claim_lost_when_already_claimed(configured) -> None:
+    # Another process set kundli_status='generating' first: the precondition filter
+    # matches zero rows, PostgREST returns an empty representation -> claim lost.
+    route = respx.patch(ENDPOINT).mock(return_value=Response(200, json=[]))
+    ok = await sheet_orders_repo.claim("order_9", attempts=0)
+    assert ok is False
+    assert route.called
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_claim_false_on_server_error(configured) -> None:
+    route = respx.patch(ENDPOINT).mock(return_value=Response(500, text="boom"))
+    ok = await sheet_orders_repo.claim("order_9", attempts=0)
+    assert ok is False
+    assert route.call_count == 3  # retried, then gave up — never raised
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_claim_unconfigured(unconfigured) -> None:
+    route = respx.patch(ENDPOINT).mock(return_value=Response(200, json=[]))
+    ok = await sheet_orders_repo.claim("order_9", attempts=0)
+    assert ok is False
+    assert not route.called
 
 
 @respx.mock
