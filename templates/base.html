@@ -12,6 +12,9 @@
             font-size: 7.5pt;
             font-weight: 600;
             color: #8B0000;
+            /* Page has 0 left/right margins (full-width gradient), so inset the
+               footer text from the paper edge. */
+            padding-left: 8mm;
         }
         @bottom-right {
             content: "{{ brand_footer.url }}";
@@ -19,6 +22,7 @@
             font-size: 7.5pt;
             font-weight: 600;
             color: #8B0000;
+            padding-right: 8mm;
         }
     }
     @page cover {
