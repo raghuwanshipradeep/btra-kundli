@@ -1464,12 +1464,20 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
         batch2_texts.update(
             _extract_texts(kundli_data.general_house_reports, "house")
         )
+    # House reports run 10-12 lines each; truncate like batch1 to cut translation output cost.
+    batch2_texts = {
+        k: _truncate_sentences(v, _REPORT_MAX_SENTENCES) for k, v in batch2_texts.items()
+    }
 
     batch3_texts: dict[str, str] = {}
     if kundli_data.general_rashi_reports:
         batch3_texts.update(
             _extract_texts(kundli_data.general_rashi_reports, "rashi")
         )
+    # Rashi reports are similarly verbose; truncate before translation.
+    batch3_texts = {
+        k: _truncate_sentences(v, _REPORT_MAX_SENTENCES) for k, v in batch3_texts.items()
+    }
 
     cost_sink: list[float] = []
     results = await asyncio.gather(
@@ -1499,6 +1507,6 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
         rashi_translations = {k[6:]: v for k, v in batch3_result.items() if k.startswith("rashi.")}
         _inject_texts(kundli_data.general_rashi_reports, rashi_translations)
 
-    translated_count = sum(len(r) for r in [batch1_result, batch2_result, batch3_result, batch4_result] if isinstance(r, dict))
+    translated_count = sum(len(r) for r in (batch1_result, batch2_result, batch3_result) if isinstance(r, dict))
     logger.info("Report translation complete: %d fields translated to Hindi", translated_count)
     logger.info("COST TOTAL translation lang=%s => $%.4f", lang, sum(cost_sink))
