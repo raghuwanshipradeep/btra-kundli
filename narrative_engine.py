@@ -794,25 +794,8 @@ async def generate_narratives(
                 "isRetro": planet.isRetro,
             })
 
-    # --- Outer planets ---
-    OUTER_PLANET_DEITIES = {
-        "Uranus": "Arun Dev",
-        "Neptune": "Varun Dev",
-        "Pluto": "Yama / Shiva",
-    }
-    outer_source = kundli_data.planets_extended or kundli_data.planets
-    if outer_source:
-        for planet in outer_source:
-            if planet.name in OUTER_PLANET_DEITIES:
-                misc_batch[f"outer_{planet.name}"] = ("outer_planet", {
-                    "name": planet.name,
-                    "sign": planet.sign,
-                    "signLord": planet.signLord,
-                    "house": planet.house,
-                    "nakshatra": planet.nakshatra,
-                    "isRetro": planet.isRetro,
-                    "deity": OUTER_PLANET_DEITIES[planet.name],
-                })
+    # Outer planets (Uranus/Neptune/Pluto) narratives removed — not classical Vedic; the
+    # outer_planets section is also unregistered in pdf_generator.py (cost cut).
 
     # --- Current Mahadasha ---
     if kundli_data.current_vdasha and kundli_data.current_vdasha.major:
@@ -910,9 +893,16 @@ async def generate_narratives(
                 })
 
     # --- Mahadasha Journey (uses different system prompt) ---
+    # Only narrate the current mahadasha + next 2 — farther periods are low-value filler.
+    # Must select the same window the renderer shows (sections/mahadasha_journey.py) so no
+    # dasha card renders without a narrative.
     if kundli_data.major_vdasha and kundli_data.planets:
+        from sections.mahadasha_journey import select_journey_dashas
+        current_planet_en = ""
+        if kundli_data.current_vdasha and kundli_data.current_vdasha.major:
+            current_planet_en = planet_to_en(kundli_data.current_vdasha.major.planet)
         planet_map = {p.name: p for p in kundli_data.planets if p.name != "Ascendant"}
-        for dasha in kundli_data.major_vdasha:
+        for dasha in select_journey_dashas(kundli_data.major_vdasha, current_planet_en):
             # Normalize the (possibly Devanagari) dasha planet name to English so
             # the planet_map lookup works AND the narrative key matches the
             # renderer's key (sections/mahadasha_journey.py).
