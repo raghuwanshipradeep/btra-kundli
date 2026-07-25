@@ -46,7 +46,6 @@ def test_pdf_with_empty_data(generator: PDFGenerator) -> None:
 
 
 TESTABLE_SECTIONS = [
-    "outer_planets",
     "three_pillars",
     "sade_sati_journey",
     "mahadasha_journey",

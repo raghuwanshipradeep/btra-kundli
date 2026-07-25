@@ -52,7 +52,6 @@ from sections.marriage_timing import render_marriage_timing
 from sections.front_matter import render_front_matter, render_front_matter_toc
 from sections.graha_profile import render_graha_profile
 from sections.graha_sanyog import render_graha_sanyog
-from sections.outer_planets import render_outer_planets
 from sections.authors_note import render_authors_note
 from sections.closing_cta import render_closing_cta
 from sections.dasha_narrative import render_dasha_narrative
@@ -165,7 +164,6 @@ SECTION_RENDERERS = [
     ("three_pillars", render_three_pillars),
     ("divider_grah", make_divider_renderer("ghrah.png")),
     ("graha_profile", render_graha_profile),
-    ("outer_planets", render_outer_planets),
     ("divider_dosha", make_divider_renderer("kundli-dosha.png")),
     ("dosha", render_dosha),
     ("remedy_rudraksha", render_remedy_rudraksha),

@@ -13,6 +13,21 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+JOURNEY_DASHA_COUNT = 3  # current mahadasha + next 2; farther periods are low-value filler
+
+
+def select_journey_dashas(major_vdasha, current_planet_en, count=JOURNEY_DASHA_COUNT):
+    """Current mahadasha + next (count-1). Falls back to first `count` if current not found."""
+    if not major_vdasha:
+        return []
+    start = 0
+    if current_planet_en:
+        for i, d in enumerate(major_vdasha):
+            if planet_to_en(d.planet) == current_planet_en:
+                start = i
+                break
+    return major_vdasha[start:start + count]
+
 
 def _parse_journey_narrative(raw: str) -> dict:
     """Parse JSON narrative into {experience: [...], avoid: [...]}. Multi-strategy with fallback."""
@@ -83,7 +98,7 @@ def render_mahadasha_journey(data: KundliData, lang: str = "en") -> str | None:
         current_planet = planet_to_en(data.current_vdasha.major.planet)
 
     journey_entries = []
-    for dasha in data.major_vdasha:
+    for dasha in select_journey_dashas(data.major_vdasha, current_planet):
         # major_vdasha planet names are NOT normalized at fetch time, so in Hindi
         # reports dasha.planet is Devanagari (e.g. "चन्द्र"); normalize to the
         # English canonical so it matches planet_map (English) and the narrative key.

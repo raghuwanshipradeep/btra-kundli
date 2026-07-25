@@ -794,25 +794,8 @@ async def generate_narratives(
                 "isRetro": planet.isRetro,
             })
 
-    # --- Outer planets ---
-    OUTER_PLANET_DEITIES = {
-        "Uranus": "Arun Dev",
-        "Neptune": "Varun Dev",
-        "Pluto": "Yama / Shiva",
-    }
-    outer_source = kundli_data.planets_extended or kundli_data.planets
-    if outer_source:
-        for planet in outer_source:
-            if planet.name in OUTER_PLANET_DEITIES:
-                misc_batch[f"outer_{planet.name}"] = ("outer_planet", {
-                    "name": planet.name,
-                    "sign": planet.sign,
-                    "signLord": planet.signLord,
-                    "house": planet.house,
-                    "nakshatra": planet.nakshatra,
-                    "isRetro": planet.isRetro,
-                    "deity": OUTER_PLANET_DEITIES[planet.name],
-                })
+    # Outer planets (Uranus/Neptune/Pluto) narratives removed — not classical Vedic; the
+    # outer_planets section is also unregistered in pdf_generator.py (cost cut).
 
     # --- Current Mahadasha ---
     if kundli_data.current_vdasha and kundli_data.current_vdasha.major:
@@ -910,9 +893,16 @@ async def generate_narratives(
                 })
 
     # --- Mahadasha Journey (uses different system prompt) ---
+    # Only narrate the current mahadasha + next 2 — farther periods are low-value filler.
+    # Must select the same window the renderer shows (sections/mahadasha_journey.py) so no
+    # dasha card renders without a narrative.
     if kundli_data.major_vdasha and kundli_data.planets:
+        from sections.mahadasha_journey import select_journey_dashas
+        current_planet_en = ""
+        if kundli_data.current_vdasha and kundli_data.current_vdasha.major:
+            current_planet_en = planet_to_en(kundli_data.current_vdasha.major.planet)
         planet_map = {p.name: p for p in kundli_data.planets if p.name != "Ascendant"}
-        for dasha in kundli_data.major_vdasha:
+        for dasha in select_journey_dashas(kundli_data.major_vdasha, current_planet_en):
             # Normalize the (possibly Devanagari) dasha planet name to English so
             # the planet_map lookup works AND the narrative key matches the
             # renderer's key (sections/mahadasha_journey.py).
@@ -1386,7 +1376,7 @@ async def _translate_chunked(
     client: AsyncAnthropic,
     semaphore: asyncio.Semaphore,
     cost_sink: list[float] | None = None,
-    chunk_size: int = 6,
+    chunk_size: int = 4,
 ) -> dict[str, str]:
     """Split a large text dict into chunks and translate each separately.
 
@@ -1420,22 +1410,20 @@ async def _translate_chunked(
     return merged
 
 
-# API report fields (ascendant विवरण, nakshatra चरित्र/शिक्षा…) run 10-12 lines. Keep only
-# the first few sentences before translating so Haiku processes and returns far fewer tokens.
-_REPORT_MAX_SENTENCES = 4
+# API report fields (ascendant विवरण, nakshatra चरित्र/शिक्षा…) run 10-12 lines. Hard-cap each
+# field by character budget before translating so Haiku processes and returns far fewer tokens.
+# A char cap is deterministic — unlike sentence counting, it still trims run-on report text that
+# has few .!? terminators (which was letting most fields through untruncated).
+_REPORT_MAX_CHARS = 350
 
 
-def _truncate_sentences(text: str, max_sentences: int) -> str:
-    """First N sentences of English text (terminator-delimited), or the whole text if shorter."""
-    if not text or max_sentences <= 0:
+def _truncate_report(text: str, max_chars: int = _REPORT_MAX_CHARS) -> str:
+    """Hard-cap English report text before translation, ending on a sentence boundary when possible."""
+    if not text or len(text) <= max_chars:
         return text
-    count = 0
-    for i, ch in enumerate(text):
-        if ch in ".!?":
-            count += 1
-            if count >= max_sentences:
-                return text[: i + 1].strip()
-    return text
+    cut = text[:max_chars]
+    last = max(cut.rfind("."), cut.rfind("!"), cut.rfind("?"))
+    return (cut[: last + 1] if last >= max_chars // 2 else cut).strip()
 
 
 async def translate_reports(kundli_data: KundliData, lang: str) -> None:
@@ -1455,9 +1443,7 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
             _extract_texts(kundli_data.general_nakshatra_report, "nak")
         )
     # Shorten these verbose report fields before translation (cost + length).
-    batch1_texts = {
-        k: _truncate_sentences(v, _REPORT_MAX_SENTENCES) for k, v in batch1_texts.items()
-    }
+    batch1_texts = {k: _truncate_report(v) for k, v in batch1_texts.items()}
 
     batch2_texts: dict[str, str] = {}
     if kundli_data.general_house_reports:
@@ -1465,9 +1451,7 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
             _extract_texts(kundli_data.general_house_reports, "house")
         )
     # House reports run 10-12 lines each; truncate like batch1 to cut translation output cost.
-    batch2_texts = {
-        k: _truncate_sentences(v, _REPORT_MAX_SENTENCES) for k, v in batch2_texts.items()
-    }
+    batch2_texts = {k: _truncate_report(v) for k, v in batch2_texts.items()}
 
     batch3_texts: dict[str, str] = {}
     if kundli_data.general_rashi_reports:
@@ -1475,9 +1459,7 @@ async def translate_reports(kundli_data: KundliData, lang: str) -> None:
             _extract_texts(kundli_data.general_rashi_reports, "rashi")
         )
     # Rashi reports are similarly verbose; truncate before translation.
-    batch3_texts = {
-        k: _truncate_sentences(v, _REPORT_MAX_SENTENCES) for k, v in batch3_texts.items()
-    }
+    batch3_texts = {k: _truncate_report(v) for k, v in batch3_texts.items()}
 
     cost_sink: list[float] = []
     results = await asyncio.gather(
