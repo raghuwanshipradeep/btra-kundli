@@ -22,7 +22,6 @@
 
         {% if planets %}
         {% set ascendant = planets | selectattr("name", "equalto", "Ascendant") | first %}
-        {% set sun = planets | selectattr("name", "equalto", "Sun") | first %}
         {% set moon = planets | selectattr("name", "equalto", "Moon") | first %}
         {% endif %}
 
@@ -52,11 +51,6 @@
                 {% if ascendant %}
                 <div class="cover-bd-row">
                     <span class="cover-bd-label">{{ locale.ascendant }}</span><span class="cover-bd-value">{{ ascendant.sign }}</span>
-                </div>
-                {% endif %}
-                {% if sun %}
-                <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.sun_sign }}</span><span class="cover-bd-value">{{ sun.sign }}</span>
                 </div>
                 {% endif %}
                 {% if moon %}
