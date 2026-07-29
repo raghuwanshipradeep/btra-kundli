@@ -105,6 +105,13 @@ class Settings(BaseSettings):
     sheet_orders_table: str = "sheet_orders"
     sheet_orders_kundli_max_attempts: int = 3
 
+    # Credit gating for the sheet sweeper: generate only while the astrologer has credits, and
+    # spend one per delivered PDF (credits_repo.py + credits_schema.sql). The astrologer is
+    # resolved at runtime (the single is_active row in `astrologers`), so there is no id to
+    # configure. false = unmetered generation, the pre-credit behaviour — the rollback switch
+    # if the gate ever wrongly blocks production, applied by restarting the sweeper.
+    credit_check_enabled: bool = True
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
