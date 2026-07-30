@@ -31,7 +31,10 @@ services:
   # IMPORTANT: run EXACTLY ONE instance — the no-double-generation guarantee is an in-process
   # lock (sheet_worker._SHEET_WORKER_LOCK), so never scale/replicate this service.
   # Its own narrative-cache volume avoids two containers writing the same SQLite file.
-  # Set SHEET_SWEEPER_ENABLED=false in .env to keep it idle without stopping the container.
+  # SHEET_SWEEPER_ENABLED=false keeps it idle instead of removing the service — but env is read
+  # once at import, so apply it with `up -d --force-recreate sweeper`, NOT `restart` (which
+  # reuses the container's existing env and would silently keep the old value). Same for
+  # CREDIT_CHECK_ENABLED, the credit-gate rollback switch.
   sweeper:
     build: .
     command: python run_sweeper.py
