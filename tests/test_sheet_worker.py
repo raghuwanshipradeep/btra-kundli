@@ -2,10 +2,21 @@ from __future__ import annotations
 
 import pytest
 
+import credits_repo
 import drive_uploader
 import main
 import sheet_worker
 from config import settings
+
+
+@pytest.fixture(autouse=True)
+def _credits_off(monkeypatch: pytest.MonkeyPatch):
+    """Keep the pre-existing sweeper tests on the unmetered path.
+
+    Without this they would resolve a real astrologer over HTTP (the dev .env has Supabase
+    configured). The credit tests at the bottom of this file opt back in explicitly.
+    """
+    monkeypatch.setattr(settings, "credit_check_enabled", False)
 
 
 # --- amount-based Drive folder routing -------------------------------------
@@ -294,3 +305,156 @@ async def test_sheet_jobs_endpoint_requires_admin_key(monkeypatch) -> None:
     with pytest.raises(HTTPException) as exc:
         await main.sheet_jobs_endpoint(x_admin_key="wrong", limit=10)
     assert exc.value.status_code == 401
+
+
+# --- credit gating ----------------------------------------------------------
+
+def _credit_sweep_stubs(monkeypatch, rows, calls):
+    """Wire a sweep whose every step succeeds, recording the call order in `calls`."""
+    async def fake_fetch(limit):
+        return rows
+
+    async def fake_noop(*a, **k):
+        return None
+
+    async def fake_claim(order_id, attempts):
+        calls.append(f"claim:{order_id}")
+        return True
+
+    async def fake_tzone(*a, **k):
+        return 5.5
+
+    async def fake_build(request, order_id):
+        calls.append(f"build:{order_id}")
+        return b"%PDF-", f"{order_id}.pdf"
+
+    async def fake_upload(**kwargs):
+        return {"id": "file", "webViewLink": "link"}
+
+    async def fake_done(*a, **k):
+        return True
+
+    monkeypatch.setattr(sheet_worker.sheet_repo, "fetch_pending", fake_fetch)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "reclaim_stale", fake_noop)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "claim", fake_claim)
+    monkeypatch.setattr(sheet_worker.sheet_repo, "mark_done", fake_done)
+    monkeypatch.setattr(sheet_worker, "_lookup_tzone", fake_tzone)
+    monkeypatch.setattr(sheet_worker, "_build_kundli_pdf", fake_build)
+    monkeypatch.setattr(sheet_worker, "upload_kundli_pdf", fake_upload)
+
+
+def _enable_credits(monkeypatch, balance, *, consume=(True, 9), spent=None):
+    """Turn gating on with a stubbed balance. `spent` collects consume_credit order ids."""
+    monkeypatch.setattr(settings, "credit_check_enabled", True)
+
+    async def fake_resolve():
+        return "astro-1"
+
+    async def fake_balance(astrologer_id):
+        return balance
+
+    async def fake_consume(astrologer_id, order_id):
+        if spent is not None:
+            spent.append(order_id)
+        return consume
+
+    monkeypatch.setattr(credits_repo, "enabled", lambda: True)
+    monkeypatch.setattr(credits_repo, "resolve_astrologer_id", fake_resolve)
+    monkeypatch.setattr(credits_repo, "get_balance", fake_balance)
+    monkeypatch.setattr(credits_repo, "consume_credit", fake_consume)
+
+
+@pytest.mark.asyncio
+async def test_zero_balance_blocks_before_any_spend(monkeypatch) -> None:
+    """The whole point of gating before claim(): a blocked row costs nothing and stays pending."""
+    calls: list[str] = []
+    _credit_sweep_stubs(monkeypatch, [dict(_row(), order_id="A")], calls)
+    _enable_credits(monkeypatch, balance=0)
+
+    summary = await sheet_worker.sweep_once(limit=50)
+
+    assert summary["status"] == "no_credits"
+    assert summary["credits_balance"] == 0
+    assert summary["processed"] == 0
+    # Never claimed and never built: kundli_status stays null, attempts untouched, no API spend.
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_unknown_balance_fails_closed(monkeypatch) -> None:
+    """A Supabase error (balance None) must block, not wave generation through."""
+    calls: list[str] = []
+    _credit_sweep_stubs(monkeypatch, [dict(_row(), order_id="A")], calls)
+    _enable_credits(monkeypatch, balance=None)
+
+    summary = await sheet_worker.sweep_once(limit=50)
+
+    assert summary["status"] == "no_credits"
+    assert summary["credits_balance"] is None
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_unresolvable_astrologer_skips_sweep(monkeypatch) -> None:
+    calls: list[str] = []
+    _credit_sweep_stubs(monkeypatch, [dict(_row(), order_id="A")], calls)
+    monkeypatch.setattr(settings, "credit_check_enabled", True)
+    monkeypatch.setattr(credits_repo, "enabled", lambda: True)
+
+    async def no_astrologer():
+        return None
+
+    monkeypatch.setattr(credits_repo, "resolve_astrologer_id", no_astrologer)
+
+    summary = await sheet_worker.sweep_once(limit=50)
+
+    assert summary["status"] == "no_astrologer"
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_credit_spent_once_per_generated_order(monkeypatch) -> None:
+    spent: list[str] = []
+    calls: list[str] = []
+    rows = [dict(_row(), order_id="A"), dict(_row(), order_id="B")]
+    _credit_sweep_stubs(monkeypatch, rows, calls)
+    _enable_credits(monkeypatch, balance=5, consume=(True, 4), spent=spent)
+
+    summary = await sheet_worker.sweep_once(limit=50)
+
+    assert summary["processed"] == 2
+    assert spent == ["A", "B"]  # exactly one credit per delivered PDF
+
+
+@pytest.mark.asyncio
+async def test_failed_deduction_still_archives_the_order(monkeypatch) -> None:
+    """PDF is already in Drive — a ledger failure must never fail or refund the order."""
+    calls: list[str] = []
+    _credit_sweep_stubs(monkeypatch, [dict(_row(), order_id="A")], calls)
+    _enable_credits(monkeypatch, balance=5, consume=(False, 0))
+
+    summary = await sheet_worker.sweep_once(limit=50)
+
+    assert summary["processed"] == 1
+    assert summary["details"][0]["result"] == "archived"
+    assert summary["credit_warnings"] == ["A"]
+
+
+@pytest.mark.asyncio
+async def test_disabled_gating_never_touches_credits(monkeypatch) -> None:
+    """CREDIT_CHECK_ENABLED=false must behave exactly like the pre-credit sweeper."""
+    calls: list[str] = []
+    _credit_sweep_stubs(monkeypatch, [dict(_row(), order_id="A")], calls)
+
+    async def boom(*a, **k):
+        raise AssertionError("credit gating must not run when disabled")
+
+    monkeypatch.setattr(settings, "credit_check_enabled", False)
+    monkeypatch.setattr(credits_repo, "get_balance", boom)
+    monkeypatch.setattr(credits_repo, "consume_credit", boom)
+
+    summary = await sheet_worker.sweep_once(limit=50)
+
+    assert summary["processed"] == 1
+    assert "status" not in summary or summary["status"] == "ok"
+    assert calls == ["claim:A", "build:A"]

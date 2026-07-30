@@ -4,8 +4,8 @@
 -- Fed by scripts/sheet_to_supabase.gs, an hourly Apps Script on the orders sheet
 -- that POSTs new rows straight to PostgREST. This is a SEPARATE order stream from
 -- public.kundli_orders (the Razorpay flow) — different source, own dedup scheme, plus
--- addons/UTM columns — so it gets its own table rather than sharing one. The two do share
--- the Razorpay order id: join them on order_id, don't merge the tables (see order_id).
+-- addons/UTM columns — so it gets its own table rather than sharing one. The two streams are
+-- fully independent and are NOT joinable on order_id — see the order_id comment below.
 --
 -- Like kundli_orders, the writer uses the service_role key, which bypasses RLS; RLS
 -- is enabled with no public policy so the table is private (no anon/public access).
@@ -20,15 +20,22 @@ create table if not exists public.sheet_orders (
     row_hash        text not null unique,
     sheet_row       integer,                         -- source row number, for tracing back
 
-    -- The Razorpay order id — the same value as public.kundli_orders.order_id, so the two
-    -- streams join on this column (sheet_orders_order_id_idx below serves that).
+    -- The order id as it appears in the sheet. Despite what this comment used to claim, it is
+    -- NOT a Razorpay id and does NOT join public.kundli_orders: the sheet is fed by the
+    -- admin/user web app, which mints its own cuid-style ids ('cmruho0m700opltrt...'), whereas
+    -- kundli_orders holds Razorpay ids ('order_T8zLLOKd7YPe67'). Measured overlap between the
+    -- two tables is exactly zero. Treat them as separate id namespaces.
     --
-    -- No foreign key, on purpose: the sheet is an independent hand-maintained record and
-    -- may hold ids kundli_orders never saw (manual or legacy orders), or land here before
-    -- the Razorpay row exists. An FK would reject those rows and stall the hourly sync.
+    -- That mistaken assumption has already cost one bug: credit_transactions.order_id is
+    -- FK-constrained to kundli_orders, so writing a sheet order id there raises 23503 (see
+    -- credits_schema.sql, which now nulls the column and keeps the id in `note`). Check the
+    -- namespace before wiring this column to anything that references kundli_orders.
     --
-    -- Nullable and non-unique, even though kundli_orders declares the same id not null
-    -- unique — that table mints the id, this one copies whatever the cell happens to say.
+    -- No foreign key here either, on purpose: the sheet is an independent hand-maintained
+    -- record and may hold ids kundli_orders never saw. An FK would reject those rows and stall
+    -- the hourly sync.
+    --
+    -- Nullable and non-unique: this column copies whatever the cell happens to say.
     -- Constraining it would fail a whole 500-row batch on one blank or repeated cell.
     -- Dedup stays on row_hash above.
     order_id        text,

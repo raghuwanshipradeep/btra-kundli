@@ -64,7 +64,9 @@ var TZ_OFFSET = '+05:30';
  * column holding the sheet's original display string, so a parse miss loses nothing.
  */
 var COLUMN_MAP = {
-  orderid:          { col: 'order_id',           type: 'text' },  // Razorpay id; joins kundli_orders.order_id
+  // Web app's own cuid-style id ('cmruho0m700opltrt...'), NOT a Razorpay id — it does not
+  // join kundli_orders (measured overlap: zero). Separate id namespaces.
+  orderid:          { col: 'order_id',           type: 'text' },
   orderdate:        { col: 'order_date',         type: 'date' },
   ordertime:        { col: 'order_time',         type: 'time' },
   name:             { col: 'name',               type: 'text' },
