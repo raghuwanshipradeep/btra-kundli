@@ -6,7 +6,10 @@ Exactly one instance — do NOT run replicas/workers, or the no-double-spend gua
 (the in-process _SHEET_WORKER_LOCK in sheet_worker) breaks.
 
 Each tick calls sheet_worker.sweep_once() (drains up to 50 pending orders), then sleeps
-sheet_sweep_interval_seconds. SHEET_SWEEPER_ENABLED=false idles the loop without a restart.
+sheet_sweep_interval_seconds. SHEET_SWEEPER_ENABLED=false idles the loop without touching
+code — but config.settings is built once at import, so the flag is frozen at process start:
+the loop below re-reads an attribute, not the environment. Flipping it requires restarting
+this process, and in a container RECREATING it (`docker restart` reuses the old env).
 """
 from __future__ import annotations
 

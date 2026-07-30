@@ -66,8 +66,10 @@ class Settings(BaseSettings):
 
     # Standalone sheet_orders sweeper (run: python run_sweeper.py as a SEPARATE single
     # process). sheet_sweeper_enabled is a kill switch for the 24/7 loop; disabling it
-    # idles the loop without a restart. sheet_sweep_interval_seconds is the poll cadence
-    # between drains. The manual endpoint POST /admin/process-sheet-orders is unaffected.
+    # idles the loop without code changes, but the value is read at import (see `settings`
+    # at the bottom of this file), so the process must be restarted — in a container,
+    # RECREATED, since `docker restart` keeps the old env. sheet_sweep_interval_seconds is
+    # the poll cadence between drains. POST /admin/process-sheet-orders is unaffected.
     sheet_sweeper_enabled: bool = True
     sheet_sweep_interval_seconds: int = 60
     # Liveness heartbeat: the sweeper touches this file after every tick and every
@@ -109,7 +111,8 @@ class Settings(BaseSettings):
     # spend one per delivered PDF (credits_repo.py + credits_schema.sql). The astrologer is
     # resolved at runtime (the single is_active row in `astrologers`), so there is no id to
     # configure. false = unmetered generation, the pre-credit behaviour — the rollback switch
-    # if the gate ever wrongly blocks production, applied by restarting the sweeper.
+    # if the gate ever wrongly blocks production. No rebuild needed, but like every setting
+    # here it is read once at import, so it takes effect only on a sweeper recreate.
     credit_check_enabled: bool = True
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}

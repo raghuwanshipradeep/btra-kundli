@@ -47,7 +47,8 @@ def enabled() -> bool:
     """Credit gating is on only when Supabase is configured AND the kill switch is set.
 
     ``CREDIT_CHECK_ENABLED=false`` restores the pre-credit behaviour (unmetered generation)
-    without a redeploy — the rollback path if the gate ever wrongly blocks production.
+    with no rebuild — the rollback path if the gate ever wrongly blocks production. It is read
+    from ``settings``, built once at import, so it applies on a sweeper recreate, not live.
     """
     return bool(
         settings.supabase_url
