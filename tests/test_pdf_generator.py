@@ -77,13 +77,52 @@ def test_section_renders_hindi(generator: PDFGenerator, section_name: str) -> No
     assert len(pdf) > 1000
 
 
-def test_authors_note_skips_without_config() -> None:
+# Both renderers read the module-level `config.settings` singleton, which is populated from
+# the developer's real .env. Without patching, these tests assert "no AUTHOR_NAME configured"
+# on a machine where AUTHOR_NAME *is* configured, so they pass only against an empty .env.
+# Patching the attribute makes each test assert its own branch either way.
+
+
+def test_authors_note_skips_without_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    from config import settings
     from sections.authors_note import render_authors_note
+
+    monkeypatch.setattr(settings, "author_name", "")
+    assert render_authors_note(SAMPLE_KUNDLI_DATA, "en") is None
+
+
+def test_authors_note_renders_with_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    """AUTHOR_NAME is a gate, not content: templates/authors_note.html is an image-based
+    page and does not print the name. So this asserts the section appears, nothing more."""
+    from config import settings
+    from sections.authors_note import render_authors_note
+
+    monkeypatch.setattr(settings, "author_name", "Pandit Test")
+    monkeypatch.setattr(settings, "author_title", "Jyotish Acharya")
+
     result = render_authors_note(SAMPLE_KUNDLI_DATA, "en")
-    assert result is None
+    assert result is not None
+    assert "authors-note-page" in result
 
 
-def test_closing_cta_skips_without_config() -> None:
+def test_closing_cta_skips_without_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    from config import settings
     from sections.closing_cta import render_closing_cta
-    result = render_closing_cta(SAMPLE_KUNDLI_DATA, "en")
-    assert result is None
+
+    monkeypatch.setattr(settings, "cta_consult_url", "")
+    monkeypatch.setattr(settings, "cta_pooja_url", "")
+    assert render_closing_cta(SAMPLE_KUNDLI_DATA, "en") is None
+
+
+def test_closing_cta_renders_with_either_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Either URL alone is enough — the renderer's condition is an `and` over two absences."""
+    from config import settings
+    from sections.closing_cta import render_closing_cta
+
+    monkeypatch.setattr(settings, "cta_consult_url", "https://example.test/consult")
+    monkeypatch.setattr(settings, "cta_pooja_url", "")
+    assert render_closing_cta(SAMPLE_KUNDLI_DATA, "en") is not None
+
+    monkeypatch.setattr(settings, "cta_consult_url", "")
+    monkeypatch.setattr(settings, "cta_pooja_url", "https://example.test/pooja")
+    assert render_closing_cta(SAMPLE_KUNDLI_DATA, "en") is not None
