@@ -28,6 +28,15 @@ def _safe_time(value) -> str:
         except ValueError:
             return s
     return s
+    
+def format_time_12h(hour, minute) -> str:
+    """9, 5 -> '9:05 AM'; 21, 5 -> '9:05 PM'. Bad input falls back to a raw render."""
+    try:
+        h, m = int(hour), int(minute)
+    except (TypeError, ValueError):
+        return f"{hour}:{minute}"
+    suffix = "PM" if h % 24 >= 12 else "AM"
+    return f"{h % 12 or 12}:{m:02d} {suffix}"
 
 
 def truncate_sentences(text, max_sentences: int = 6):
