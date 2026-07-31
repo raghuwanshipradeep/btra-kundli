@@ -282,28 +282,47 @@ def normalise_longitude(longitude: float) -> float:
     return float(longitude) % 360.0
 
 
+def _pada_index(longitude: float) -> int:
+    """Which of the 108 padas a longitude falls in, 0-107. Exact at every boundary.
+
+    ``NAKSHATRA_SPAN`` and ``PADA_SPAN`` are 13.333... and 3.333... — neither has an exact
+    binary representation, so flooring a division by them gets exact multiples wrong. At 80°,
+    6 × span evaluates to 80.00000000000001, the floor lands on 5, and the longitude reads as
+    the last instant of Ardra rather than the first of Punarvasu. Scaling by 108/360 = 0.3
+    keeps the arithmetic in exact binary and puts each boundary in the arc it begins.
+
+    That is not a rounding curiosity. The nakshatra decides the Vimshottari lord, so being one
+    off shifts the whole dasha timeline by a Mahadasha and turns a full balance at birth into
+    a zero one.
+    """
+    return min(int(normalise_longitude(longitude) * 108.0 / 360.0), 107)
+
+
+def _nakshatra_index(longitude: float) -> int:
+    """0-26. Derived from the pada index so the two can never disagree at a boundary."""
+    return _pada_index(longitude) // 4
+
+
 def nakshatra_at(longitude: float) -> tuple[Nakshatra, int]:
     """Return (nakshatra, pada) for a sidereal longitude. Pada is 1-4.
 
     This is the authoritative derivation — language-independent and exact. Compare an API
     label against it with ``resolve_nakshatra``; never the other way round.
     """
-    lon = normalise_longitude(longitude)
-    index = int(lon // NAKSHATRA_SPAN)          # 0-26
-    offset = lon - index * NAKSHATRA_SPAN
-    pada = int(offset // PADA_SPAN) + 1         # 1-4
-    return NAKSHATRAS[index], min(pada, 4)
+    pada_index = _pada_index(longitude)
+    return NAKSHATRAS[pada_index // 4], pada_index % 4 + 1
 
 
 def nakshatra_elapsed_fraction(longitude: float) -> float:
     """How far through its nakshatra a longitude sits, as 0.0-1.0.
 
     The Vimshottari balance at birth is ``(1 - this) * lord_period``, so this is the single
-    number the whole dasha timeline hangs off.
+    number the whole dasha timeline hangs off — which is why it is derived from the same
+    exact index as ``nakshatra_at`` rather than from a modulo that disagrees with it.
     """
     lon = normalise_longitude(longitude)
-    offset = lon % NAKSHATRA_SPAN
-    return offset / NAKSHATRA_SPAN
+    offset = max(0.0, lon - _nakshatra_index(lon) * NAKSHATRA_SPAN)
+    return min(offset / NAKSHATRA_SPAN, 1.0)
 
 
 # --- Rashi ------------------------------------------------------------------------------

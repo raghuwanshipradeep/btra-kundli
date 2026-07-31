@@ -135,10 +135,10 @@ def test_a_wrong_api_nakshatra_label_warns_but_does_not_win():
                     "Ketu": deg(2, 10.0)},
     )
     moon = next(p for p in data.planets if p.name == "Moon")
-    moon.nakshatra = "Revati"           # the truth at 40° is Krittika
+    moon.nakshatra = "Revati"           # the truth at 40° is Rohini
 
     chart = build_chart(data)
-    assert chart.planets[Graha.MOON].nakshatra.en == "Krittika"
+    assert chart.planets[Graha.MOON].nakshatra.en == "Rohini"
     assert any("API says nakshatra Revati" in w for w in chart.warnings)
 
 
@@ -332,11 +332,18 @@ def test_exaltation_orb_is_zero_at_the_deep_point(charts):
 
 
 def test_pada_matches_the_longitude(charts):
-    """Pada is a quarter of a 13°20' nakshatra, derived — never read off the API's field."""
+    """Pada is a quarter of a 13°20' nakshatra, derived — never read off the API's field.
+
+    Checked with exact rational arithmetic: ``longitude % NAKSHATRA_SPAN`` is precisely the
+    float operation that put a longitude in the wrong nakshatra, so it cannot be the oracle.
+    """
+    from fractions import Fraction
+
     for key in CORPUS_IDS:
         for position in charts[key].planets.values():
-            offset = position.longitude % NAKSHATRA_SPAN
-            assert position.pada == min(int(offset // (NAKSHATRA_SPAN / 4)) + 1, 4)
+            quarters = Fraction(position.longitude) * 108 / 360      # padas from 0°
+            expected = int(quarters) % 4 + 1
+            assert position.pada == expected, (key, position.graha, position.longitude)
 
 
 def test_helper_accessors(charts):

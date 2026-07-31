@@ -12,6 +12,7 @@ from app.astro.enums import Graha, Rashi
 from app.astro.normalise import (
     NAKSHATRA_SPAN,
     NAKSHATRAS,
+    PADA_SPAN,
     NameResolutionError,
     format_degree,
     graha_label,
@@ -127,6 +128,64 @@ def test_elapsed_fraction_spans_zero_to_one() -> None:
     assert nakshatra_elapsed_fraction(0.0) == pytest.approx(0.0)
     assert nakshatra_elapsed_fraction(NAKSHATRA_SPAN / 2) == pytest.approx(0.5)
     assert nakshatra_elapsed_fraction(NAKSHATRA_SPAN * 3.25) == pytest.approx(0.25)
+
+
+# The nakshatra span is 13.333... — no exact binary representation — so a longitude that lands
+# on a round multiple like 40°, 80° or 120° used to floor one nakshatra early and report an
+# elapsed fraction of 0.99999999 instead of 0.0. The Vimshottari lord comes from the
+# nakshatra, so that error moved the whole dasha timeline by a full Mahadasha.
+
+def test_round_longitudes_land_in_the_nakshatra_they_start() -> None:
+    assert nakshatra_at(40.0)[0].en == "Rohini"
+    assert nakshatra_at(80.0)[0].en == "Punarvasu"
+    assert nakshatra_at(120.0)[0].en == "Magha"
+    assert nakshatra_at(160.0)[0].en == "Hasta"
+
+
+def test_every_nakshatra_boundary_is_exact() -> None:
+    """At the start of each of the 27 arcs: the arc's own nakshatra, pada 1, nothing elapsed."""
+    for index in range(27):
+        boundary = index * NAKSHATRA_SPAN
+        nakshatra, pada = nakshatra_at(boundary)
+        assert nakshatra.index == index + 1, boundary
+        assert pada == 1
+        assert nakshatra_elapsed_fraction(boundary) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_every_pada_boundary_is_exact() -> None:
+    """The same float problem exists one level down: 100° is exactly the Pushya pada-2/3
+    join, and flooring a division by 3.333... put it in pada 2. Both the nakshatra and the
+    pada are derived from one exact 0-107 index, so they cannot disagree."""
+    for pada_index in range(108):
+        boundary = pada_index * PADA_SPAN
+        nakshatra, pada = nakshatra_at(boundary)
+        assert nakshatra.index == pada_index // 4 + 1, boundary
+        assert pada == pada_index % 4 + 1, boundary
+
+    assert nakshatra_at(100.0) == (NAKSHATRAS[7], 3)
+
+
+def test_elapsed_fraction_is_never_out_of_range() -> None:
+    """It multiplies a lord's period to give the balance at birth, so a value marginally
+    outside [0, 1] would produce a negative or over-long first Mahadasha."""
+    for index in range(27):
+        for offset in (0.0, 1e-13, NAKSHATRA_SPAN / 2, NAKSHATRA_SPAN - 1e-13):
+            fraction = nakshatra_elapsed_fraction(index * NAKSHATRA_SPAN + offset)
+            assert 0.0 <= fraction <= 1.0
+
+
+def test_nakshatra_at_and_elapsed_fraction_never_disagree() -> None:
+    """Both must read off the same index. If one floors early and the other does not, the
+    dasha lord and the balance come from different nakshatras."""
+    for index in range(27):
+        boundary = index * NAKSHATRA_SPAN
+        for delta in (-1e-9, 0.0, 1e-9):
+            longitude = (boundary + delta) % 360.0
+            nakshatra, _ = nakshatra_at(longitude)
+            fraction = nakshatra_elapsed_fraction(longitude)
+            # Near the start of an arc the fraction is ~0; near the end it is ~1.
+            expected_late = delta < 0
+            assert (fraction > 0.5) == expected_late, (nakshatra.en, longitude, fraction)
 
 
 def test_longitudes_are_folded_into_range() -> None:

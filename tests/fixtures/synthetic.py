@@ -13,6 +13,7 @@ nothing.
 """
 from __future__ import annotations
 
+from app.astro.normalise import nakshatra_at
 from models import HoroChartSign, KundliData, KundliRequest, PlanetData
 
 _SIGN_NAMES = (
@@ -24,18 +25,6 @@ _SIGN_LORDS = (
     "Mars", "Venus", "Mercury", "Moon", "Sun", "Mercury",
     "Venus", "Mars", "Jupiter", "Saturn", "Saturn", "Jupiter",
 )
-
-_NAKSHATRA_NAMES = (
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu",
-    "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta",
-    "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha",
-    "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada",
-    "Uttara Bhadrapada", "Revati",
-)
-
-_NAKSHATRA_LORDS = (
-    "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury",
-) * 3
 
 _PLANET_IDS = {
     "Ascendant": 0, "Sun": 1, "Moon": 2, "Mars": 3, "Mercury": 4,
@@ -58,8 +47,15 @@ def deg(sign: int, degree: float) -> float:
 
 
 def _planet(name: str, longitude: float, lagna_sign: int, retro: bool, speed: float) -> PlanetData:
+    """One PlanetData, with its label fields filled in from the longitude.
+
+    The nakshatra label comes from ``nakshatra_at`` rather than being recomputed here. These
+    fixtures stand in for an API response, and a real response is internally consistent — a
+    fixture that disagreed with itself would raise adapter warnings that mean nothing about
+    the adapter. Tests that need a *wrong* label set it explicitly after construction.
+    """
     sign_index = int(longitude // 30)
-    nak_index = int(longitude // (360 / 27))
+    nakshatra, pada = nakshatra_at(longitude)
     return PlanetData(
         id=_PLANET_IDS[name],
         name=name,
@@ -68,9 +64,9 @@ def _planet(name: str, longitude: float, lagna_sign: int, retro: bool, speed: fl
         speed=speed,
         sign=_SIGN_NAMES[sign_index],
         signLord=_SIGN_LORDS[sign_index],
-        nakshatra=_NAKSHATRA_NAMES[nak_index],
-        nakshatraLord=_NAKSHATRA_LORDS[nak_index],
-        nakshatra_pad=int((longitude % (360 / 27)) // (360 / 108)) + 1,
+        nakshatra=nakshatra.en,
+        nakshatraLord=nakshatra.lord.value,
+        nakshatra_pad=pada,
         house=((sign_index + 1 - lagna_sign) % 12) + 1,
         isRetro="true" if retro else "false",
     )
