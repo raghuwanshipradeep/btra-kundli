@@ -35,7 +35,7 @@
                     <span class="cover-bd-label">{{ locale.dob }}</span><span class="cover-bd-value">{{ request.day }}/{{ request.month }}/{{ request.year }}</span>
                 </div>
                 <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.tob }}</span><span class="cover-bd-value">{{ "%02d"|format(request.hour) }}:{{ "%02d"|format(request.min) }}</span>
+                   <span class="cover-bd-label">{{ locale.tob }}</span><span class="cover-bd-value">{{ format_time_12h(request.hour, request.min) }}</span>
                 </div>
                 <div class="cover-bd-row">
                     <span class="cover-bd-label">{{ locale.pob }}</span><span class="cover-bd-value">{% if request.place %}{{ request.place }}{% else %}{{ "%.4f"|format(request.lat) }}°N, {{ "%.4f"|format(request.lon) }}°E{% endif %}</span>
