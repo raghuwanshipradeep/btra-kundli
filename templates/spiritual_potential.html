@@ -7,14 +7,14 @@
   </p>
 
   {% if narrative %}
-  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid var(--accent);">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
   </div>
   {% endif %}
 
   {% if ninth_sign or ninth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.sp_9th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -43,7 +43,7 @@
 
   {% if twelfth_sign or twelfth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.sp_12th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -72,7 +72,7 @@
 
   {% if fifth_sign or fifth_lord %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.sp_5th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
@@ -94,7 +94,7 @@
 
   {% if jupiter %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.sp_jupiter_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -115,7 +115,7 @@
 
   {% if ketu %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.sp_ketu_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -144,7 +144,7 @@
   </div>
   {% if ak_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.sp_ak_effect }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ak_report }}</p>

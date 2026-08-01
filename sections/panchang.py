@@ -41,33 +41,6 @@ def _hours_to_hms(hours):
     return f"{h:02d}:{m:02d}"
 
 
-def _empty_to_none(obj):
-    """Convert empty dicts/lists to None so Jinja truthiness skips them."""
-    if isinstance(obj, dict) and len(obj) == 0:
-        return None
-    if isinstance(obj, list) and len(obj) == 0:
-        return None
-    return obj
-
-
-# The real API omits the chaughadiya "type" (nature), so the प्रकार column comes up
-# blank. Each chaughadiya's nature is fixed by its name, so derive it. Keyed by both
-# English and Hindi names (lowercased; Devanagari has no case so it's a no-op there).
-_CHAUGHADIYA_NATURE = {
-    "amrit": "auspicious", "अमृत": "auspicious",
-    "shubh": "auspicious", "शुभ": "auspicious",
-    "labh": "auspicious", "लाभ": "auspicious",
-    "char": "neutral", "chal": "neutral", "चर": "neutral", "चल": "neutral",
-    "rog": "inauspicious", "रोग": "inauspicious",
-    "kaal": "inauspicious", "kal": "inauspicious", "काल": "inauspicious",
-    "udveg": "inauspicious", "उद्वेग": "inauspicious",
-}
-_NATURE_LABELS = {
-    "en": {"auspicious": "Auspicious", "neutral": "Neutral", "inauspicious": "Inauspicious"},
-    "hi": {"auspicious": "शुभ", "neutral": "सम", "inauspicious": "अशुभ"},
-}
-
-
 def _fill_planet_panchang_degrees(pp, planets):
     """Fill the अंश (degree) column from data.planets (authoritative normDegree) when
     the real API omits it. planet_panchang positions equal the birth chart, so the
@@ -86,22 +59,6 @@ def _fill_planet_panchang_degrees(pp, planets):
                 it["degree"] = f"{deg:.2f}°"
 
 
-def _fill_chaughadiya_type(obj, labels):
-    """Recursively set item['type'] from the chaughadiya name where the API left it
-    empty. Non-chaughadiya dicts map to None and are left untouched."""
-    if isinstance(obj, list):
-        for it in obj:
-            _fill_chaughadiya_type(it, labels)
-    elif isinstance(obj, dict):
-        if not obj.get("type") and not obj.get("is_day"):
-            name = str(obj.get("muhurta") or obj.get("name") or "").strip().lower()
-            nature = _CHAUGHADIYA_NATURE.get(name)
-            if nature:
-                obj["type"] = labels[nature]
-        for v in obj.values():
-            _fill_chaughadiya_type(v, labels)
-
-
 def render_panchang(data: KundliData, lang: str = "en") -> str | None:
     has_any = (
         data.panchang
@@ -110,17 +67,9 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         or data.advanced_panchang_sunrise
         or data.planet_panchang
         or data.planet_panchang_sunrise
-        or data.chaughadiya_muhurta
-        or data.hora_muhurta
     )
     if not has_any:
         return None
-
-    logger.info(
-        "Panchang data: chaughadiya=%s hora=%s",
-        type(data.chaughadiya_muhurta).__name__ if data.chaughadiya_muhurta else None,
-        type(data.hora_muhurta).__name__ if data.hora_muhurta else None,
-    )
 
     locale = LOCALES.get(lang, LOCALES["en"])
     env = make_env()
@@ -128,10 +77,6 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
     birth_ayan = 0.0
     if data.birth_details:
         birth_ayan = data.birth_details.ayanamsha
-
-    # Chaughadiya: derive the missing प्रकार (type) from each muhurta's name.
-    chaughadiya = _empty_to_none(_sanitize_nan(data.chaughadiya_muhurta))
-    _fill_chaughadiya_type(chaughadiya, _NATURE_LABELS.get(lang, _NATURE_LABELS["en"]))
 
     # Graha Panchang: fill the अंश (degree) column from data.planets when the API omits it.
     planet_pp = copy.deepcopy(data.planet_panchang) if data.planet_panchang else data.planet_panchang
@@ -163,8 +108,6 @@ def render_panchang(data: KundliData, lang: str = "en") -> str | None:
         advanced_panchang_sunrise=_sanitize_nan(data.advanced_panchang_sunrise),
         planet_panchang=planet_pp,
         planet_panchang_sunrise=data.planet_panchang_sunrise,
-        chaughadiya_muhurta=chaughadiya,
-        hora_muhurta=_empty_to_none(_sanitize_nan(data.hora_muhurta)),
         locale=locale,
         lang=lang,
     )

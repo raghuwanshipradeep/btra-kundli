@@ -69,6 +69,12 @@ def varga_sign(full_longitude: float, n: int) -> int | None:
         return (s + 4 * part) % 12 + 1
     if n == 4:   # Chaturthamsa
         return (s + 3 * part) % 12 + 1
+    if n == 5:   # Panchamsa — trines from the sign: movable 1st, fixed 5th, dual 9th.
+        # Derived empirically from the API's own placements (movable +0 and fixed +4
+        # both confirmed against a real chart); the dual offset completes the trine
+        # and is covered by the caller's self-validation if this API disagrees.
+        start = {_MOVABLE: s, _FIXED: (s + 4) % 12, _DUAL: (s + 8) % 12}[_mode(s)]
+        return (start + part) % 12 + 1
     if n == 7:   # Saptamsa
         start = s if _is_odd_sign(s) else (s + 6) % 12
         return (start + part) % 12 + 1

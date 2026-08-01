@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 
 def render_closing_cta(data: KundliData, lang: str = "en") -> str | None:
-    if not settings.cta_consult_url and not settings.cta_pooja_url:
+    if not settings.cta_consult_url and not settings.cta_pooja_url \
+            and not settings.cta_rudraksha_url:
         return None
 
     locale = LOCALES.get(lang, LOCALES["en"])
@@ -20,6 +21,7 @@ def render_closing_cta(data: KundliData, lang: str = "en") -> str | None:
     return template.render(
         cta_consult_url=settings.cta_consult_url,
         cta_pooja_url=settings.cta_pooja_url,
+        cta_rudraksha_url=settings.cta_rudraksha_url,
         name=data.request.name,
         locale=locale,
         lang=lang,

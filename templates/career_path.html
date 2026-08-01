@@ -6,13 +6,13 @@
   </p>
 
   {% if narrative %}
-  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid var(--accent);">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
   </div>
   {% endif %}
 
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_10th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -24,7 +24,7 @@
         <td>{{ locale.gp_lord }}</td>
         <td>{{ locale.planet_names.get(tenth_lord, tenth_lord) }}
           {% if tenth_lord_planet %}
-            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ tenth_lord_planet.house }})</span>
+            <span style="color: var(--ink-mute); font-size: 9pt;">({{ locale.gp_house_prefix }} {{ tenth_lord_planet.house }})</span>
           {% endif %}
         </td>
       </tr>
@@ -52,7 +52,7 @@
   </div>
 
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_6th_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
@@ -64,7 +64,7 @@
         <td>{{ locale.gp_lord }}</td>
         <td>{{ locale.planet_names.get(sixth_lord, sixth_lord) }}
           {% if sixth_lord_planet %}
-            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ sixth_lord_planet.house }})</span>
+            <span style="color: var(--ink-mute); font-size: 9pt;">({{ locale.gp_house_prefix }} {{ sixth_lord_planet.house }})</span>
           {% endif %}
         </td>
       </tr>
@@ -72,7 +72,7 @@
   </div>
 
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_2nd_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm; font-size: 9.5pt;">
@@ -84,7 +84,7 @@
         <td>{{ locale.gp_lord }}</td>
         <td>{{ locale.planet_names.get(second_lord, second_lord) }}
           {% if second_lord_planet %}
-            <span style="color: #666; font-size: 9pt;">({{ locale.gp_house_prefix }} {{ second_lord_planet.house }})</span>
+            <span style="color: var(--ink-mute); font-size: 9pt;">({{ locale.gp_house_prefix }} {{ second_lord_planet.house }})</span>
           {% endif %}
         </td>
       </tr>
@@ -97,7 +97,7 @@
 
   {% if sun %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_sun_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -118,7 +118,7 @@
 
   {% if saturn %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_saturn_title }}
     </h4>
     <table class="kv-table" style="margin-bottom: 3mm;">
@@ -160,7 +160,7 @@
 
   {% if ak_house_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_ak_house_effect }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ak_house_report }}</p>
@@ -169,7 +169,7 @@
 
   {% if ak_rashi_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.cp_ak_rashi_effect }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ak_rashi_report }}</p>

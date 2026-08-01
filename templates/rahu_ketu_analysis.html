@@ -12,7 +12,7 @@
       <div class="planet-name">{{ locale.gp_house_prefix }} {{ rahu.house }}</div>
       <div class="period-dates">{{ locale.sign_names.get(rahu.sign, rahu.sign) }} — {{ rahu.normDegree | round(2) }}°</div>
     </div>
-    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, #5C6BC0 0%, #7986CB 100%);">
+    <div class="dasha-current-card" style="flex: 1; background: linear-gradient(135deg, var(--deep) 0%, var(--primary) 100%); color: var(--surface-3);">
       <div class="period-label">{{ locale.planet_names.get("Ketu", "Ketu") }}</div>
       <div class="planet-name">{{ locale.gp_house_prefix }} {{ ketu.house }}</div>
       <div class="period-dates">{{ locale.sign_names.get(ketu.sign, ketu.sign) }} — {{ ketu.normDegree | round(2) }}°</div>
@@ -20,14 +20,14 @@
   </div>
 
   {% if narrative %}
-  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid #D4AF37;">
+  <div class="report-card" style="margin-bottom: 5mm; border-left: 3px solid var(--accent);">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0;">{{ narrative }}</p>
   </div>
   {% endif %}
 
   {% if axis_text %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.rk_axis_title }} ({{ axis_key }})
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ axis_text }}</p>
@@ -41,7 +41,7 @@
 
   {% if rahu_house_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.gp_house_placement }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ rahu_house_report }}</p>
@@ -50,7 +50,7 @@
 
   {% if rahu_rashi_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.gp_rashi_placement }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ rahu_rashi_report }}</p>
@@ -65,7 +65,7 @@
 
   {% if ketu_house_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.gp_house_placement }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ketu_house_report }}</p>
@@ -74,7 +74,7 @@
 
   {% if ketu_rashi_report %}
   <div class="report-card" style="margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.gp_rashi_placement }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ ketu_rashi_report }}</p>
@@ -83,7 +83,7 @@
 
   {% if rahu_lk_remedies or ketu_lk_remedies %}
   <div class="report-card" style="margin-top: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.rk_remedies_title }}
     </h4>
     {% if rahu_lk_remedies %}

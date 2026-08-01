@@ -500,19 +500,6 @@ def _build_user_prompt(section_type: str, data: dict, lang: str) -> str:
             f"how Jupiter and Ketu guide the soul's journey, "
             f"and one practical spiritual practice the chart supports."
         )
-    if section_type == "rahu_ketu_analysis":
-        return (
-            f"Rahu: House {data['rahu_house']} in {data['rahu_sign']}\n"
-            f"Rahu Nakshatra: {data.get('rahu_nakshatra', '?')}\n"
-            f"Ketu: House {data['ketu_house']} in {data['ketu_sign']}\n"
-            f"Ketu Nakshatra: {data.get('ketu_nakshatra', '?')}\n"
-            f"Axis: {data.get('axis', '?')}\n\n"
-            f"Write a narrative about this Rahu-Ketu axis and its karmic significance. "
-            f"Cover: what past-life patterns Ketu brings, "
-            f"what this-life desires Rahu amplifies, "
-            f"and how to balance both poles for growth. "
-            f"Keep the tone empowering — karmic lessons are growth opportunities."
-        )
     return f"Section: {section_type}\nData: {json.dumps(data, default=str)}\n\nWrite a brief narrative."
 
 
@@ -1185,21 +1172,6 @@ async def generate_narratives(
             "ketu_sign": ket.sign if ket else "",
             "atmakaraka": f"{atma['name']} in {atma['sign']} (House {atma['house']})" if atma else "Not computed",
         })
-
-    if kundli_data.planets:
-        rahu_p = next((p for p in kundli_data.planets if p.name == "Rahu"), None)
-        ketu_p = next((p for p in kundli_data.planets if p.name == "Ketu"), None)
-        if rahu_p and ketu_p:
-            from sections.rahu_ketu_analysis import _get_axis_key
-            thematic_batch["rahu_ketu_analysis"] = ("rahu_ketu_analysis", {
-                "rahu_house": rahu_p.house,
-                "rahu_sign": rahu_p.sign,
-                "rahu_nakshatra": rahu_p.nakshatra,
-                "ketu_house": ketu_p.house,
-                "ketu_sign": ketu_p.sign,
-                "ketu_nakshatra": ketu_p.nakshatra,
-                "axis": _get_axis_key(rahu_p.house, ketu_p.house),
-            })
 
     # --- Fire all batches in parallel ---
     # Cost lever: formulaic batches (planets, numerology) use Haiku (3x cheaper);

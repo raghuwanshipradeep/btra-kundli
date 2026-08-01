@@ -2,7 +2,7 @@
   <h2 class="section-header">{{ locale.ry_title }}</h2>
   <p class="section-desc">{{ locale.ry_desc }}</p>
 
-  <div class="yogini-card" style="border-left: 4px solid var(--gold); background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%); padding: 6mm 8mm;">
+  <div class="yogini-card" style="border-left: 4px solid var(--gold); background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-1) 100%); padding: 6mm 8mm;">
     <h3 style="font-family: 'Playfair Display', serif; font-size: 16pt; color: var(--maroon); margin-bottom: 4mm; text-align: center;">
       {{ yantra_name }}
     </h3>
@@ -24,7 +24,7 @@
   </div>
 
   {% if narrative %}
-  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+  <div style="border-left: 3px solid var(--accent); padding-left: 4mm; margin-bottom: 4mm;">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
       {{ narrative }}
     </p>
@@ -34,7 +34,7 @@
   <div class="yogini-card" style="border-left: 4px solid var(--benefic);">
     <h3 class="sub-header" style="color: var(--benefic);">{{ locale.ry_dos_title }}</h3>
     {% for item in dos %}
-    <div style="padding: 1.5mm 0; border-bottom: 0.5px solid #E0D5C5;">
+    <div style="padding: 1.5mm 0; border-bottom: 0.5px solid var(--rule);">
       <span style="color: var(--benefic); font-weight: 700; margin-right: 2mm;">&#10003;</span>
       <span style="font-size: 10pt;">{{ item }}</span>
     </div>
@@ -44,7 +44,7 @@
   <div class="yogini-card" style="border-left: 4px solid var(--malefic);">
     <h3 class="sub-header" style="color: var(--malefic);">{{ locale.ry_donts_title }}</h3>
     {% for item in donts %}
-    <div style="padding: 1.5mm 0; border-bottom: 0.5px solid #E0D5C5;">
+    <div style="padding: 1.5mm 0; border-bottom: 0.5px solid var(--rule);">
       <span style="color: var(--malefic); font-weight: 700; margin-right: 2mm;">&#10007;</span>
       <span style="font-size: 10pt;">{{ item }}</span>
     </div>

@@ -24,7 +24,7 @@
           {% elif yoga.effect == "Mixed" %}
             <span style="color: orange;">{{ yoga.effect }}</span>
           {% elif yoga.effect == "Panch Mahapurusha" %}
-            <span style="color: #0066cc; font-weight: bold;">{{ yoga.effect }}</span>
+            <span style="color: var(--primary); font-weight: bold;">{{ yoga.effect }}</span>
           {% else %}
             {{ yoga.effect }}
           {% endif %}
@@ -38,7 +38,7 @@
       {% if narratives and narratives.get(yoga_narr_key) %}
       <tr>
         <td colspan="2" style="padding-top: 3mm;">
-          <div style="border-left: 3px solid #D4AF37; padding-left: 4mm;">
+          <div style="border-left: 3px solid var(--accent); padding-left: 4mm;">
             <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
               {{ narratives.get(yoga_narr_key) }}
             </p>

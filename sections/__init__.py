@@ -5,6 +5,8 @@ import re
 
 from jinja2 import Environment, FileSystemLoader
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,6 +55,10 @@ def make_env() -> Environment:
     env.filters["to_hindi_value"] = to_hindi_value
     env.filters["format_degree"] = _format_degree
     env.filters["truncate_sentences"] = truncate_sentences
+    # Templates gate their <img> tags on these; see settings.pdf_images_enabled
+    # (section artwork) and settings.pdf_logo_enabled (the brand signature).
+    env.globals["show_images"] = settings.pdf_images_enabled
+    env.globals["show_logo"] = settings.pdf_logo_enabled
     return env
 
 
@@ -421,6 +427,16 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         # Sadhesati keys
         "consideration_date": "विचार तिथि",
         "is_saturn_retrograde": "शनि वक्री",
+        "saturn_sign": "शनि राशि",
+        "sadhesati_phase": "साढ़ेसाती चरण",
+        "mukhi": "मुखी",
+        "is_undergoing_sadhesati": "साढ़ेसाती चल रही है",
+        "sadhesati_status": "साढ़ेसाती स्थिति",
+        "is_undergoing_small_panoti": "छोटी पनौती चल रही है",
+        "small_panoti_status": "छोटी पनौती स्थिति",
+        "remedies": "उपाय",
+        "vedic_sunrise": "वैदिक सूर्योदय",
+        "vedic_sunset": "वैदिक सूर्यास्त",
         "शनि राशि": "शनि राशि",
         "साढ़ेसाती चल रही है": "साढ़ेसाती चल रही है",
         "साढ़ेसाती स्थिति": "साढ़ेसाती स्थिति",
@@ -533,6 +549,22 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
     },
     "en": {
         "is_retro": "Retrograde",
+        # Sadhesati keys
+        "consideration_date": "Considered On",
+        "is_saturn_retrograde": "Saturn Retrograde",
+        "saturn_sign": "Saturn Sign",
+        "sadhesati_phase": "Sade Sati Phase",
+        "is_undergoing_sadhesati": "Currently in Sade Sati",
+        "sadhesati_status": "Sade Sati Status",
+        "is_undergoing_small_panoti": "Currently in Small Panoti",
+        "small_panoti_status": "Small Panoti Status",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "what_is_sadhesati": "What Sade Sati Is",
+        "mukhi": "Mukhi",
+        "benefit": "Benefit",
+        "vedic_sunrise": "Vedic Sunrise",
+        "vedic_sunset": "Vedic Sunset",
         # Manglik / Dosha keys
         "msg": "Message",
         "is_present": "Present",
@@ -627,6 +659,11 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
 }
 
 VALUE_TRANSLATIONS_HI: dict[str, str] = {
+    # Sadhesati status sentences (the API returns these in English regardless of lang)
+    "Not undergoing Sadhesati": "साढ़ेसाती नहीं चल रही है",
+    "Undergoing Sadhesati": "साढ़ेसाती चल रही है",
+    "Not undergoing Small Panoti": "छोटी पनौती नहीं चल रही है",
+    "Undergoing Small Panoti": "छोटी पनौती चल रही है",
     # Tithi — Sanskrit/standard
     "Prathama": "प्रथमा", "Dwitiya": "द्वितीया", "Tritiya": "तृतीया",
     "Chaturthi": "चतुर्थी", "Panchami": "पंचमी", "Shashthi": "षष्ठी",
@@ -820,12 +857,6 @@ LOCALES: dict[str, dict] = {
         "advanced_panchang_sunrise_title": "Advanced Panchang (Sunrise)",
         "planet_panchang_title": "Planet Panchang",
         "planet_panchang_sunrise_title": "Planet Panchang (Sunrise)",
-        "chaughadiya_muhurta_title": "Chaughadiya Muhurta",
-        "chaughadiya_desc": "Choghadiya divides day and night into 8 equal parts, each ruled by a planet. Used to pick auspicious time slots for travel, business, and daily tasks.",
-        "hora_muhurta_title": "Hora Muhurta",
-        "hora_desc": "Hora divides each day into 24 one-hour slots, each ruled by a planet. Choose the hora matching your activity for best results.",
-        "hora_guide_title": "Hora Activity Guide",
-        "hora_best_activities": "Best Activities",
         "dur_muhurtha": "Dur Muhurtha",
         "amrit_kaal": "Amrit Kaal",
         "varjyam": "Varjyam",
@@ -836,9 +867,6 @@ LOCALES: dict[str, dict] = {
         "date_col": "Date",
         "yog_name_col": "Yog Name",
         "month_year_label": "Month / Year",
-        "muhurta_col": "Muhurta",
-        "type_col": "Type",
-        "hora_lord_col": "Hora Lord",
 
         "chart_title": "Lagna Chart (D1)",
         "chart_desc": "The birth chart (Lagna Kundli) is a snapshot of the sky at your birth moment. It reveals your personality, health tendencies, career path, and life direction.",
@@ -1031,7 +1059,6 @@ LOCALES: dict[str, dict] = {
         "varshaphal_saham_points_title": "Saham Points",
         "varshaphal_yoga_title": "Varshaphal Yoga",
 
-        "current_vdasha_all_title": "All Current Dasha Levels",
         "sub_dasha_title": "Antardasha Periods",
         "sub_sub_dasha_title": "Pratyantar Dasha Periods",
         "sub_sub_sub_dasha_title": "Sookshma Dasha Periods",
@@ -1341,6 +1368,9 @@ LOCALES: dict[str, dict] = {
         "cta_pooja_heading": "Strengthen Your Remedies",
         "cta_pooja_desc": "Want to amplify the positive energies in your chart? A guided pooja performed by experienced priests can activate the remedies suggested in this report with powerful traditional rituals.",
         "cta_pooja_button": "Schedule a Pooja",
+        "cta_rudraksha_heading": "Strengthen Your Remedies",
+        "cta_rudraksha_desc": "The rudraksha, gemstone and yantra suggested in this report work best when they are authentic and energised. Our store carries consecrated pieces chosen to match the planetary strengths in your chart.",
+        "cta_rudraksha_button": "Visit the Store",
         "cta_signoff": "Remember, {name} — the stars illuminate the path, but the journey is yours to walk. We're here whenever you need us.",
 
         "fm_toc_title": "Table of Contents",
@@ -1349,24 +1379,21 @@ LOCALES: dict[str, dict] = {
         "fm_toc_items": [
             {"name": "Birth Summary", "desc": "Core birth details, Janma Rashi, Nakshatra, and Ayanamsha"},
             {"name": "Birth Panchang", "desc": "Tithi, Nakshatra, Yoga, Karana, and time elements at birth"},
-            {"name": "Dasha Predictions", "desc": "Vimshottari Mahadasha & Antardasha journey, plus Yogini and Char Dasha"},
-            {"name": "Birth & Divisional Charts", "desc": "Lagna, Moon, Navamsha and divisional charts (D1-D60), North & South style"},
+            {"name": "Dasha Predictions", "desc": "Your Vimshottari Mahadasha and Antardasha journey"},
+            {"name": "Birth & Divisional Charts", "desc": "Lagna, Navamsha and divisional charts (D1-D12), North Indian style"},
             {"name": "Life Area Reports", "desc": "Ascendant, Nakshatra, and predictions for each area of life"},
             {"name": "Three Pillars", "desc": "Your Lagna, Moon sign, and Nakshatra — the foundation of your chart"},
             {"name": "Planet Profiles", "desc": "Each planet's placement, sign, dignity, aspects, and effects (incl. outer planets)"},
             {"name": "Doshas", "desc": "Manglik, Kaal Sarp, Sade Sati, Pitra, and other planetary afflictions"},
             {"name": "Remedies", "desc": "Rudraksha, Gemstones, Mantras, Ishta Devata, Yantra, and Daan guidance"},
             {"name": "Annual Forecast", "desc": "Varshaphal — your yearly horoscope analysis"},
-            {"name": "Planetary Strength & Friendships", "desc": "Dignity, nature, aspects, Ashtakvarga / Shodashvarga, and Maitri relations"},
-            {"name": "House Analysis", "desc": "All 12 houses, Bhav Madhya cusps, and Ghat Chakra"},
-            {"name": "Jaimini Karakas", "desc": "Chara Karakas, Avakhada Chakra, and karmic significators"},
-            {"name": "Rahu-Ketu Axis", "desc": "The karmic North & South Node analysis"},
-            {"name": "Yogas & Conjunctions", "desc": "Raj Yogas, Graha Sanyog, and special planetary combinations"},
+            {"name": "Planetary Nature & Ashtakvarga", "desc": "Planetary nature analysis, Sarvashtakvarga, and Maitri relations"},
+            {"name": "Yoga Analysis", "desc": "Raj Yogas and special planetary combinations"},
             {"name": "Numerology", "desc": "Moolank, Bhagyank, and numerological personality"},
             {"name": "Lal Kitab", "desc": "Lal Kitab debts, planetary effects, and remedies"},
             {"name": "Career Path", "desc": "10th house, Amatyakaraka, and professional direction"},
             {"name": "Love, Marriage & Home", "desc": "Darakaraka, marriage timing, romance, and home / property / vehicle"},
-            {"name": "Spiritual Potential", "desc": "Your soul's journey, Sade Sati phases, and spiritual growth"},
+            {"name": "Sade Sati Journey", "desc": "Your Saturn transit, its phases, and remedies"},
         ],
 
         # Graha Profile
@@ -1601,12 +1628,6 @@ LOCALES: dict[str, dict] = {
         "advanced_panchang_sunrise_title": "विस्तृत पंचांग (सूर्योदय)",
         "planet_panchang_title": "ग्रह पंचांग",
         "planet_panchang_sunrise_title": "ग्रह पंचांग (सूर्योदय)",
-        "chaughadiya_muhurta_title": "चौघड़िया मुहूर्त",
-        "chaughadiya_desc": "चौघड़िया दिन और रात को 8-8 भागों में बाँटता है। हर भाग एक ग्रह से शासित होता है जो उस समय की शुभता तय करता है — यात्रा, व्यापार और दैनिक कार्यों के लिए उपयोगी।",
-        "hora_muhurta_title": "होरा मुहूर्त",
-        "hora_desc": "होरा प्रत्येक घंटे का ग्रह स्वामी बताती है। दिन में 12 और रात में 12 होराएं होती हैं। जिस कार्य का ग्रह स्वामी बलवान, उस होरा में वह कार्य सफल होगा।",
-        "hora_guide_title": "होरा गतिविधि मार्गदर्शिका",
-        "hora_best_activities": "उत्तम गतिविधियाँ",
         "dur_muhurtha": "दुर्मुहूर्त",
         "amrit_kaal": "अमृत काल",
         "varjyam": "वर्ज्यम",
@@ -1617,9 +1638,6 @@ LOCALES: dict[str, dict] = {
         "date_col": "दिनांक",
         "yog_name_col": "योग नाम",
         "month_year_label": "मास / वर्ष",
-        "muhurta_col": "मुहूर्त",
-        "type_col": "प्रकार",
-        "hora_lord_col": "होरा स्वामी",
 
         "chart_title": "लग्न कुंडली (D1)",
         "chart_desc": "लग्न कुंडली आपके जन्म के समय का आकाशीय मानचित्र है। यह आपके व्यक्तित्व, स्वास्थ्य, करियर और जीवन की समग्र दिशा को दर्शाती है।",
@@ -1812,7 +1830,6 @@ LOCALES: dict[str, dict] = {
         "varshaphal_saham_points_title": "सहम बिंदु",
         "varshaphal_yoga_title": "वर्षफल योग",
 
-        "current_vdasha_all_title": "सभी वर्तमान दशा स्तर",
         "sub_dasha_title": "अंतर्दशा काल",
         "sub_sub_dasha_title": "प्रत्यंतर दशा काल",
         "sub_sub_sub_dasha_title": "सूक्ष्म दशा काल",
@@ -2128,6 +2145,9 @@ LOCALES: dict[str, dict] = {
         "cta_pooja_heading": "अपने उपायों को मज़बूत करें",
         "cta_pooja_desc": "अपनी कुंडली की positive energies को amplify करना चाहते हैं? अनुभवी पंडितों द्वारा की गई guided pooja इस रिपोर्ट में सुझाए गए उपायों को शक्तिशाली पारंपरिक अनुष्ठानों के साथ activate कर सकती है।",
         "cta_pooja_button": "पूजा शेड्यूल करें",
+        "cta_rudraksha_heading": "अपने उपायों को मज़बूत करें",
+        "cta_rudraksha_desc": "इस रिपोर्ट में सुझाए गए रुद्राक्ष, रत्न और यंत्र तभी पूरा असर देते हैं जब वे असली और प्राण-प्रतिष्ठित हों। हमारे स्टोर पर आपकी कुंडली के ग्रह-बल के अनुसार चुने गए सिद्ध रुद्राक्ष और रत्न उपलब्ध हैं।",
+        "cta_rudraksha_button": "स्टोर देखें",
         "cta_signoff": "याद रखें {name} — सितारे रास्ता दिखाते हैं, लेकिन यात्रा आपकी अपनी है। जब भी ज़रूरत हो, हम यहां हैं।",
 
         "fm_toc_title": "विषय सूची",
@@ -2136,24 +2156,21 @@ LOCALES: dict[str, dict] = {
         "fm_toc_items": [
             {"name": "जन्म सारांश", "desc": "मूलभूत जन्म विवरण, जन्म राशि, नक्षत्र और अयनांश"},
             {"name": "जन्म पंचांग", "desc": "जन्म के समय तिथि, नक्षत्र, योग, करण और समय तत्व"},
-            {"name": "दशा भविष्यवाणी", "desc": "विंशोत्तरी महादशा व अंतरदशा यात्रा, साथ ही योगिनी और चर दशा"},
-            {"name": "जन्म कुंडली व वर्ग चार्ट", "desc": "लग्न, चंद्र, नवांश और विभागीय चार्ट (D1-D60), उत्तर व दक्षिण शैली"},
+            {"name": "दशा भविष्यवाणी", "desc": "आपकी विंशोत्तरी महादशा व अंतरदशा यात्रा"},
+            {"name": "जन्म कुंडली व वर्ग चार्ट", "desc": "लग्न, नवांश और विभागीय चार्ट (D1-D12), उत्तर भारतीय शैली"},
             {"name": "जीवन क्षेत्र रिपोर्ट", "desc": "लग्न, नक्षत्र और जीवन के प्रत्येक क्षेत्र की भविष्यवाणी"},
             {"name": "तीन आधार स्तंभ", "desc": "आपका लग्न, चंद्र राशि और नक्षत्र — कुंडली की नींव"},
             {"name": "ग्रह प्रोफाइल", "desc": "प्रत्येक ग्रह की स्थिति, राशि, गरिमा, दृष्टि और प्रभाव (बाह्य ग्रहों सहित)"},
             {"name": "दोष", "desc": "मांगलिक, काल सर्प, साढ़े साती, पितृ और अन्य ग्रह दोष"},
             {"name": "उपाय", "desc": "रुद्राक्ष, रत्न, मंत्र, इष्ट देव, यंत्र और दान मार्गदर्शन"},
             {"name": "वार्षिक फल", "desc": "वर्षफल — आपका वार्षिक राशिफल विश्लेषण"},
-            {"name": "ग्रह बल व मैत्री", "desc": "गरिमा, स्वभाव, दृष्टि, अष्टकवर्ग / षोडशवर्ग और पंचधा / तात्कालिक मैत्री"},
-            {"name": "भाव विश्लेषण", "desc": "सभी 12 भाव, भाव मध्य (कस्प) और घात चक्र"},
-            {"name": "जैमिनी कारक", "desc": "चर कारक, अवकहड़ा चक्र और कार्मिक कारक"},
-            {"name": "राहु-केतु अक्ष", "desc": "कार्मिक उत्तर व दक्षिण नोड विश्लेषण"},
-            {"name": "योग व ग्रह संयोग", "desc": "राज योग, ग्रह संयोग और विशेष ग्रह संयोजन"},
+            {"name": "ग्रह स्वभाव व अष्टकवर्ग", "desc": "ग्रह स्वभाव विश्लेषण, सर्व अष्टकवर्ग और पंचधा मैत्री"},
+            {"name": "योग विश्लेषण", "desc": "राज योग और विशेष ग्रह संयोजन"},
             {"name": "अंक ज्योतिष", "desc": "मूलांक, भाग्यांक और अंकशास्त्रीय व्यक्तित्व"},
             {"name": "लाल किताब", "desc": "लाल किताब ऋण, ग्रह प्रभाव और उपाय"},
             {"name": "करियर पथ", "desc": "दसवां भाव, अमात्यकारक और व्यावसायिक दिशा"},
             {"name": "प्रेम, विवाह व गृह सुख", "desc": "दाराकारक, विवाह समय, प्रेम तथा घर, संपत्ति व वाहन"},
-            {"name": "आध्यात्मिक क्षमता", "desc": "आत्मा की यात्रा, साढ़े साती चरण और आध्यात्मिक विकास"},
+            {"name": "साढ़े साती यात्रा", "desc": "आपकी शनि यात्रा, उसके चरण और उपाय"},
         ],
 
         # Graha Profile

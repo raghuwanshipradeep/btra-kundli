@@ -38,7 +38,7 @@ python qa_check.py demo.pdf
 
 ### Two PDF pipelines
 
-1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (57 entries in `SECTION_RENDERERS`: 49 content renderers + 8 divider/banner image renderers)
+1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (56 entries in `SECTION_RENDERERS`: 48 content renderers + 8 divider/banner image renderers)
 2. **Match-making:** `POST /generate-match` -> `AstrologyAPIClient.fetch_match()` -> `MatchData` -> `MatchPDFGenerator` (single `render_matching` section)
 
 Both share `base.html` + `styles.css` for final HTML->PDF conversion via WeasyPrint.
@@ -65,6 +65,7 @@ Concurrency is bounded by an `asyncio.Semaphore(10)` — at most 10 API calls in
 - `_normalize_planet_names()` overrides API-returned planet names with English canonical names from `PLANET_ID_TO_EN` (the API returns Hindi names when `lang=hi`).
 - PDF generation runs in `asyncio.to_thread()` because WeasyPrint is blocking, and simultaneous renders are capped by `generation_concurrency` (`_get_generation_slots()` in `pipeline.py`).
 - **Filler images:** `_fill_gap_pages()` in `pdf_generator.py` overlays promo images on pages that come out mostly blank. Controlled by `filler_images_enabled`, `filler_gap_threshold`, `filler_skip_pages`.
+- **Image master switch:** `pdf_images_enabled` (`PDF_IMAGES_ENABLED`). When false, `PDFGenerator.generate()` skips the section names in `IMAGE_ONLY_SECTIONS` (`pdf_generator.py`) — every divider/banner page *except* the opening `front_page` — and the filler pass is bypassed. It also sets the Jinja global `show_images`, which the templates use to drop `kundli_logo.png` (`partials/brand_signature.html`, included 5×) and the planet deity PNGs (`graha_profile.html`, `outer_planets.html`). Charts (the inline-SVG North Indian macro, the cover mandala, and the API chart images) are unaffected. The global is set in both Jinja environments — `make_env()` in `sections/__init__.py` and `PDFGenerator.__init__`.
 - Two payload variants: `payload` (basic birth params) and `payload_with_ayan` (adds `ayanamsha: "LAHIRI"`). Numerology uses a separate `numero_payload` (day/month/year/name, no coordinates).
 
 ### Section rendering pattern
@@ -160,6 +161,7 @@ Key optional settings:
 - `AUTHOR_NAME`, `AUTHOR_TITLE` — enables Author's Note page.
 - `CTA_CONSULT_URL`, `CTA_POOJA_URL` — enables Closing CTA page.
 - `BRAND_FOOTER_ENABLED`, `BRAND_FOOTER_NAME`, `BRAND_FOOTER_URL`, `BRAND_FOOTER_PHONE` — enables branded footer on every page.
+- `PDF_IMAGES_ENABLED` — `false` keeps only the opening front-page image and drops every other PNG (dividers, offer banner, promo fillers, logo, planet deity art). Charts unaffected. `FILLER_IMAGES_ENABLED`, `FILLER_GAP_THRESHOLD`, `FILLER_SKIP_PAGES` tune the promo overlay pass on its own.
 - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `KUNDLI_PRICE_PAISE` — enables the paid generation flow. `ALLOW_FREE_GENERATION=true` re-opens the unauthenticated `/generate-kundli` endpoint (off in prod).
 - `GOOGLE_DRIVE_FOLDER_ID`, `GOOGLE_DRIVE_FOLDER_ID_PREMIUM`, `DRIVE_PREMIUM_AMOUNT_THRESHOLD`, `DRIVE_ARCHIVE_ENABLED`, `DRIVE_RECOVERY_DIR` — Drive archive of paid PDFs (premium routing by order amount).
 - `PABBLY_WEBHOOK_URL` — downstream payment-success automation.

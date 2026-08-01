@@ -15,10 +15,10 @@
         {{ num.value }}
       </div>
       <div>
-        <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin: 0;">
+        <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin: 0;">
           {{ num.label }}
         </h4>
-        <p style="font-size: 9pt; color: #777; margin: 0;">{{ num.desc }}</p>
+        <p style="font-size: 9pt; color: var(--ink-mute); margin: 0;">{{ num.desc }}</p>
       </div>
     </div>
 
@@ -30,7 +30,7 @@
   </div>
   {% endfor %}
 
-  <p style="font-size: 8pt; color: #999; text-align: center; margin-top: 3mm;">
+  <p style="font-size: 8pt; color: var(--ink-mute); text-align: center; margin-top: 3mm;">
     {{ locale.np_chaldean_note }}
   </p>
 </div>

@@ -21,9 +21,9 @@
           {% elif row.dignity == "Debilitated" %}
             <span style="color: red; font-weight: bold;">{{ locale.dignity_debilitated }}</span>
           {% elif row.dignity == "Own Sign" %}
-            <span style="color: #1a7a1a;">{{ locale.dignity_own }}</span>
+            <span style="color: var(--pos);">{{ locale.dignity_own }}</span>
           {% elif row.dignity == "Moolatrikona" %}
-            <span style="color: #0066cc;">{{ locale.dignity_moolatrikona }}</span>
+            <span style="color: var(--primary);">{{ locale.dignity_moolatrikona }}</span>
           {% else %}
             {{ locale.dignity_normal }}
           {% endif %}

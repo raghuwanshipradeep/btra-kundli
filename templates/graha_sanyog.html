@@ -7,14 +7,14 @@
 
   {% for conj in conjunctions %}
   <div class="report-card" style="margin-bottom: 5mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.gp_house_prefix }} {{ conj.house }} — {{ locale.sign_names.get(conj.sign, conj.sign) }}
     </h4>
 
-    <p style="font-size: 10pt; color: #666; margin-bottom: 3mm;">
+    <p style="font-size: 10pt; color: var(--ink-mute); margin-bottom: 3mm;">
       {{ locale.gs_planets_together }}:
       {% for p in conj.planets %}
-        <strong style="color: #2C2C2C;">{{ locale.planet_names.get(p, p) }}</strong>{% if not loop.last %}, {% endif %}
+        <strong style="color: var(--ink);">{{ locale.planet_names.get(p, p) }}</strong>{% if not loop.last %}, {% endif %}
       {% endfor %}
     </p>
 

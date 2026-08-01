@@ -1,30 +1,30 @@
 <div class="section-page authors-note-page">
 
-  <div style="background: #542F01; border: 1.5px solid #D4AF37; border-radius: 2mm; padding: 4mm 6mm; margin-bottom: 6mm; text-align: center;">
-    <h2 style="font-family: 'Playfair Display', 'Noto Sans Devanagari', serif; font-size: 22pt; font-weight: 700; color: #F8E9C8; margin: 0;">
+  <div style="background: var(--deep); border: 1.5px solid var(--accent); border-radius: 2mm; padding: 4mm 6mm; margin-bottom: 6mm; text-align: center;">
+    <h2 style="font-family: 'Playfair Display', 'Noto Sans Devanagari', serif; font-size: 22pt; font-weight: 700; color: var(--surface-3); margin: 0;">
       {{ locale.an_title }}
     </h2>
   </div>
 
-  <div style="background: #FDEED6; border: 1px solid #D4AF37; border-radius: 3mm; padding: 8mm 10mm;">
+  <div style="background: var(--surface-2); border: 1px solid var(--accent); border-radius: 3mm; padding: 8mm 10mm;">
 
-    <p style="font-size: 14pt; line-height: 1.9; color: #3A2410; font-weight: 600; margin-bottom: 4mm;">
+    <p style="font-size: 14pt; line-height: 1.9; color: var(--ink); font-weight: 600; margin-bottom: 4mm;">
       {{ locale.an_greeting|replace('{name}', name) }}
     </p>
 
-    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: #3A2410; margin-bottom: 4mm;">
+    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: var(--ink); margin-bottom: 4mm;">
       {{ locale.an_body_p1|replace('{name}', name) }}
     </p>
 
-    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: #3A2410; margin-bottom: 4mm;">
+    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: var(--ink); margin-bottom: 4mm;">
       {{ locale.an_body_p2 }}
     </p>
 
-    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: #3A2410; margin-bottom: 8mm;">
+    <p style="font-size: 14pt; line-height: 1.9; text-align: justify; color: var(--ink); margin-bottom: 8mm;">
       {{ locale.an_body_p3 }}
     </p>
 
-    <div style="padding-top: 4mm; border-top: 1px solid #D4AF37;">
+    <div style="padding-top: 4mm; border-top: 1px solid var(--accent);">
       {% include "partials/brand_signature.html" %}
     </div>
   </div>

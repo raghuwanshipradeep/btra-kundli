@@ -6,7 +6,7 @@
             <h4>{{ locale.good_planets }}</h4>
             <div>
                 {% for p in nature.GOOD %}
-                <span class="nature-planet-badge" style="background:#E8F5E9; color:#2E7D32;">{{ planet_names.get(p, p) }}</span>
+                <span class="nature-planet-badge" style="background:var(--surface-1); color:var(--pos);">{{ planet_names.get(p, p) }}</span>
                 {% endfor %}
                 {% if not nature.GOOD %}
                 <span class="note">&mdash;</span>
@@ -17,7 +17,7 @@
             <h4>{{ locale.bad_planets }}</h4>
             <div>
                 {% for p in nature.BAD %}
-                <span class="nature-planet-badge" style="background:#FFEBEE; color:#B71C1C;">{{ planet_names.get(p, p) }}</span>
+                <span class="nature-planet-badge" style="background:var(--surface-1); color:var(--neg);">{{ planet_names.get(p, p) }}</span>
                 {% endfor %}
                 {% if not nature.BAD %}
                 <span class="note">&mdash;</span>
@@ -28,7 +28,7 @@
             <h4>{{ locale.killer_planets }}</h4>
             <div>
                 {% for p in nature.KILLER %}
-                <span class="nature-planet-badge" style="background:#FFF3E0; color:#E65100;">{{ planet_names.get(p, p) }}</span>
+                <span class="nature-planet-badge" style="background:var(--surface-1); color:var(--caution);">{{ planet_names.get(p, p) }}</span>
                 {% endfor %}
                 {% if not nature.KILLER %}
                 <span class="note">&mdash;</span>
@@ -39,7 +39,7 @@
             <h4>{{ locale.yogakaraka_planets }}</h4>
             <div>
                 {% for p in nature.YOGAKARAKA %}
-                <span class="nature-planet-badge" style="background:#FFF8E1; color:#F57F17;">{{ planet_names.get(p, p) }}</span>
+                <span class="nature-planet-badge" style="background:var(--surface-1); color:var(--caution);">{{ planet_names.get(p, p) }}</span>
                 {% endfor %}
                 {% if not nature.YOGAKARAKA %}
                 <span class="note">&mdash;</span>

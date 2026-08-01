@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     author_title: str = ""
     cta_consult_url: str = ""
     cta_pooja_url: str = ""
+    cta_rudraksha_url: str = ""
     brand_footer_enabled: bool = False
     brand_footer_name: str = ""
     brand_footer_url: str = ""
@@ -83,11 +84,24 @@ class Settings(BaseSettings):
     # .db file path creates a directory and silently disables the cache.
     narrative_cache_path: str = ""
 
+    # Master switch for decorative section artwork in the kundli PDF. When false, the
+    # divider pages, the offer banner and the planet deity art are dropped; only the
+    # opening front-page image survives. Charts (inline SVG + API chart images) and the
+    # brand logo are unaffected — see pdf_logo_enabled and filler_images_enabled.
+    pdf_images_enabled: bool = True
+
+    # The brand logo is independent of the divider/deity artwork: it stays on when
+    # pdf_images_enabled is false so the cover, author's note, front matter and TOC
+    # keep their signature block.
+    pdf_logo_enabled: bool = True
+
     # Post-generation filler images: overlay a promotional image into any page
     # (after filler_skip_pages) whose bottom empty space exceeds filler_gap_threshold.
+    # Capped at filler_max_images placements per report.
     filler_images_enabled: bool = True
     filler_gap_threshold: float = 0.40
     filler_skip_pages: int = 15
+    filler_max_images: int = 3
 
     # Pabbly Connect webhook — POST a payment-success payload for downstream
     # automation (WhatsApp, CRM, sheets). Empty = integration disabled.

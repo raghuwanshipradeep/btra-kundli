@@ -14,7 +14,7 @@
     <p class="chart-caption">
         {{ locale.chart_caption }}
         {% if ascendant %}
-            — {{ locale.ascendant }}: {{ ascendant.sign }} {{ "%.2f"|format(ascendant.normDegree) }}°
+            — {{ locale.ascendant }}: {{ locale.sign_names.get(ascendant.sign, ascendant.sign) }} {{ "%.2f"|format(ascendant.normDegree) }}°
         {% endif %}
     </p>
 
@@ -31,7 +31,7 @@
         <tbody>
             {% for sign_data in horo_chart %}
             <tr>
-                <td><strong>{{ sign_data.sign_name }}</strong></td>
+                <td><strong>{{ locale.sign_names.get(sign_data.sign_name, sign_data.sign_name) }}</strong></td>
                 <td>
                     {% if sign_data.planet %}
                         {{ sign_data.planet | join(', ') }}

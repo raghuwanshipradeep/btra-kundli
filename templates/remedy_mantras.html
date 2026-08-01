@@ -3,7 +3,7 @@
   <p class="section-desc">{{ locale.rm_desc }}</p>
 
   {% if narrative %}
-  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+  <div style="border-left: 3px solid var(--accent); padding-left: 4mm; margin-bottom: 4mm;">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
       {{ narrative }}
     </p>
@@ -11,7 +11,7 @@
   {% endif %}
 
   {% if ishta_devata %}
-  <div class="yogini-card" style="border-left: 4px solid var(--gold); background: #FFFDE7;">
+  <div class="yogini-card" style="border-left: 4px solid var(--gold); background: var(--surface-1);">
     <h3 class="sub-header">{{ locale.rm_ishta_mantra_title }}</h3>
     <table class="kv-table">
       <tr>

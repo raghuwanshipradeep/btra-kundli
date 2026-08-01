@@ -26,40 +26,42 @@
    } %}
 {% macro north_indian_chart(houses, lang, box=350) %}
 <div style="position: relative; width: {{ box }}px; height: {{ box }}px; margin: 0 auto;
-            background: linear-gradient(135deg, #4A1E12 0%, #7A2E12 100%); border-radius: 2mm;">
+            background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%); border-radius: 2mm;">
+  {# SVG presentation attributes can't resolve custom properties in WeasyPrint, so the
+     token hexes are written out literally below. Keep them in step with :root. #}
   <svg viewBox="0 0 400 400" width="{{ box }}" height="{{ box }}"
        xmlns="http://www.w3.org/2000/svg"
        style="position: absolute; top: 0; left: 0;">
     <!-- alternate-house shading (drawn first, under the lines) -->
     {% for hn in range(1, 13) %}
     <polygon points="{{ house_polys[hn] }}"
-             fill="{% if hn % 2 == 1 %}#000000{% else %}#F5E6C8{% endif %}"
-             fill-opacity="{% if hn % 2 == 1 %}0.14{% else %}0.05{% endif %}"/>
+             fill="{% if hn % 2 == 1 %}#C2410C{% else %}#F59E0B{% endif %}"
+             fill-opacity="{% if hn % 2 == 1 %}0.07{% else %}0.06{% endif %}"/>
     {% endfor %}
     <!-- diagonals (collinear with the shading-polygon boundaries) -->
-    <line x1="4" y1="4" x2="396" y2="396" stroke="#F5E6C8" stroke-width="2"/>
-    <line x1="396" y1="4" x2="4" y2="396" stroke="#F5E6C8" stroke-width="2"/>
+    <line x1="4" y1="4" x2="396" y2="396" stroke="#FDBA74" stroke-width="2"/>
+    <line x1="396" y1="4" x2="4" y2="396" stroke="#FDBA74" stroke-width="2"/>
     <!-- inner diamond (edge-midpoints) -->
-    <polygon points="200,3 397,200 200,397 3,200" fill="none" stroke="#F5E6C8" stroke-width="2"/>
+    <polygon points="200,3 397,200 200,397 3,200" fill="none" stroke="#FDBA74" stroke-width="2"/>
     <!-- double border frame -->
-    <rect x="2" y="2" width="396" height="396" fill="none" stroke="#D4AF37" stroke-width="6"/>
-    <rect x="12" y="12" width="376" height="376" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
-    <!-- gold corner accents -->
-    <circle cx="12" cy="12" r="5" fill="#D4AF37"/>
-    <circle cx="388" cy="12" r="5" fill="#D4AF37"/>
-    <circle cx="388" cy="388" r="5" fill="#D4AF37"/>
-    <circle cx="12" cy="388" r="5" fill="#D4AF37"/>
+    <rect x="2" y="2" width="396" height="396" fill="none" stroke="#C2410C" stroke-width="6"/>
+    <rect x="12" y="12" width="376" height="376" fill="none" stroke="#FDBA74" stroke-width="1.5"/>
+    <!-- accent corner dots -->
+    <circle cx="12" cy="12" r="5" fill="#F59E0B"/>
+    <circle cx="388" cy="12" r="5" fill="#F59E0B"/>
+    <circle cx="388" cy="388" r="5" fill="#F59E0B"/>
+    <circle cx="12" cy="388" r="5" fill="#F59E0B"/>
   </svg>
 
   {% for h in houses %}
   <div style="position: absolute; left: {{ (h.cx / 4.0) }}%; top: {{ (h.cy / 4.0) }}%;
               transform: translate(-50%, -50%); width: 80px; text-align: center; line-height: 1.25;">
-    <div style="font-size: 11pt; color: #F5E6C8; font-weight: 600;">{{ h.sign_id }}</div>
+    <div style="font-size: 11pt; color: var(--primary); font-weight: 600;">{{ h.sign_id }}</div>
     {% if h.planets %}
-    <div style="font-size: 9.5pt; font-weight: bold; color: #F9A825;">
+    <div style="font-size: 9.5pt; font-weight: bold; color: var(--deep);">
       {%- for p in h.planets -%}
         {%- if p is mapping -%}
-          {{ p.label }}<span style="font-size: 6pt; vertical-align: super; color: #E8C87E;">{{ p.deg }}</span>
+          {{ p.label }}<span style="font-size: 6pt; vertical-align: super; color: var(--ink-mute);">{{ p.deg }}</span>
         {%- else -%}
           {{ p }}
         {%- endif -%}
@@ -68,7 +70,7 @@
     </div>
     {% endif %}
     {% if h.house == 1 %}
-    <div style="font-size: 7.5pt; color: #F5E6C8; font-style: italic;">{% if lang == 'hi' %}लग्न{% else %}Asc{% endif %}</div>
+    <div style="font-size: 7.5pt; color: var(--primary); font-style: italic;">{% if lang == 'hi' %}लग्न{% else %}Asc{% endif %}</div>
     {% endif %}
   </div>
   {% endfor %}

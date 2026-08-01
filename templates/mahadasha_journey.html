@@ -12,28 +12,28 @@
     {% endif %}
   {% endif %}
 
-  <div class="report-card" style="margin-bottom: 5mm; {% if entry.is_current %}border-left: 4px solid #8B0000;{% else %}border-left: 4px solid #D4AF37;{% endif %}">
+  <div class="report-card" style="margin-bottom: 5mm; {% if entry.is_current %}border-left: 4px solid var(--primary);{% else %}border-left: 4px solid var(--accent);{% endif %}">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2mm;">
-      <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin: 0;">
+      <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin: 0;">
         {{ entry.planet_display }}
-        <span style="font-size: 10pt; font-weight: normal; color: #555;">
-          — {{ entry.sign }} ({{ locale.get("gp_house_prefix", "House") }} {{ entry.house }})
+        <span style="font-size: 10pt; font-weight: normal; color: var(--ink-mute);">
+          — {{ locale.sign_names.get(entry.sign, entry.sign) }} ({{ locale.get("gp_house_prefix", "House") }} {{ entry.house }})
         </span>
       </h4>
       {% if entry.is_current %}
-      <span style="background: #8B0000; color: white; font-size: 8pt; padding: 1mm 3mm; border-radius: 3mm;">
+      <span style="background: var(--primary); color: white; font-size: 8pt; padding: 1mm 3mm; border-radius: 3mm;">
         {{ locale.mj_current_label }}
       </span>
       {% endif %}
     </div>
 
-    <p style="font-size: 9.5pt; color: #777; margin: 0 0 3mm 0;">
+    <p style="font-size: 9.5pt; color: var(--ink-mute); margin: 0 0 3mm 0;">
       {{ locale.mj_period }}: {{ entry.start }} → {{ entry.end }}
     </p>
 
     {% if entry.experience %}
     <div style="margin-bottom: 3mm;">
-      <h5 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">{{ locale.mj_experience }}</h5>
+      <h5 style="font-weight: 700; font-size: 14pt; color: var(--deep); margin: 0 0 2mm 0;">{{ locale.mj_experience }}</h5>
       <ul style="font-size: 11.5pt; line-height: 1.7; margin: 0; padding-left: 5mm;">
         {% for bullet in entry.experience %}
         <li>{{ bullet }}</li>
@@ -44,7 +44,7 @@
 
     {% if entry.avoid %}
     <div>
-      <h5 style="font-weight: 700; font-size: 14pt; color: #542F01; margin: 0 0 2mm 0;">{{ locale.mj_avoid }}</h5>
+      <h5 style="font-weight: 700; font-size: 14pt; color: var(--deep); margin: 0 0 2mm 0;">{{ locale.mj_avoid }}</h5>
       <ul style="font-size: 11.5pt; line-height: 1.7; margin: 0; padding-left: 5mm;">
         {% for bullet in entry.avoid %}
         <li>{{ bullet }}</li>

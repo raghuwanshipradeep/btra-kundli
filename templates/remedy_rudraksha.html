@@ -3,7 +3,7 @@
   <p class="section-desc">{{ locale.rr_desc }}</p>
 
   {% if narrative_personal %}
-  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+  <div style="border-left: 3px solid var(--accent); padding-left: 4mm; margin-bottom: 4mm;">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
       {{ narrative_personal }}
     </p>
@@ -63,7 +63,7 @@
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.rr_how_to_wear_title }}</h3>
     {% if narrative_guidance %}
-    <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+    <div style="border-left: 3px solid var(--accent); padding-left: 4mm; margin-bottom: 4mm;">
       <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
         {{ narrative_guidance }}
       </p>
@@ -71,7 +71,7 @@
     {% endif %}
     {% for step in locale.rr_how_to_wear_steps %}
     <div class="report-card" style="margin-bottom: 2mm;">
-      <h4 style="font-weight: 700; font-size: 14pt; color: #542F01; margin-bottom: 1mm;">{{ loop.index }}. {{ step.title }}</h4>
+      <h4 style="font-weight: 700; font-size: 14pt; color: var(--deep); margin-bottom: 1mm;">{{ loop.index }}. {{ step.title }}</h4>
       <p style="font-size: 9.5pt; line-height: 1.5; margin: 0;">{{ step.desc }}</p>
     </div>
     {% endfor %}

@@ -14,7 +14,7 @@
             </tr>
             <tr>
                 <td>{{ locale.sun_sign }}</td>
-                <td>{{ astro.sign }} ({{ astro.SignLord }})</td>
+                <td>{{ locale.sign_names.get(astro.sign, astro.sign) }} ({{ locale.planet_names.get(astro.SignLord, astro.SignLord) }})</td>
             </tr>
             <tr>
                 <td>{{ locale.nakshatra }}</td>

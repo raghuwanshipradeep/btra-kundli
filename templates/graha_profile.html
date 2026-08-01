@@ -1,116 +1,95 @@
-{% for profile in profiles %}
+{# Two planets per page. Each planet block is break-inside:avoid, so if the deity
+   images are ever re-enabled the pair degrades to one per page rather than overflowing. #}
+{% for pair in profiles|batch(2) %}
 <div class="section-page">
-  <h2 class="section-header">
-    {{ locale.planet_names.get(profile.name, profile.name) }}
-    {% if lang == "hi" and locale.planet_names_en.get(profile.name) %}
-      <span style="font-size: 11pt; font-weight: 400; color: #666;"> ({{ locale.planet_names_en.get(profile.name) }})</span>
-    {% endif %}
-  </h2>
+  {% for profile in pair %}
+  <div class="graha-block" style="page-break-inside: avoid;{% if not loop.first %} margin-top: 7mm;{% endif %}">
+    <h2 class="section-header">
+      {{ locale.planet_names.get(profile.name, profile.name) }}
+      {% if lang == "hi" and locale.planet_names_en.get(profile.name) %}
+        <span style="font-size: 11pt; font-weight: 400; color: var(--surface-3);"> ({{ locale.planet_names_en.get(profile.name) }})</span>
+      {% endif %}
+    </h2>
 
-  {% if profile.image %}
-  <div style="text-align: center; margin-bottom: 1mm;">
-    <img src="images/{{ profile.image }}" alt="" style="max-width: 100%; max-height: 60mm; display: block; margin: 0 auto;">
+    {% if show_images and profile.image %}
+    <div style="text-align: center; margin-bottom: 1mm;">
+      <img src="images/{{ profile.image }}" alt="" style="max-width: 100%; max-height: 60mm; display: block; margin: 0 auto;">
+    </div>
+    {% endif %}
+
+    {# Core six across. .strip-table sets table-layout:auto so Devanagari doesn't wrap. #}
+    <table class="strip-table" style="margin-bottom: 2mm;">
+      <thead>
+        <tr>
+          <th>{{ locale.gp_house }}</th>
+          <th>{{ locale.gp_sign }}</th>
+          <th>{{ locale.gp_degree }}</th>
+          <th>{{ locale.gp_nakshatra }}</th>
+          <th>{{ locale.gp_dignity }}</th>
+          <th>{{ locale.gp_karaka }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ locale.gp_house_prefix }} {{ profile.house }}</td>
+          <td>{{ locale.sign_names.get(profile.sign, profile.sign) }}
+            <span style="color: var(--ink-mute); font-size: 8pt;">({{ locale.planet_names.get(profile.sign_lord, profile.sign_lord) }})</span>
+          </td>
+          <td>{{ profile.degree }}°</td>
+          <td>{% if profile.nakshatra %}{{ profile.nakshatra }}{% else %}—{% endif %}</td>
+          <td>
+            {% if profile.dignity == "Exalted" %}
+              <span style="color: var(--pos); font-weight: 700;">{{ locale.dignity_exalted }}</span>
+            {% elif profile.dignity == "Debilitated" %}
+              <span style="color: var(--neg); font-weight: 700;">{{ locale.dignity_debilitated }}</span>
+            {% elif profile.dignity == "Own Sign" %}
+              <span style="color: var(--pos);">{{ locale.dignity_own }}</span>
+            {% elif profile.dignity == "Moolatrikona" %}
+              <span style="color: var(--primary);">{{ locale.dignity_moolatrikona }}</span>
+            {% else %}
+              {{ locale.dignity_normal }}
+            {% endif %}
+          </td>
+          <td>{% if profile.karaka_role %}{{ locale.karaka_names.get(profile.karaka_role, profile.karaka_role) }}{% else %}—{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    {# Everything that didn't fit the six columns, on one caption line. #}
+    <p class="graha-meta">
+      {%- set sep = joiner('  ·  ') -%}
+      {%- if profile.nakshatra_lord %}{{ sep() }}{{ locale.gp_nakshatra }} {{ locale.gp_lord }}: {{ locale.planet_names.get(profile.nakshatra_lord, profile.nakshatra_lord) }}{% endif -%}
+      {%- if profile.nature %}{{ sep() }}{{ locale.gp_nature }}: {{ profile.nature }}{% endif -%}
+      {%- if profile.is_retro %}{{ sep() }}{{ locale.gp_retrograde }}: {{ locale.gp_retro_yes }}{% endif -%}
+      {%- if profile.aspects_given %}{{ sep() }}{{ locale.gp_aspects_given }}:
+        {%- for h in profile.aspects_given %} {{ locale.gp_house_prefix }} {{ h }}{% if not loop.last %},{% endif %}{% endfor %}
+      {%- endif -%}
+      {%- if profile.aspects_received %}{{ sep() }}{{ locale.gp_aspects_received }}:
+        {%- for p in profile.aspects_received %} {{ locale.planet_names.get(p, p) }}{% if not loop.last %},{% endif %}{% endfor %}
+      {%- endif -%}
+    </p>
+
+    {% if profile.narrative %}
+    <div class="report-card" style="margin-top: 3mm;">
+      <h4>{{ locale.gp_about }}</h4>
+      <p style="font-size: 11.5pt; line-height: 1.6; text-align: justify; color: var(--ink);">{{ profile.narrative }}</p>
+    </div>
+    {% endif %}
+
+    {% if profile.house_report %}
+    <div class="report-card" style="margin-top: 3mm;">
+      <h4>{{ locale.gp_house_placement }}</h4>
+      <p style="font-size: 11.5pt; line-height: 1.6; text-align: justify;">{{ profile.house_report }}</p>
+    </div>
+    {% endif %}
+
+    {% if profile.rashi_report %}
+    <div class="report-card" style="margin-top: 3mm;">
+      <h4>{{ locale.gp_rashi_placement }}</h4>
+      <p style="font-size: 11.5pt; line-height: 1.6; text-align: justify;">{{ profile.rashi_report }}</p>
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
-
-  <table class="kv-table" style="margin-bottom: 3mm;">
-    <tr>
-      <td>{{ locale.gp_house }}</td>
-      <td>{{ locale.gp_house_prefix }} {{ profile.house }}</td>
-    </tr>
-    <tr>
-      <td>{{ locale.gp_sign }}</td>
-      <td>{{ locale.sign_names.get(profile.sign, profile.sign) }}
-        <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ locale.planet_names.get(profile.sign_lord, profile.sign_lord) }})</span>
-      </td>
-    </tr>
-    <tr>
-      <td>{{ locale.gp_degree }}</td>
-      <td>{{ profile.degree }}°</td>
-    </tr>
-    {% if profile.nakshatra %}
-    <tr>
-      <td>{{ locale.gp_nakshatra }}</td>
-      <td>{{ profile.nakshatra }}
-        {% if profile.nakshatra_lord %}
-          <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ profile.nakshatra_lord }})</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endif %}
-    <tr>
-      <td>{{ locale.gp_dignity }}</td>
-      <td>
-        {% if profile.dignity == "Exalted" %}
-          <span style="color: #2E7D32; font-weight: 700;">{{ locale.dignity_exalted }}</span>
-        {% elif profile.dignity == "Debilitated" %}
-          <span style="color: #B71C1C; font-weight: 700;">{{ locale.dignity_debilitated }}</span>
-        {% elif profile.dignity == "Own Sign" %}
-          <span style="color: #1a7a1a;">{{ locale.dignity_own }}</span>
-        {% elif profile.dignity == "Moolatrikona" %}
-          <span style="color: #0066cc;">{{ locale.dignity_moolatrikona }}</span>
-        {% else %}
-          {{ locale.dignity_normal }}
-        {% endif %}
-      </td>
-    </tr>
-    {% if profile.nature %}
-    <tr>
-      <td>{{ locale.gp_nature }}</td>
-      <td>{{ profile.nature }}</td>
-    </tr>
-    {% endif %}
-    {% if profile.is_retro %}
-    <tr>
-      <td>{{ locale.gp_retrograde }}</td>
-      <td><span class="retro-badge">{{ locale.gp_retro_yes }}</span></td>
-    </tr>
-    {% endif %}
-    {% if profile.karaka_role %}
-    <tr>
-      <td>{{ locale.gp_karaka }}</td>
-      <td style="font-weight: 600; color: #8B0000;">{{ locale.karaka_names.get(profile.karaka_role, profile.karaka_role) }}</td>
-    </tr>
-    {% endif %}
-    {% if profile.aspects_given %}
-    <tr>
-      <td>{{ locale.gp_aspects_given }}</td>
-      <td>{% for h in profile.aspects_given %}{{ locale.gp_house_prefix }} {{ h }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-    </tr>
-    {% endif %}
-    {% if profile.aspects_received %}
-    <tr>
-      <td>{{ locale.gp_aspects_received }}</td>
-      <td>{% for p in profile.aspects_received %}{{ locale.planet_names.get(p, p) }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-    </tr>
-    {% endif %}
-  </table>
-
-  {% if profile.narrative %}
-  <div class="report-card" style="margin-top: 4mm; margin-bottom: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', 'Noto Sans Devanagari', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
-      {{ locale.gp_about }}
-    </h4>
-    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; color: #3A2410;">{{ profile.narrative }}</p>
-  </div>
-  {% endif %}
-
-  {% if profile.house_report %}
-  <div class="report-card" style="margin-top: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
-      {{ locale.gp_house_placement }}
-    </h4>
-    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ profile.house_report }}</p>
-  </div>
-  {% endif %}
-
-  {% if profile.rashi_report %}
-  <div class="report-card" style="margin-top: 4mm;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
-      {{ locale.gp_rashi_placement }}
-    </h4>
-    <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify;">{{ profile.rashi_report }}</p>
-  </div>
-  {% endif %}
+  {% endfor %}
 </div>
 {% endfor %}

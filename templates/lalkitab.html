@@ -63,7 +63,39 @@
   {% if houses %}
   <div class="yogini-card">
     <h3 class="sub-header">{{ locale.lalkitab_houses_title }}</h3>
+    {# One row per house instead of 12 stacked vertical tables (5 pages -> 1).
+       Fixed column order so it does not depend on dict iteration order. #}
+    {% set cols = ['khana_number', 'maalik', 'pakka_ghar', 'kismat', 'soya', 'exalt', 'debilitated'] %}
+    {#- One cell. The API mixes scalars, booleans and lists in these fields, so mirror
+        what the generic render_value macro does rather than printing repr(). -#}
+    {%- macro lk_cell(v) -%}
+      {%- if v is none or v == "" or v == [] -%}—
+      {%- elif v is sameas true -%}{{ locale.get('yes', 'Yes') }}
+      {%- elif v is sameas false -%}{{ locale.get('no', 'No') }}
+      {%- elif v is iterable and v is not string and v is not mapping -%}
+        {%- for item in v %}{% if lang == "hi" %}{{ item | trim | to_hindi_value(lang) }}{% else %}{{ item | trim }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor -%}
+      {%- elif lang == "hi" -%}{{ v | to_hindi_value(lang) }}
+      {%- else -%}{{ v }}
+      {%- endif -%}
+    {%- endmacro -%}
+    {% if houses is iterable and houses is not mapping and houses is not string %}
+    <table class="lk-house-table">
+      <thead>
+        <tr>{% for c in cols %}<th>{{ c | humanize_key(lang) }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for h in houses if h is mapping %}
+        <tr>
+          {% for c in cols %}
+          <td>{{ lk_cell(h.get(c)) }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
     {{ render_value(houses) }}
+    {% endif %}
   </div>
   {% endif %}
 

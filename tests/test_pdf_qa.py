@@ -70,14 +70,14 @@ class TestP07TimeFormat:
 
 
 class TestP03ChartCaption:
-    def test_natal_wheel_label_used(self, en_pdf: bytes) -> None:
+    def test_birth_chart_is_labelled(self, en_pdf: bytes) -> None:
+        """Every report must carry a labelled birth chart. This used to assert on the
+        API's Western "Natal Wheel", which was removed from the PDF; the surviving
+        chart is the locally-drawn North Indian D1 on the panchang page, paired with
+        the D9 Navamsa."""
         text = _pdf_to_text(en_pdf)
-        assert "Natal Wheel" in text
-
-    def test_hindi_caption_updated_in_locale(self) -> None:
-        from sections import LOCALES
-        assert "नैटल व्हील" in LOCALES["hi"]["chart_caption"]
-        assert "उत्तर भारतीय शैली" not in LOCALES["hi"]["chart_caption"]
+        assert "North Indian Chart" in text
+        assert "Navamsa (D9)" in text
 
 
 class TestSafeTimeFilter:

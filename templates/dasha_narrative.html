@@ -21,10 +21,10 @@
 
   <div class="report-card" style="margin-bottom: 5mm;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3mm;">
-      <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin: 0;">
+      <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin: 0;">
         {{ locale.planet_names.get(narr.md_planet, narr.md_planet) }} — {{ locale.planet_names.get(narr.ad_planet, narr.ad_planet) }}
       </h4>
-      <span style="font-size: 9pt; color: #666;">
+      <span style="font-size: 9pt; color: var(--ink-mute);">
         {{ narr.start }} → {{ narr.end }}
       </span>
     </div>
@@ -40,9 +40,9 @@
         <td>{{ locale.dn_nature }}</td>
         <td>
           {% if narr.md_nature == "benefic" %}
-            <span style="color: #2E7D32;">{{ locale.dn_benefic }}</span>
+            <span style="color: var(--pos);">{{ locale.dn_benefic }}</span>
           {% elif narr.md_nature == "malefic" %}
-            <span style="color: #B71C1C;">{{ locale.dn_malefic }}</span>
+            <span style="color: var(--neg);">{{ locale.dn_malefic }}</span>
           {% else %}
             {{ locale.dn_mixed }}
           {% endif %}
@@ -50,9 +50,9 @@
         <td>{{ locale.dn_nature }}</td>
         <td>
           {% if narr.ad_nature == "benefic" %}
-            <span style="color: #2E7D32;">{{ locale.dn_benefic }}</span>
+            <span style="color: var(--pos);">{{ locale.dn_benefic }}</span>
           {% elif narr.ad_nature == "malefic" %}
-            <span style="color: #B71C1C;">{{ locale.dn_malefic }}</span>
+            <span style="color: var(--neg);">{{ locale.dn_malefic }}</span>
           {% else %}
             {{ locale.dn_mixed }}
           {% endif %}
@@ -62,9 +62,9 @@
         <td>{{ locale.dn_relationship }}</td>
         <td colspan="3">
           {% if narr.friendship == "friend" %}
-            <span style="color: #2E7D32; font-weight: 600;">{{ locale.dn_friend }}</span>
+            <span style="color: var(--pos); font-weight: 600;">{{ locale.dn_friend }}</span>
           {% elif narr.friendship == "enemy" %}
-            <span style="color: #B71C1C; font-weight: 600;">{{ locale.dn_enemy }}</span>
+            <span style="color: var(--neg); font-weight: 600;">{{ locale.dn_enemy }}</span>
           {% else %}
             {{ locale.dn_neutral }}
           {% endif %}

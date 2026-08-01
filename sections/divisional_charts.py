@@ -29,19 +29,13 @@ CHART_ORDER = [
     ("D4", "d4_title", "d4_desc"),
     ("D5", "d5_title", "d5_desc"),
     ("D7", "d7_title", "d7_desc"),
-    ("D8", "d8_title", "d8_desc"),
+    # D8 (Ashtamsa) is omitted: the API's /horo_chart/D8 data is degenerate — it
+    # returns contradictory signs for the same sign+part (7 of 9 planets land in
+    # Aries with ten signs empty), so no ascendant formula can validate against it.
     # D9 (Navamsa) is shown earlier, embedded in the panchang page right after the
     # D1 lagna chart (classic Rasi+Navamsa pairing) — see sections/panchang.py.
     ("D10", "d10_title", "d10_desc"),
     ("D12", "d12_title", "d12_desc"),
-    ("D16", "d16_title", "d16_desc"),
-    ("D20", "d20_title", "d20_desc"),
-    ("D24", "d24_title", "d24_desc"),
-    ("D27", "d27_title", "d27_desc"),
-    ("D30", "d30_title", "d30_desc"),
-    ("D40", "d40_title", "d40_desc"),
-    ("D45", "d45_title", "d45_desc"),
-    ("D60", "d60_title", "d60_desc"),
 ]
 
 
@@ -128,6 +122,24 @@ def build_chart_houses(chart_data, lang, locale, lagna_sign_id):
     return houses
 
 
+def _fallback_rows(signs_sorted, lang, locale):
+    """Flat sign→planets rows, used when the diamond can't be drawn and the API image
+    isn't usable. Same naming as build_chart_houses() so the two agree."""
+    short = PLANET_SHORT_HI if lang == "hi" else PLANET_SHORT_EN
+    sign_names_by_id = locale.get("sign_names_by_id", {})
+    rows = []
+    for entry in signs_sorted:
+        sid = getattr(entry, "sign", None)
+        if not sid:
+            continue
+        en_planets = [_planet_to_en(p) for p in entry.planet]
+        rows.append({
+            "sign_name": sign_names_by_id.get(sid, SIGN_NAMES_BY_ID.get(sid, str(sid))),
+            "planets": [short.get(p, p) for p in en_planets],
+        })
+    return rows or None
+
+
 def build_varga_chart(data, chart_data, chart_id, lang, locale):
     """Compute the varga ascendant and build the North Indian house layout, or
     None if the ascendant can't be reliably determined."""
@@ -154,15 +166,19 @@ def render_divisional_charts(data: KundliData, lang: str = "en") -> str | None:
         image_url = images.get(chart_id)
         signs_sorted = sorted(chart_data, key=lambda s: s.sign if hasattr(s, 'sign') else 0)
         houses = build_varga_chart(data, chart_data, chart_id, lang, locale)
-        # When we can't draw the diamond (e.g. D5/D8) the API's inline SVG fallback
-        # has unshapeable Devanagari in WeasyPrint — drop it for Hindi so the clean
-        # sign→planet data table stands alone instead of showing garbled text.
+        # The diamond needs a varga ascendant we can trust; _varga_lagna_sign() returns
+        # None when our formula can't reproduce this API's own placements. In Hindi the
+        # API's inline SVG is no use either (unshapeable Devanagari in WeasyPrint), so
+        # drop it and let the template's sign→planet table carry the data.
         if houses is None and lang == "hi" and isinstance(image_url, str) \
                 and image_url.startswith("data:image/svg+xml"):
             image_url = None
-        logger.info("divisional_charts: %s → %d signs, houses=%s, image=%s",
+        rows = None
+        if houses is None and not image_url:
+            rows = _fallback_rows(signs_sorted, lang, locale)
+        logger.info("divisional_charts: %s → %d signs, houses=%s, image=%s, table=%s",
                     chart_id, len(signs_sorted), "yes" if houses else "no",
-                    "yes" if image_url else "no")
+                    "yes" if image_url else "no", "yes" if rows else "no")
         charts.append({
             "id": chart_id,
             "title": locale.get(title_key, chart_id),
@@ -170,6 +186,7 @@ def render_divisional_charts(data: KundliData, lang: str = "en") -> str | None:
             "signs": signs_sorted,
             "houses": houses,
             "image_url": image_url,
+            "rows": rows,
         })
 
     if not charts:

@@ -1,6 +1,6 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.tp_title }}</h2>
-  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 6mm; text-align: justify; color: #555;">
+  <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 6mm; text-align: justify; color: var(--ink-mute);">
     {{ locale.tp_subtitle }}
   </p>
 
@@ -8,7 +8,7 @@
   <div style="margin-bottom: 6mm;">
     <div class="dasha-current-card rashi-card-lagna" style="margin-bottom: 3mm;">
       <div class="period-label">{{ locale.tp_lagna_title }}</div>
-      <div class="planet-name">{{ lagna.sign }}</div>
+      <div class="planet-name">{{ locale.sign_names.get(lagna.sign, lagna.sign) }}</div>
       <div class="period-dates">{{ locale.tp_lagna_desc }}</div>
     </div>
     {% if narratives and narratives.get("pillar_lagna") %}
@@ -20,7 +20,7 @@
     {% else %}
     <div class="report-card" style="border-left: 4px solid var(--maroon); margin-top: 0;">
       <table class="kv-table">
-        <tr><td>{{ locale.tp_lagna_title }}</td><td>{{ lagna.sign }}</td></tr>
+        <tr><td>{{ locale.tp_lagna_title }}</td><td>{{ locale.sign_names.get(lagna.sign, lagna.sign) }}</td></tr>
         <tr><td>Lord</td><td>{{ lagna.lord }}</td></tr>
         <tr><td>Nakshatra</td><td>{{ lagna.nakshatra }}</td></tr>
         <tr><td>Degree</td><td>{{ lagna.degree }}°</td></tr>
@@ -34,7 +34,7 @@
   <div style="margin-bottom: 6mm;">
     <div class="dasha-current-card rashi-card-moon" style="margin-bottom: 3mm;">
       <div class="period-label">{{ locale.tp_moon_title }}</div>
-      <div class="planet-name">{{ moon_rashi.sign }}</div>
+      <div class="planet-name">{{ locale.sign_names.get(moon_rashi.sign, moon_rashi.sign) }}</div>
       <div class="period-dates">{{ locale.tp_moon_desc }}</div>
     </div>
     {% if narratives and narratives.get("pillar_moon_rashi") %}
@@ -46,7 +46,7 @@
     {% else %}
     <div class="report-card" style="border-left: 4px solid var(--gold); margin-top: 0;">
       <table class="kv-table">
-        <tr><td>{{ locale.tp_moon_title }}</td><td>{{ moon_rashi.sign }}</td></tr>
+        <tr><td>{{ locale.tp_moon_title }}</td><td>{{ locale.sign_names.get(moon_rashi.sign, moon_rashi.sign) }}</td></tr>
         <tr><td>Lord</td><td>{{ moon_rashi.lord }}</td></tr>
         <tr><td>House</td><td>{{ moon_rashi.house }}</td></tr>
       </table>

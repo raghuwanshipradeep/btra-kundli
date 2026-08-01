@@ -3,7 +3,7 @@
   <p class="section-desc">{{ locale.rd_desc }}</p>
 
   {% if narrative %}
-  <div style="border-left: 3px solid #D4AF37; padding-left: 4mm; margin-bottom: 4mm;">
+  <div style="border-left: 3px solid var(--accent); padding-left: 4mm; margin-bottom: 4mm;">
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; margin: 0; word-break: break-word; overflow-wrap: break-word;">
       {{ narrative }}
     </p>
@@ -28,7 +28,7 @@
           <td><strong>{{ locale.planet_names.get(p.name, p.name) if locale.planet_names is defined else p.name }}</strong></td>
           <td>
             <span class="dosha-badge dosha-badge-full" style="font-size: 8pt;">{{ p.dignity }}</span>
-            <br><span style="font-size: 8pt; color: #888;">{{ p.reason }}</span>
+            <br><span style="font-size: 8pt; color: var(--ink-mute);">{{ p.reason }}</span>
           </td>
           <td>{{ p.item }}</td>
           <td>{{ p.day }}</td>
@@ -44,7 +44,7 @@
     {% for p in weak_planets %}
     {% if p.behavioral %}
     <div class="report-card" style="margin-bottom: 2mm; border-left: 3px solid var(--saffron);">
-      <h4 style="font-weight: 700; font-size: 14pt; color: #542F01; margin-bottom: 1mm;">
+      <h4 style="font-weight: 700; font-size: 14pt; color: var(--deep); margin-bottom: 1mm;">
         {{ locale.planet_names.get(p.name, p.name) if locale.planet_names is defined else p.name }}
       </h4>
       <p style="font-size: 9.5pt; line-height: 1.5; margin: 0;">{{ p.behavioral }}</p>
@@ -54,7 +54,7 @@
   </div>
 
   {% else %}
-  <div class="yogini-card" style="border-left: 4px solid var(--benefic); background: #E8F5E9;">
+  <div class="yogini-card" style="border-left: 4px solid var(--benefic); background: var(--surface-1);">
     <p style="font-size: 12.5pt; line-height: 1.6; margin: 0; color: var(--benefic);">
       {{ locale.rd_no_weak }}
     </p>

@@ -1026,7 +1026,7 @@ class AstrologyAPIClient:
             self.get_planets_extended(payload),             # 2
             self.get_houses(payload),                       # 3
             self.get_horo_chart_d1(payload),                # 4
-            self.get_natal_wheel_chart(payload),            # 5
+            self._skip(),                                   # 5 (Western natal wheel — removed from PDF)
             self.get_panchang(payload_with_ayan),              # 6
             self.get_current_vdasha(payload),               # 7
             self.get_major_vdasha(payload),                 # 8
@@ -1034,8 +1034,8 @@ class AstrologyAPIClient:
             self.get_sarvashtak(payload),                   # 10
             self.get_ayanamsha(payload),                    # 11
             self.get_astro_details(payload_with_ayan),      # 12
-            self.get_ghat_chakra(payload_with_ayan),        # 13
-            self.get_bhav_madhya(payload_with_ayan),        # 14
+            self._skip(),                                   # 13 (Ghat Chakra — removed from PDF)
+            self._skip(),                                   # 14 (Bhav Madhya — removed from PDF)
             self.get_planet_nature(payload_with_ayan),      # 15
             self.get_panchada_maitri(payload_with_ayan),    # 16
             self.get_horo_chart_extended(payload_with_ayan),  # 17
@@ -1069,19 +1069,19 @@ class AstrologyAPIClient:
             self._skip(),                                   # 45 (KP removed)
             self._skip(),                                   # 46 (KP removed)
             self._skip(),                                   # 47 (KP removed)
-            self.get_major_yogini_dasha(payload_with_ayan),        # 48
-            self.get_current_yogini_dasha(payload_with_ayan),      # 49
+            self._skip(),                                          # 48 (Yogini Dasha — removed from PDF)
+            self._skip(),                                          # 49 (Yogini Dasha — removed from PDF)
             self._skip(),                                          # 50 (Upa/Sub Yogini Dasha removed)
             self.get_basic_panchang(payload),                       # 51
             self.get_basic_panchang_sunrise(payload),               # 52
             self.get_advanced_panchang_sunrise(payload),            # 53
             self.get_planet_panchang(payload),                      # 54
             self.get_planet_panchang_sunrise(payload),              # 55
-            self.get_chaughadiya_muhurta(payload),                  # 56
-            self.get_hora_muhurta(payload),                         # 57
+            self._skip(),                                          # 56 (Chaughadiya Muhurta — removed from PDF)
+            self._skip(),                                          # 57 (Hora Muhurta — removed from PDF)
             # --- New: Char Dasha ---
-            self.get_current_chardasha(payload_with_ayan),         # 58
-            self.get_major_chardasha(payload_with_ayan),           # 59
+            self._skip(),                                          # 58 (Char Dasha — removed from PDF)
+            self._skip(),                                          # 59 (Char Dasha — removed from PDF)
             # --- New: Numerology ---
             self.get_numero_table(numero_payload),                 # 60
             self.get_numero_report(numero_payload),                # 61
@@ -1110,27 +1110,21 @@ class AstrologyAPIClient:
         # Phase 2: per-planet and per-chart parallel calls
         planet_names = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"]
         report_planets = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"]
-        chart_ids = [
-            "D2", "D3", "D4", "D5", "D7", "D8", "D9", "D10",
-            "D12", "D16", "D20", "D24", "D27", "D30", "D40", "D45", "D60",
-        ]
+        # D1-D12 only. D9 is not in CHART_ORDER but must stay — sections/panchang.py
+        # renders it as the Navamsa beside the D1 lagna chart.
+        chart_ids = ["D2", "D3", "D4", "D5", "D7", "D9", "D10", "D12"]
 
         await asyncio.sleep(5)
         phase2a = await asyncio.gather(
-            *[self.get_planet_ashtak(payload_with_ayan, p) for p in planet_names],
+            # get_planet_ashtak retired here — it fed only the Bhinnashtak section,
+            # which was removed from the PDF. Sarvashtakvarga is a separate Phase 1 call.
             *[self.get_horo_chart(payload_with_ayan, c) for c in chart_ids],
             return_exceptions=True,
         )
 
-        planet_ashtak: dict = {}
-        for i, pname in enumerate(planet_names):
-            val = safe(phase2a[i])
-            if val is not None:
-                planet_ashtak[pname] = val
-
         horo_charts: dict = {}
         for i, cid in enumerate(chart_ids):
-            val = safe(phase2a[len(planet_names) + i])
+            val = safe(phase2a[i])
             if val is not None:
                 horo_charts[cid] = val
 
@@ -1223,19 +1217,6 @@ class AstrologyAPIClient:
             sub_sub_sub_vdasha_data = safe(sub_results[2])
             sub_sub_sub_sub_vdasha_data = safe(sub_results[3])
 
-        # Phase 3b: Char Dasha sub-periods (need current_chardasha sign)
-        current_chardasha_data = safe(results[58])
-        sub_chardasha_data = None
-        if current_chardasha_data and isinstance(current_chardasha_data, dict):
-            cd_sign = current_chardasha_data.get("sign_id") or current_chardasha_data.get("sign", "")
-            if cd_sign:
-                sub_chardasha_data = await self.get_sub_chardasha(payload_with_ayan, str(cd_sign))
-
-        natal_wheel = safe(results[5])
-        chart_svg: str | None = None
-        if natal_wheel and natal_wheel.chart_url:
-            chart_svg = await self._download_chart_svg(natal_wheel.chart_url)
-
         planets = safe(results[1])
         planets_extended = safe(results[2])
         _normalize_planet_names(planets)
@@ -1252,8 +1233,6 @@ class AstrologyAPIClient:
             planets_extended=planets_extended,
             houses=houses,
             horo_chart_d1=safe(results[4]),
-            natal_wheel_chart=natal_wheel,
-            natal_chart_svg=chart_svg,
             panchang=safe(results[6]),
             current_vdasha=current_vdasha,
             major_vdasha=safe(results[8]),
@@ -1261,12 +1240,9 @@ class AstrologyAPIClient:
             sarvashtak=safe(results[10]),
             ayanamsha_details=safe(results[11]),
             astro_details=safe(results[12]),
-            ghat_chakra=safe(results[13]),
-            bhav_madhya=safe(results[14]),
             planet_nature=safe(results[15]),
             panchada_maitri=safe(results[16]),
             horo_chart_extended=safe(results[17]),
-            planet_ashtak=planet_ashtak or None,
             horo_charts=horo_charts or None,
             horo_chart_images=horo_chart_images or None,
             general_ascendant_report=safe(results[18]),
@@ -1302,20 +1278,12 @@ class AstrologyAPIClient:
             kp_house_cusps=safe(results[45]),
             kp_house_significator=safe(results[46]),
             kp_planet_significator=safe(results[47]),
-            major_yogini_dasha=safe(results[48]),
-            current_yogini_dasha=safe(results[49]),
-            sub_yogini_dasha=safe(results[50]),
             basic_panchang=safe(results[51]),
             basic_panchang_sunrise=safe(results[52]),
             advanced_panchang_sunrise=safe(results[53]),
             planet_panchang=safe(results[54]),
             planet_panchang_sunrise=safe(results[55]),
-            chaughadiya_muhurta=safe(results[56]),
-            hora_muhurta=safe(results[57]),
             # Char Dasha
-            current_chardasha=current_chardasha_data,
-            major_chardasha=safe(results[59]),
-            sub_chardasha=sub_chardasha_data,
             # Numerology
             numero_table=safe(results[60]),
             numero_report=safe(results[61]),

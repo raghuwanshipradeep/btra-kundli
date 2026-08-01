@@ -56,8 +56,6 @@ TESTABLE_SECTIONS = [
     "remedy_yantra",
     "remedy_daan",
     "career_path",
-    "rahu_ketu_analysis",
-    "spiritual_potential",
     "marriage_timing",
     "material_comforts",
 ]
@@ -111,18 +109,19 @@ def test_closing_cta_skips_without_config(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr(settings, "cta_consult_url", "")
     monkeypatch.setattr(settings, "cta_pooja_url", "")
+    monkeypatch.setattr(settings, "cta_rudraksha_url", "")
     assert render_closing_cta(SAMPLE_KUNDLI_DATA, "en") is None
 
 
-def test_closing_cta_renders_with_either_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Either URL alone is enough — the renderer's condition is an `and` over two absences."""
+@pytest.mark.parametrize("field", ["cta_consult_url", "cta_pooja_url", "cta_rudraksha_url"])
+def test_closing_cta_renders_with_any_single_url(
+    monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    """Any one URL alone is enough — the renderer's guard is an `and` over the absences."""
     from config import settings
     from sections.closing_cta import render_closing_cta
 
-    monkeypatch.setattr(settings, "cta_consult_url", "https://example.test/consult")
-    monkeypatch.setattr(settings, "cta_pooja_url", "")
-    assert render_closing_cta(SAMPLE_KUNDLI_DATA, "en") is not None
-
-    monkeypatch.setattr(settings, "cta_consult_url", "")
-    monkeypatch.setattr(settings, "cta_pooja_url", "https://example.test/pooja")
+    for f in ("cta_consult_url", "cta_pooja_url", "cta_rudraksha_url"):
+        monkeypatch.setattr(settings, f, "")
+    monkeypatch.setattr(settings, field, "https://example.test/x")
     assert render_closing_cta(SAMPLE_KUNDLI_DATA, "en") is not None

@@ -3,18 +3,18 @@
   <h2 class="section-header">
     {{ locale.planet_names.get(profile.name, profile.name) if locale.planet_names is defined else profile.name }}
     {% if lang == "hi" %}
-      <span style="font-size: 11pt; font-weight: 400; color: #666;"> ({{ profile.name }})</span>
+      <span style="font-size: 11pt; font-weight: 400; color: var(--ink-mute);"> ({{ profile.name }})</span>
     {% endif %}
   </h2>
 
-  {% if profile.image %}
+  {% if show_images and profile.image %}
   <div style="text-align: center; margin-bottom: 1mm;">
     <img src="images/{{ profile.image }}" alt="" style="max-width: 100%; max-height: 60mm; display: block; margin: 0 auto;">
   </div>
   {% endif %}
 
-  <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #e0d5c5; padding: 4mm; border-radius: 3mm; margin-bottom: 4mm;">
-    <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: #F8E9C8; margin-bottom: 2mm; text-align: center;">
+  <div style="background: linear-gradient(135deg, var(--deep) 0%, var(--primary) 100%); color: var(--surface-3); padding: 4mm; border-radius: 3mm; margin-bottom: 4mm;">
+    <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--surface-3); margin-bottom: 2mm; text-align: center;">
       {{ locale.op_deity_label }}: {{ profile.deity }}
     </h3>
     <p style="font-size: 12.5pt; line-height: 1.8; text-align: justify; margin: 0;">
@@ -30,7 +30,7 @@
     <tr>
       <td>{{ locale.op_sign }}</td>
       <td>{{ locale.sign_names.get(profile.sign, profile.sign) if locale.sign_names is defined else profile.sign }}
-        <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ locale.planet_names.get(profile.sign_lord, profile.sign_lord) if locale.planet_names is defined else profile.sign_lord }})</span>
+        <span style="color: var(--ink-mute); font-size: 9pt;">({{ locale.gp_lord }}: {{ locale.planet_names.get(profile.sign_lord, profile.sign_lord) if locale.planet_names is defined else profile.sign_lord }})</span>
       </td>
     </tr>
     <tr>
@@ -42,7 +42,7 @@
       <td>{{ locale.op_nakshatra }}</td>
       <td>{{ profile.nakshatra }}
         {% if profile.nakshatra_lord %}
-          <span style="color: #666; font-size: 9pt;">({{ locale.gp_lord }}: {{ profile.nakshatra_lord }})</span>
+          <span style="color: var(--ink-mute); font-size: 9pt;">({{ locale.gp_lord }}: {{ profile.nakshatra_lord }})</span>
         {% endif %}
       </td>
     </tr>
@@ -56,8 +56,8 @@
   </table>
 
   {% if profile.narrative %}
-  <div class="report-card" style="border-left: 4px solid #0f3460;">
-    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+  <div class="report-card" style="border-left: 4px solid var(--primary);">
+    <h4 style="font-weight: 700; font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
       {{ locale.op_placement_title }}
     </h4>
     <p style="font-size: 12.5pt; line-height: 1.7; text-align: justify; word-break: break-word; overflow-wrap: break-word;">

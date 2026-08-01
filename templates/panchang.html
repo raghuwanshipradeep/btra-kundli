@@ -30,50 +30,6 @@
   {% endif %}
 {% endmacro %}
 
-{% macro muhurta_table(items) %}
-  <table>
-    <thead>
-      <tr>
-        <th style="width:10%">#</th>
-        <th style="width:35%">{{ locale.timing }}</th>
-        <th style="width:25%">{{ locale.get('muhurta_col', 'Muhurta') }}</th>
-        <th style="width:30%">{{ locale.get('type_col', 'Type') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in items %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ item.get('time', item.get('start', '')) | safe_time }}{% if item.get('end') %} — {{ item.end | safe_time }}{% endif %}</td>
-        <td><strong>{{ item.get('muhurta', item.get('name', '')) }}</strong></td>
-        <td>{{ item.get('type', item.get('is_day', '')) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endmacro %}
-
-{% macro hora_table(items) %}
-  <table>
-    <thead>
-      <tr>
-        <th style="width:10%">#</th>
-        <th style="width:45%">{{ locale.timing }}</th>
-        <th style="width:45%">{{ locale.get('hora_lord_col', 'Hora Lord') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in items %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ item.get('time', item.get('start', '')) | safe_time }}{% if item.get('end') %} — {{ item.end | safe_time }}{% endif %}</td>
-        <td><strong>{{ item.get('hora_lord', item.get('hora', item.get('lord', ''))) }}</strong></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-{% endmacro %}
-
 {% macro planet_table(items) %}
   <table>
     <thead>
@@ -235,7 +191,7 @@
     <div style="page-break-inside: avoid; margin-top: 4mm; text-align: center;">
         <h3 class="section-subheader" style="margin-top: 0;">{{ locale.north_chart_title }}</h3>
         {% if locale.north_chart_desc %}
-        <p style="font-size: 11pt; color: #555; margin-bottom: 3mm;">{{ locale.north_chart_desc }}</p>
+        <p style="font-size: 11pt; color: var(--ink-mute); margin-bottom: 3mm;">{{ locale.north_chart_desc }}</p>
         {% endif %}
         {{ nic.north_indian_chart(lagna_houses, lang, 300) }}
     </div>
@@ -245,7 +201,7 @@
     <div style="page-break-inside: avoid; margin-top: 6mm; text-align: center;">
         <h3 class="section-subheader" style="margin-top: 0;">{{ navamsa_title }}</h3>
         {% if navamsa_desc %}
-        <p style="font-size: 11pt; color: #555; margin-bottom: 3mm;">{{ navamsa_desc }}</p>
+        <p style="font-size: 11pt; color: var(--ink-mute); margin-bottom: 3mm;">{{ navamsa_desc }}</p>
         {% endif %}
         {% if navamsa_houses %}
         {{ nic.north_indian_chart(navamsa_houses, lang, 300) }}
@@ -257,63 +213,7 @@
 </div>
 {% endif %}
 
-{# ===== PAGE 2: Chaughadiya & Hora Muhurta ===== #}
-{% if chaughadiya_muhurta or hora_muhurta %}
-<div class="section-page">
-    <h2 class="section-header">{{ locale.chaughadiya_muhurta_title }}</h2>
-
-    <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
-      {{ locale.chaughadiya_desc }}
-    </p>
-
-    {% if chaughadiya_muhurta %}
-      {% set chdata = chaughadiya_muhurta.get('chaughadiya', chaughadiya_muhurta) if chaughadiya_muhurta is mapping else chaughadiya_muhurta %}
-      {% if chdata is mapping %}
-        {% for period_name, items in chdata.items() %}
-          {% if items is iterable and items is not string and items is not mapping %}
-            <h3 class="section-subheader">{{ locale.chaughadiya_muhurta_title }} — {{ period_name | title }}</h3>
-            {{ muhurta_table(items) }}
-            {% if not loop.last %}<hr class="divider">{% endif %}
-          {% endif %}
-        {% endfor %}
-      {% elif chdata is iterable and chdata is not string %}
-        <h3 class="section-subheader">{{ locale.chaughadiya_muhurta_title }}</h3>
-        {{ muhurta_table(chdata) }}
-      {% else %}
-        {{ render_value(chaughadiya_muhurta) }}
-      {% endif %}
-    {% endif %}
-</div>
-
-{% if hora_muhurta %}
-<div class="section-page">
-    <h2 class="section-header">{{ locale.hora_muhurta_title }}</h2>
-
-    <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 4mm; text-align: justify;">
-      {{ locale.hora_desc }}
-    </p>
-
-    {% if hora_muhurta %}
-      {% set hdata = hora_muhurta.get('hora', hora_muhurta) if hora_muhurta is mapping else hora_muhurta %}
-      {% if hdata is mapping %}
-        {% for period_name, items in hdata.items() %}
-          {% if items is iterable and items is not string and items is not mapping %}
-            <h3 class="section-subheader">{{ locale.hora_muhurta_title }} — {{ period_name | replace('_', ' ') | title }}</h3>
-            {{ hora_table(items) }}
-            {% if not loop.last %}<hr class="divider">{% endif %}
-          {% endif %}
-        {% endfor %}
-      {% elif hdata is iterable and hdata is not string %}
-        {{ hora_table(hdata) }}
-      {% else %}
-        {{ render_value(hora_muhurta) }}
-      {% endif %}
-    {% endif %}
-</div>
-{% endif %}
-{% endif %}
-
-{# ===== PAGE 3: Planet Panchang ===== #}
+{# ===== PAGE 2: Planet Panchang ===== #}
 {% if planet_panchang %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.planet_panchang_title }}</h2>
@@ -329,7 +229,7 @@
 </div>
 {% endif %}
 
-{# ===== PAGE 4: Basic Panchang variants ===== #}
+{# ===== PAGE 3: Basic Panchang variants ===== #}
 {% if basic_panchang or advanced_panchang_sunrise %}
 <div class="section-page">
     <h2 class="section-header">{{ locale.basic_panchang_title }}</h2>

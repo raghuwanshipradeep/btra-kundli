@@ -10,21 +10,25 @@ from config import settings
 from models import KundliData
 from sections import _format_degree, _safe_time, humanize_key, to_hindi_value
 
+# Sections the "lite" tier drops. Most of the original list (tatkalik_maitri,
+# bhinnashtak, char_dasha, yogini_dasha) has since been removed from the report
+# outright, so lite and detailed now differ by a single section.
 LITE_SKIP_SECTIONS = {
-    "panchada_maitri", "tatkalik_maitri",
-    "bhinnashtak", "char_dasha", "yogini_dasha",
+    "panchada_maitri",
+}
+
+# Image-only section pages dropped when settings.pdf_images_enabled is false.
+# "front_page" is deliberately absent — the opening image always stays.
+IMAGE_ONLY_SECTIONS = {
+    "astrologer_intro", "divider_ganesha", "divider_grah", "divider_dosha",
+    "offer_banner", "divider_numerology", "divider_lalkitab",
 }
 from sections.ashtakvarga import render_ashtakvarga
 from sections.astro_details import render_astro_details
-from sections.bhav_madhya import render_bhav_madhya
-from sections.bhinnashtak import render_bhinnashtak
-from sections.chart import render_chart
 from sections.cover import render_cover
 from sections.dasha import render_dasha
 from sections.divisional_charts import render_divisional_charts
 from sections.dosha import render_dosha
-from sections.ghat_chakra import render_ghat_chakra
-from sections.houses import render_houses
 from sections.life_reports import render_life_reports
 from sections.panchada_maitri import render_panchada_maitri
 from sections.panchang import render_panchang
@@ -36,29 +40,19 @@ from sections.remedy_mantras import render_remedy_mantras
 from sections.remedy_yantra import render_remedy_yantra
 from sections.remedy_daan import render_remedy_daan
 from sections.varshaphal import render_varshaphal
-from sections.yogini_dasha import render_yogini_dasha
-from sections.char_dasha import render_char_dasha
 from sections.numerology import render_numerology
 from sections.lalkitab import render_lalkitab
-from sections.drishti import render_drishti
-from sections.dignity import render_dignity
-from sections.chara_karaka import render_chara_karaka
-from sections.avakhada_chakra import render_avakhada_chakra
-from sections.tatkalik_maitri import render_tatkalik_maitri
 from sections.yogas import render_yogas
 from sections.thematic_reports import render_thematic_reports
 from sections.north_chart import render_north_chart
 from sections.marriage_timing import render_marriage_timing
 from sections.front_matter import render_front_matter, render_front_matter_toc
 from sections.graha_profile import render_graha_profile
-from sections.graha_sanyog import render_graha_sanyog
 from sections.authors_note import render_authors_note
 from sections.closing_cta import render_closing_cta
 from sections.dasha_narrative import render_dasha_narrative
 from sections.career_path import render_career_path
 from sections.material_comforts import render_material_comforts
-from sections.rahu_ketu_analysis import render_rahu_ketu_analysis
-from sections.spiritual_potential import render_spiritual_potential
 from sections.sadhesati_enhanced import render_sadhesati_enhanced
 from sections.three_pillars import render_three_pillars
 from sections.sade_sati_journey import render_sade_sati_journey
@@ -70,21 +64,23 @@ logger = logging.getLogger(__name__)
 
 TEMPLATES_DIR = pathlib.Path(__file__).parent / "templates"
 
-# Promotional filler images (award / celebrity photos), rotated across sparse pages.
+# Promotional filler images, rotated across sparse pages and capped at
+# settings.filler_max_images placements per report.
 _FILLER_IMAGES = [
-    str(TEMPLATES_DIR / "images" / "promo_award_2021.png"),
-    str(TEMPLATES_DIR / "images" / "promo_award_2022.png"),
-    str(TEMPLATES_DIR / "images" / "promo_celebrities.png"),
-    str(TEMPLATES_DIR / "images" / "promo_celebrities_.png"),
+    str(TEMPLATES_DIR / "images" / "btr_image.JPG"),
 ]
 # Content below this fraction of page height is the footer / page-number band and
 # is ignored when measuring how far down real content reaches.
 _FILLER_FOOTER_ZONE = 0.90
+# Minimum pages between two filler placements. Without this the capped run lands on
+# the first few consecutive sparse pages and the same image repeats back-to-back.
+_FILLER_MIN_PAGE_GAP = 12
 
 
 def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
     """Overlay a promotional image into the empty bottom band of any page (after
-    settings.filler_skip_pages) whose bottom gap exceeds settings.filler_gap_threshold.
+    settings.filler_skip_pages) whose bottom gap exceeds settings.filler_gap_threshold,
+    stopping after settings.filler_max_images placements.
     Same-page overlay only (page count unchanged). Best-effort: never raises."""
     import fitz  # PyMuPDF
 
@@ -96,8 +92,13 @@ def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     rotate = 0
     added = 0
+    last_pno = -_FILLER_MIN_PAGE_GAP
     for pno in range(len(doc)):
+        if added >= settings.filler_max_images:
+            break
         if pno < settings.filler_skip_pages:
+            continue
+        if pno - last_pno < _FILLER_MIN_PAGE_GAP:
             continue
         page = doc[pno]
         H = page.rect.height
@@ -139,6 +140,7 @@ def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
         y = bottom + ((cut - bottom) - dh) / 2
         page.insert_image(fitz.Rect(x, y, x + dw, y + dh), filename=path)
         added += 1
+        last_pno = pno
 
     if added:
         pdf_bytes = doc.tobytes()
@@ -158,7 +160,6 @@ SECTION_RENDERERS = [
     ("panchang", render_panchang),
     ("dasha", render_dasha),
     ("mahadasha_journey", render_mahadasha_journey),
-    ("chart", render_chart),
     ("divisional_charts", render_divisional_charts),
     ("life_reports", render_life_reports),
     ("three_pillars", render_three_pillars),
@@ -174,33 +175,19 @@ SECTION_RENDERERS = [
     ("remedy_daan", render_remedy_daan),
     ("varshaphal", render_varshaphal),
     ("planets", render_planets),
-    ("houses", render_houses),
-    ("ghat_chakra", render_ghat_chakra),
-    ("bhav_madhya", render_bhav_madhya),
     ("planet_nature", render_planet_nature),
     ("panchada_maitri", render_panchada_maitri),
     ("ashtakvarga", render_ashtakvarga),
-    ("bhinnashtak", render_bhinnashtak),
-    ("yogini_dasha", render_yogini_dasha),
-    ("char_dasha", render_char_dasha),
     ("divider_numerology", make_divider_renderer("numrology.png")),
     ("numerology", render_numerology),
     ("numerology_personality", render_numerology_personality),
     ("divider_lalkitab", make_divider_renderer("lal_kitab.png")),
     ("lalkitab", render_lalkitab),
-    ("drishti", render_drishti),
-    ("dignity", render_dignity),
-    ("chara_karaka", render_chara_karaka),
-    ("avakhada_chakra", render_avakhada_chakra),
-    ("tatkalik_maitri", render_tatkalik_maitri),
-    ("rahu_ketu_analysis", render_rahu_ketu_analysis),
     ("yogas", render_yogas),
-    ("graha_sanyog", render_graha_sanyog),
     ("thematic_reports", render_thematic_reports),
     ("career_path", render_career_path),
     ("marriage_timing", render_marriage_timing),
     ("material_comforts", render_material_comforts),
-    ("spiritual_potential", render_spiritual_potential),
     ("sade_sati_journey", render_sade_sati_journey),
     ("closing_cta", render_closing_cta),
 ]
@@ -213,6 +200,10 @@ class PDFGenerator:
         self._env.filters["humanize_key"] = humanize_key
         self._env.filters["to_hindi_value"] = to_hindi_value
         self._env.filters["format_degree"] = _format_degree
+        # Templates gate their <img> tags on these; see settings.pdf_images_enabled
+        # (section artwork) and settings.pdf_logo_enabled (the brand signature).
+        self._env.globals["show_images"] = settings.pdf_images_enabled
+        self._env.globals["show_logo"] = settings.pdf_logo_enabled
         self._base_template = self._env.get_template("base.html")
         self._css = (TEMPLATES_DIR / "styles.css").read_text(encoding="utf-8")
 
@@ -228,6 +219,8 @@ class PDFGenerator:
             if include_sections and name not in include_sections:
                 continue
             if report_tier == "lite" and name in LITE_SKIP_SECTIONS:
+                continue
+            if not settings.pdf_images_enabled and name in IMAGE_ONLY_SECTIONS:
                 continue
             try:
                 html = renderer(data, lang)

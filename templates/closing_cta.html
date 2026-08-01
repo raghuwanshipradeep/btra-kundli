@@ -1,44 +1,59 @@
 <div class="section-page">
   <h2 class="section-header">{{ locale.cta_title }}</h2>
 
-  <p style="font-size: 12.5pt; line-height: 1.8; text-align: center; margin-bottom: 8mm; color: #555;">
+  <p style="font-size: 12.5pt; line-height: 1.8; text-align: center; margin-bottom: 8mm; color: var(--ink-mute);">
     {{ locale.cta_intro|replace('{name}', name) }}
   </p>
 
   <div style="display: flex; gap: 6mm; margin-bottom: 8mm;">
     {% if cta_consult_url %}
-    <div style="flex: 1; background: linear-gradient(135deg, #FFF8E1 0%, #FFFDF5 100%); border: 1px solid #D4AF37; border-radius: 3mm; padding: 6mm; text-align: center;">
-      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <div style="flex: 1; background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-1) 100%); border: 1px solid var(--accent); border-radius: 3mm; padding: 6mm; text-align: center;">
+      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
         {{ locale.cta_consult_heading }}
       </h3>
-      <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; color: #555;">
+      <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; color: var(--ink-mute);">
         {{ locale.cta_consult_desc }}
       </p>
       <a href="{{ cta_consult_url }}" style="background: var(--maroon); color: white; padding: 3mm 6mm; border-radius: 2mm; display: inline-block; font-size: 10pt; font-weight: 600; text-decoration: none;">
         {{ locale.cta_consult_button }}
       </a>
-      <p style="font-size: 8.5pt; color: #999; margin-top: 2mm;">{{ cta_consult_url }}</p>
+      <p style="font-size: 8.5pt; color: var(--ink-mute); margin-top: 2mm;">{{ cta_consult_url }}</p>
+    </div>
+    {% endif %}
+
+    {% if cta_rudraksha_url %}
+    <div style="flex: 1; background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-1) 100%); border: 1px solid var(--accent); border-radius: 3mm; padding: 6mm; text-align: center;">
+      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
+        {{ locale.cta_rudraksha_heading }}
+      </h3>
+      <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; color: var(--ink-mute);">
+        {{ locale.cta_rudraksha_desc }}
+      </p>
+      <a href="{{ cta_rudraksha_url }}" style="background: var(--accent); color: var(--deep); padding: 3mm 6mm; border-radius: 2mm; display: inline-block; font-size: 10pt; font-weight: 600; text-decoration: none;">
+        {{ locale.cta_rudraksha_button }}
+      </a>
+      <p style="font-size: 8.5pt; color: var(--ink-mute); margin-top: 2mm;">{{ cta_rudraksha_url }}</p>
     </div>
     {% endif %}
 
     {% if cta_pooja_url %}
-    <div style="flex: 1; background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%); border: 1px solid #81C784; border-radius: 3mm; padding: 6mm; text-align: center;">
-      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: #542F01; margin-bottom: 3mm;">
+    <div style="flex: 1; background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-1) 100%); border: 1px solid var(--pos); border-radius: 3mm; padding: 6mm; text-align: center;">
+      <h3 style="font-family: 'Playfair Display', serif; font-size: 14pt; color: var(--deep); margin-bottom: 3mm;">
         {{ locale.cta_pooja_heading }}
       </h3>
-      <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; color: #555;">
+      <p style="font-size: 12.5pt; line-height: 1.7; margin-bottom: 5mm; color: var(--ink-mute);">
         {{ locale.cta_pooja_desc }}
       </p>
-      <a href="{{ cta_pooja_url }}" style="background: #2E7D32; color: white; padding: 3mm 6mm; border-radius: 2mm; display: inline-block; font-size: 10pt; font-weight: 600; text-decoration: none;">
+      <a href="{{ cta_pooja_url }}" style="background: var(--pos); color: white; padding: 3mm 6mm; border-radius: 2mm; display: inline-block; font-size: 10pt; font-weight: 600; text-decoration: none;">
         {{ locale.cta_pooja_button }}
       </a>
-      <p style="font-size: 8.5pt; color: #999; margin-top: 2mm;">{{ cta_pooja_url }}</p>
+      <p style="font-size: 8.5pt; color: var(--ink-mute); margin-top: 2mm;">{{ cta_pooja_url }}</p>
     </div>
     {% endif %}
   </div>
 
-  <div style="text-align: center; padding-top: 6mm; border-top: 1px solid #E0D5C5;">
-    <p style="font-size: 12.5pt; line-height: 1.8; color: #555;">
+  <div style="text-align: center; padding-top: 6mm; border-top: 1px solid var(--rule);">
+    <p style="font-size: 12.5pt; line-height: 1.8; color: var(--ink-mute);">
       {{ locale.cta_signoff|replace('{name}', name) }}
     </p>
   </div>

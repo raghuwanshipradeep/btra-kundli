@@ -18,6 +18,29 @@ SADHESATI_KEYS_HI: dict[str, str] = {
     "remedies": "उपाय",
 }
 
+# The /sadhesati_life_details rows carry the phase as an enum constant
+# (RISING_START, PEAK_START, …). Printed raw it leaks into the PDF, so map it.
+# Phase names follow the vocabulary already used in locale ss_phases_desc:
+# Rising / Peak / Setting -> आरंभ / शिखर / अंत.
+PHASE_LABELS: dict[str, dict[str, str]] = {
+    "en": {
+        "RISING_START": "Rising Phase Begins",
+        "RISING_END": "Rising Phase Ends",
+        "PEAK_START": "Peak Phase Begins",
+        "PEAK_END": "Peak Phase Ends",
+        "SETTING_START": "Setting Phase Begins",
+        "SETTING_END": "Setting Phase Ends",
+    },
+    "hi": {
+        "RISING_START": "आरंभ चरण प्रारंभ",
+        "RISING_END": "आरंभ चरण समाप्त",
+        "PEAK_START": "शिखर चरण प्रारंभ",
+        "PEAK_END": "शिखर चरण समाप्त",
+        "SETTING_START": "अंत चरण प्रारंभ",
+        "SETTING_END": "अंत चरण समाप्त",
+    },
+}
+
 
 def _has_data(data: KundliData) -> bool:
     if data.sadhesati_life_details:
@@ -86,6 +109,7 @@ def render_sade_sati_journey(data: KundliData, lang: str = "en") -> str | None:
         saturn=saturn,
         moon=moon,
         is_active=is_active,
+        phase_labels=PHASE_LABELS.get(lang, PHASE_LABELS["en"]),
         narratives=data.narratives,
         locale=locale,
         lang=lang,

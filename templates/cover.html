@@ -1,16 +1,16 @@
 <div class="cover-page">
     <svg class="cover-mandala" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="250" cy="250" r="240" fill="none" stroke="#8B0000" stroke-width="1"/>
-        <circle cx="250" cy="250" r="200" fill="none" stroke="#8B0000" stroke-width="0.5"/>
-        <circle cx="250" cy="250" r="160" fill="none" stroke="#8B0000" stroke-width="0.5"/>
-        <circle cx="250" cy="250" r="120" fill="none" stroke="#8B0000" stroke-width="0.5"/>
+        <circle cx="250" cy="250" r="240" fill="none" stroke="#C2410C" stroke-width="1"/>
+        <circle cx="250" cy="250" r="200" fill="none" stroke="#C2410C" stroke-width="0.5"/>
+        <circle cx="250" cy="250" r="160" fill="none" stroke="#C2410C" stroke-width="0.5"/>
+        <circle cx="250" cy="250" r="120" fill="none" stroke="#C2410C" stroke-width="0.5"/>
         {% for i in range(12) %}
-        <line x1="250" y1="10" x2="250" y2="490" fill="none" stroke="#8B0000" stroke-width="0.3"
+        <line x1="250" y1="10" x2="250" y2="490" fill="none" stroke="#C2410C" stroke-width="0.3"
               transform="rotate({{ i * 30 }}, 250, 250)"/>
         {% endfor %}
         {% for i in range(6) %}
         <polygon points="250,50 {% for j in range(1,6) %}{{ 250 + 200 * (j/6 * 3.14159 * 2 / 6) | round(1) }},{{ 250 - 200 * (1 - j/6) | round(1) }} {% endfor %}"
-                 fill="none" stroke="#8B0000" stroke-width="0.3"
+                 fill="none" stroke="#C2410C" stroke-width="0.3"
                  transform="rotate({{ i * 60 }}, 250, 250)"/>
         {% endfor %}
     </svg>
@@ -50,19 +50,21 @@
                 {% endif %}
                 {% if ascendant %}
                 <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.ascendant }}</span><span class="cover-bd-value">{{ ascendant.sign }}</span>
+                    <span class="cover-bd-label">{{ locale.ascendant }}</span><span class="cover-bd-value">{{ locale.sign_names.get(ascendant.sign, ascendant.sign) }}</span>
                 </div>
                 {% endif %}
                 {% if moon %}
                 <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.moon_sign }}</span><span class="cover-bd-value">{{ moon.sign }}</span>
+                    <span class="cover-bd-label">{{ locale.moon_sign }}</span><span class="cover-bd-value">{{ locale.sign_names.get(moon.sign, moon.sign) }}</span>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
+    {% if show_logo %}
     <div class="cover-logo">
         {% with logo_width='72mm', logo_margin_top='0' %}{% include "partials/brand_signature.html" %}{% endwith %}
     </div>
+    {% endif %}
 </div>

@@ -53,7 +53,7 @@ def render_numerology_personality(data: KundliData, lang: str = "en") -> str | N
             "desc": locale.get("np_moolank_desc", ""),
             "value": radical,
             "narr_key": "numero_personality_moolank",
-            "color": "#D4AF37",
+            "color": "var(--accent)",
         })
     if destiny is not None:
         numbers.append({
@@ -62,7 +62,7 @@ def render_numerology_personality(data: KundliData, lang: str = "en") -> str | N
             "desc": locale.get("np_bhagyank_desc", ""),
             "value": destiny,
             "narr_key": "numero_personality_bhagyank",
-            "color": "#1565C0",
+            "color": "var(--primary)",
         })
     numbers.append({
         "key": "success",
@@ -70,7 +70,7 @@ def render_numerology_personality(data: KundliData, lang: str = "en") -> str | N
         "desc": locale.get("np_success_desc", ""),
         "value": success,
         "narr_key": "numero_personality_success",
-        "color": "#2E7D32",
+        "color": "var(--deep)",
     })
     numbers.append({
         "key": "connection",
@@ -78,7 +78,7 @@ def render_numerology_personality(data: KundliData, lang: str = "en") -> str | N
         "desc": locale.get("np_connection_desc", ""),
         "value": conn,
         "narr_key": "numero_personality_connection",
-        "color": "#6A1B9A",
+        "color": "var(--ink-soft)",
     })
 
     env = make_env()
