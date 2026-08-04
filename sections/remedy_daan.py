@@ -66,17 +66,38 @@ def _is_weak(name: str, sign: str, house: int, is_retro: str) -> tuple[bool, str
     return bool(reasons), ", ".join(reasons)
 
 
+def _is_sadhesati_active(status) -> bool:
+    """`is_undergoing_sadhesati` is a prose sentence, so bool() on it is always True.
+
+    Prefer the real boolean `sadhesati_status`; fall back to reading the prose.
+    """
+    if not isinstance(status, dict):
+        return False
+    flag = status.get("sadhesati_status")
+    if isinstance(flag, bool):
+        return flag
+    prose = str(status.get("is_undergoing_sadhesati") or "").strip().lower()
+    return bool(prose) and not prose.startswith("no")
+
+
 def _build_dosha_afflictions(data: KundliData) -> dict[str, list[str]]:
     afflictions: dict[str, list[str]] = {}
 
+    # These gates read the LIVE API keys. `is_manglik` and `is_pitra_dosha_present` exist
+    # only in demo_data, so the earlier versions never fired against the real API and
+    # Mars/Sun/Saturn silently lost their dosha afflictions in every paid report.
     manglik = data.manglik or data.simple_manglik
-    if manglik and manglik.get("is_manglik"):
+    if manglik and (manglik.get("is_manglik") or manglik.get("is_present")
+                    or manglik.get("manglik_status") not in (None, "", "NOT_EFFECTIVE")):
         afflictions.setdefault("Mars", []).append("Manglik Dosha")
 
-    if data.sadhesati_current_status and data.sadhesati_current_status.get("is_undergoing_sadhesati"):
+    if _is_sadhesati_active(data.sadhesati_current_status):
         afflictions.setdefault("Saturn", []).append("Sadhesati Active")
 
-    if data.pitra_dosha_report and data.pitra_dosha_report.get("is_pitra_dosha_present"):
+    if data.pitra_dosha_report and (
+        data.pitra_dosha_report.get("is_pitri_dosha_present")
+        or data.pitra_dosha_report.get("is_pitra_dosha_present")
+    ):
         afflictions.setdefault("Sun", []).append("Pitra Dosha")
         afflictions.setdefault("Saturn", []).append("Pitra Dosha")
 

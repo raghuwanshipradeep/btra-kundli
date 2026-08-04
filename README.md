@@ -260,3 +260,4 @@ smart_kundli/
 2. Create `sections/new_section.py` with a `render_new_section(data, lang)` function
 3. Add the renderer to `SECTION_RENDERERS` list in `pdf_generator.py`
 4. Add locale strings to `LOCALES` dict in `sections/__init__.py`
+5. Claim the section in `TOC_CHAPTERS` (`sections/__init__.py`) so the Table of Contents lists it — or add it to `UNLISTED_SECTIONS` in `tests/test_pdf_generator.py` if it's front/back matter. The guard tests there fail until you do.

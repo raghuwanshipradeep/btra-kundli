@@ -35,17 +35,19 @@
                     <span class="cover-bd-label">{{ locale.dob }}</span><span class="cover-bd-value">{{ request.day }}/{{ request.month }}/{{ request.year }}</span>
                 </div>
                 <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.tob }}</span><span class="cover-bd-value">{{ "%02d"|format(request.hour) }}:{{ "%02d"|format(request.min) }}</span>
+                    {# Built as one string so clock12 can convert it; splitting hour and
+                       minute across two expressions would leave nothing to pipe. #}
+                    <span class="cover-bd-label">{{ locale.tob }}</span><span class="cover-bd-value">{{ "%d:%02d"|format(request.hour, request.min) | clock12 }}</span>
                 </div>
                 <div class="cover-bd-row">
                     <span class="cover-bd-label">{{ locale.pob }}</span><span class="cover-bd-value">{% if request.place %}{{ request.place }}{% else %}{{ "%.4f"|format(request.lat) }}°N, {{ "%.4f"|format(request.lon) }}°E{% endif %}</span>
                 </div>
                 {% if birth and birth.sunrise %}
                 <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.sunrise }}</span><span class="cover-bd-value">{{ birth.sunrise | safe_time }}</span>
+                    <span class="cover-bd-label">{{ locale.sunrise }}</span><span class="cover-bd-value">{{ birth.sunrise | clock12 }}</span>
                 </div>
                 <div class="cover-bd-row">
-                    <span class="cover-bd-label">{{ locale.sunset }}</span><span class="cover-bd-value">{{ birth.sunset | safe_time }}</span>
+                    <span class="cover-bd-label">{{ locale.sunset }}</span><span class="cover-bd-value">{{ birth.sunset | clock12 }}</span>
                 </div>
                 {% endif %}
                 {% if ascendant %}

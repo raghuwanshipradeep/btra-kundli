@@ -19,9 +19,10 @@
       {% if r.mantra %}
       <tr><td style="width: 28%;">{{ locale.ar_mantra }}</td><td>{{ r.mantra }}</td></tr>
       {% endif %}
-      {% if r.gemstone %}
-      <tr><td>{{ locale.ar_gemstone }}</td><td>{{ r.gemstone }}</td></tr>
-      {% endif %}
+      {# No gemstone row by design. Stones are prescribed once, in the Gemstone
+         Recommendations chapter (sections/remedy_gemstones.py). Listing a stone per
+         significator here contradicted it — the reader was told to wear Ruby, Blue
+         Sapphire, Diamond and Red Coral alongside the three actually prescribed. #}
       {% if r.donation_item %}
       <tr><td>{{ locale.ar_donation }}</td><td>{{ r.donation_item }}{% if r.donation_day %} — {{ r.donation_day }}{% endif %}</td></tr>
       {% endif %}

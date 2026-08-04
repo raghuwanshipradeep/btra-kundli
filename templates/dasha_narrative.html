@@ -25,7 +25,7 @@
         {{ locale.planet_names.get(narr.md_planet, narr.md_planet) }} — {{ locale.planet_names.get(narr.ad_planet, narr.ad_planet) }}
       </h4>
       <span style="font-size: 9pt; color: var(--ink-mute);">
-        {{ narr.start }} → {{ narr.end }}
+        {{ narr.start | clock12 }} → {{ narr.end | clock12 }}
       </span>
     </div>
 

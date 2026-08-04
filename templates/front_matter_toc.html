@@ -1,7 +1,7 @@
 <div class="section-page toc-page">
   <div class="toc-header">{{ locale.fm_toc_title }}</div>
 
-  {% for item in locale.fm_toc_items %}
+  {% for item in toc_items %}
   <div class="toc-row">
     <span class="toc-num">{{ loop.index }}</span><span class="toc-name">{{ item.name }}</span><span class="toc-desc">{{ item.desc }}</span>
   </div>

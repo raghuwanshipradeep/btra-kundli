@@ -8,8 +8,14 @@ house) are flagged as "priority" so the template can surface them first — this
 the light personalization that keeps the remedies relevant to the actual chart,
 without any AI cost.
 
-Only mainstream, respectful remedies are used (mantra, gemstone, daan, lifestyle) —
-no extreme folk practices.
+Only mainstream, respectful remedies are used (mantra, daan, lifestyle) — no extreme
+folk practices.
+
+Deliberately **no gemstone**: stones are prescribed once, in the Gemstone Recommendations
+chapter (`sections/remedy_gemstones.py`). Naming the stone of every significator here
+contradicted that chapter — a reader following the whole report was told to wear Ruby,
+Blue Sapphire, Diamond and Red Coral on top of the three actually prescribed, Ruby beside
+Blue Sapphire among them.
 """
 from __future__ import annotations
 
@@ -24,7 +30,6 @@ from sections.remedy_constants import (
     PLANET_MANTRAS,
     PLANET_MANTRAS_DEVANAGARI,
     PLANET_MANTRAS_MEANING,
-    PLANET_TO_GEMSTONE,
 )
 
 if TYPE_CHECKING:
@@ -84,7 +89,6 @@ def build_area_remedies(
         is_retro = getattr(p, "isRetro", "false") if p else "false"
 
         reasons = _weakness(name, sign, house, is_retro) if p else []
-        gem = PLANET_TO_GEMSTONE.get(name, {})
         donation = (PLANET_DONATIONS_HI if lang == "hi" else PLANET_DONATIONS).get(name, {})
 
         bundles.append({
@@ -97,7 +101,6 @@ def build_area_remedies(
             "mantra": PLANET_MANTRAS_DEVANAGARI.get(name, "") if lang == "hi"
                       else PLANET_MANTRAS.get(name, {}).get("mantra", ""),
             "mantra_meaning": PLANET_MANTRAS_MEANING.get(name, ""),
-            "gemstone": gem.get("hindi", "") if lang == "hi" else gem.get("name", ""),
             "donation_item": donation.get("item", ""),
             "donation_day": donation.get("day", ""),
             "behavioral": (BEHAVIORAL_REMEDIES_HI if lang == "hi" else BEHAVIORAL_REMEDIES).get(name, ""),

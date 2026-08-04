@@ -56,8 +56,8 @@
         {% for p in favorable_periods %}
         <tr>
           <td><strong>{{ locale.planet_names.get(p.planet, p.planet) }}</strong></td>
-          <td>{{ p.start }}</td>
-          <td>{{ p.end }}</td>
+          <td>{{ p.start | clock12 }}</td>
+          <td>{{ p.end | clock12 }}</td>
           <td>{{ p.reason }}</td>
         </tr>
         {% endfor %}

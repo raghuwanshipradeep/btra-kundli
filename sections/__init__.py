@@ -17,19 +17,108 @@ def _format_degree(value) -> str:
         return str(value)
 
 
+# Grammar warts in AstrologyAPI's own prose, corrected on the way into the PDF. This is
+# a fixed, auditable list of observed defects -- deliberately not a general rewriter, so
+# it can never mangle astrological content. Each entry names where it was seen.
+API_TEXT_FIXUPS: list[tuple[re.Pattern[str], str]] = [
+    # /advanced_panchang karan description (Baalav): "exclusively superior for
+    # performance marriage and other auspicious Samskaras".
+    (re.compile(r"\bfor performance marriage\b", re.I), "for performing marriage"),
+    # /pitra_dosha_report conclusion: "satisfying 1 rules laid down for Pitra Dosha".
+    (re.compile(r"\bsatisfying 1 rules\b", re.I), "satisfying 1 rule"),
+]
+
+
+def fix_api_prose(value) -> str:
+    """Apply API_TEXT_FIXUPS to API-returned prose. Non-strings pass through unchanged."""
+    if not isinstance(value, str) or not value:
+        return value if isinstance(value, str) else str(value) if value is not None else ""
+    for pattern, replacement in API_TEXT_FIXUPS:
+        value = pattern.sub(replacement, value)
+    return value
+
+
 def _safe_time(value) -> str:
-    if value is None or value == "" or str(value).lower() == "nan":
+    """Blank out NaN scalars and zero-pad H:M:S; pass everything else through.
+
+    The NaN test is deliberately whole-token. It used to be `if "nan" in s.lower()`,
+    a substring match — and because the generic render_value macro pipes *every*
+    scalar through this filter in nine templates, any API prose containing
+    fi-nan-ce / gover-nan-ce / mainte-nan-ce was silently replaced by an em-dash.
+    That is what made "What Sade Sati Is" render as "—" on the doshas page while the
+    same paragraph printed in full in the Sade Sati section, which does not filter.
+    """
+    if value is None or value == "":
         return "—"
     s = str(value).strip()
-    if "nan" in s.lower():
+    if not s:
         return "—"
     if ":" in s:
         parts = s.split(":")
+        # A time with any NaN component is meaningless; prose with a colon is not.
+        if any(p.strip().lower() == "nan" for p in parts):
+            return "—"
         try:
             return ":".join(f"{int(p):02d}" for p in parts)
         except ValueError:
             return s
+    if s.lower() == "nan":
+        return "—"
     return s
+
+
+# A bare clock ("6:32", "6:32:30") or a numeric date carrying one ("14-5-2005 0:12").
+# Anchored, and minutes accept a single digit because the API really does emit
+# "1-7-2025 17:0" -- a stricter \d{2} silently drops the time on those rows.
+_CLOCK_RE = re.compile(r"^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$")
+_DATE_CLOCK_RE = re.compile(r"^(\d{1,2}-\d{1,2}-\d{4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$")
+
+
+def clock12(value) -> str:
+    """Render a clock time as 12-hour with an AM/PM marker; pass anything else through.
+
+    Seconds are dropped, so "6:32:30" becomes "6:32 AM". Dates keep their numeric form:
+    "14-5-2005 0:12" becomes "14-5-2005 12:12 AM".
+
+    Deliberately NOT a replacement for `_safe_time`. That filter is piped over every
+    scalar by the generic render_value macro in nine templates, and its 24-hour
+    zero-padding contract is pinned by tests/test_pdf_qa.py -- so this one is applied only
+    at sites known to hold a real clock time. Same "—" guard for empty/NaN input, so the
+    two behave alike where a time is missing.
+    """
+    if value is None or value == "":
+        return "—"
+    s = str(value).strip()
+    if not s:
+        return "—"
+
+    m = _DATE_CLOCK_RE.match(s)
+    date_part = m.group(1) if m else ""
+    if not m:
+        m = _CLOCK_RE.match(s)
+    if not m:
+        # Not a clock -- prose, a sign name, or a NaN token. Mirror _safe_time's guard: a
+        # time with any NaN component is meaningless, but prose containing a colon is not.
+        if s.lower() == "nan":
+            return "—"
+        if ":" in s and any(p.strip().lower() == "nan" for p in s.split(":")):
+            return "—"
+        return s
+
+    try:
+        hour = int(m.group(2 if date_part else 1))
+        minute = int(m.group(3 if date_part else 2))
+    except (TypeError, ValueError):
+        return s
+    if not (0 <= minute < 60):
+        return s
+
+    # `% 24` so a stray "24:00" reads as 12:00 AM rather than 12:00 PM.
+    hour %= 24
+    suffix = "PM" if hour >= 12 else "AM"
+    hour_12 = hour % 12 or 12
+    out = f"{hour_12}:{minute:02d} {suffix}"
+    return f"{date_part} {out}" if date_part else out
 
 
 def truncate_sentences(text, max_sentences: int = 6):
@@ -49,12 +138,19 @@ def truncate_sentences(text, max_sentences: int = 6):
 def make_env() -> Environment:
     env = Environment(loader=FileSystemLoader("templates"))
     env.filters["safe_time"] = _safe_time
+    # 12-hour AM/PM, for sites that definitely hold a clock time. safe_time stays the
+    # 24-hour zero-padder used by the generic render_value macro -- see clock12's docstring.
+    env.filters["clock12"] = clock12
     env.filters["to_hi"] = to_hi
     env.filters["indian_date"] = format_indian_datetime
     env.filters["humanize_key"] = humanize_key
     env.filters["to_hindi_value"] = to_hindi_value
     env.filters["format_degree"] = _format_degree
     env.filters["truncate_sentences"] = truncate_sentences
+    # Applied only where API prose is known to be broken, not to every scalar -- see
+    # API_TEXT_FIXUPS. Not registered on PDFGenerator's env: that one renders base.html
+    # only, which carries no API text.
+    env.filters["api_text"] = fix_api_prose
     # Templates gate their <img> tags on these; see settings.pdf_images_enabled
     # (section artwork) and settings.pdf_logo_enabled (the brand signature).
     env.globals["show_images"] = settings.pdf_images_enabled
@@ -328,6 +424,9 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "lunar_emotional": "चंद्र भावनात्मक",
         "lunar_intellectual": "चंद्र बौद्धिक",
         "considered_date": "विचारित तिथि",
+        # /sadhesati_current_status also returns saturn_retrograde; unmapped it printed
+        # "Saturn Retrograde" in English inside Hindi reports.
+        "saturn_retrograde": "शनि वक्री",
         "sub_sub_sub_lord": "उप-उप-उप स्वामी",
         "house_lord": "भाव स्वामी",
         "nakshatra_name": "नक्षत्र का नाम",
@@ -446,7 +545,7 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         # Pitra Dosha keys
         "what_is_pitri_dosha": "पितृ दोष क्या है",
         "is_pitri_dosha_present": "पितृ दोष उपस्थित",
-        "rules_matched": "मिलान नियम",
+        "rules_matched": "लागू शास्त्रीय नियम",
         "conclusion": "निष्कर्ष",
         "उपाय": "उपाय",
         "effects": "प्रभाव",
@@ -635,6 +734,11 @@ HUMAN_LABELS: dict[str, dict[str, str]] = {
         "level4": "Level 4",
         "prediction_date": "Prediction Date",
         "nak_name": "Nakshatra",
+        # The API returns rules_matched as the *text of the rule it applied* (with an
+        # "and/or" covering alternative combinations), not a list of combinations found
+        # in this chart. Without this label the title-case fallback produced "Rules
+        # Matched", which reads as an assertion that every named combination is present.
+        "rules_matched": "Classical Rule Applied",
         "sunsettime": "Sunset Time",
         "prediction": "Prediction",
         "personal": "Personal",
@@ -750,6 +854,12 @@ def humanize_key(key: str, lang: str = "en") -> str:
     # are returned unchanged rather than English-title-cased.
     if any("ऀ" <= ch <= "ॿ" for ch in key):
         return key
+    # Already-humanized English labels, e.g. the "Saturn Now (Transit)" that
+    # translate_keys substitutes for `saturn_sign`. A space means this is a phrase, not an
+    # API key, and _camel_to_snake would split it on every capital — which is how
+    # "Saturn Now (Transit)" reached the PDF as "Saturn  Now ( Transit)".
+    if " " in key:
+        return key
     # camelCase API keys (fullDegree, signLord, …) reuse the snake_case mappings.
     snake = _camel_to_snake(key)
     if snake != key and snake in table:
@@ -808,6 +918,45 @@ def format_indian_datetime(value: str, lang: str = "en") -> str:
     return result
 
 
+# Table-of-contents chapters, in page order. Each chapter is (stable_key, member
+# section names). The key indexes LOCALES[lang]["fm_toc_items"] for the printed
+# strings; the members are section names from pdf_generator.SECTION_RENDERERS.
+#
+# A chapter is printed only when at least one of its members actually rendered, so
+# the TOC can never advertise a page the PDF doesn't contain. That matters because a
+# section can vanish four ways at runtime -- the include_sections filter, the lite
+# tier, pdf_images_enabled, or a renderer returning None on missing API data -- and
+# the old hardcoded list saw none of them.
+#
+# Invariants enforced by tests/test_pdf_generator.py: every member exists in
+# SECTION_RENDERERS, every content section is claimed by exactly one chapter, a
+# chapter's members are contiguous, and chapters are declared in SECTION_RENDERERS
+# order. Contiguity is what forbids giving panchada_maitri its own row: it sits
+# between planet_nature and ashtakvarga, so a separate row would print out of order.
+TOC_CHAPTERS: list[tuple[str, tuple[str, ...]]] = [
+    ("birth_summary",       ("astro_details",)),
+    ("panchang",            ("panchang",)),
+    ("dasha",               ("dasha", "mahadasha_journey")),
+    ("charts",              ("divisional_charts",)),
+    ("life_reports",        ("life_reports",)),
+    ("three_pillars",       ("three_pillars",)),
+    ("planet_profiles",     ("graha_profile",)),
+    ("doshas",              ("dosha",)),
+    ("remedies",            ("remedy_rudraksha", "remedy_gemstones", "remedy_mantras",
+                             "remedy_yantra", "remedy_daan")),
+    ("varshaphal",          ("varshaphal",)),
+    ("planetary_positions", ("planets",)),
+    ("nature_ashtakvarga",  ("planet_nature", "panchada_maitri", "ashtakvarga")),
+    ("numerology",          ("numerology", "numerology_personality")),
+    ("lalkitab",            ("lalkitab",)),
+    ("yogas",               ("yogas",)),
+    ("thematic",            ("thematic_reports",)),
+    ("career",              ("career_path",)),
+    ("marriage_home",       ("marriage_timing", "material_comforts")),
+    ("sade_sati",           ("sade_sati_journey",)),
+]
+
+
 LOCALES: dict[str, dict] = {
     "en": {
         "title": "Kundli Report",
@@ -820,8 +969,11 @@ LOCALES: dict[str, dict] = {
         "sunrise": "Sunrise",
         "sunset": "Sunset",
         "ascendant": "Ascendant",
+        "ascendant_lord": "Ascendant Lord",
+        "natal_prefix": "Natal",
         "sun_sign": "Sun Sign",
         "moon_sign": "Moon Sign",
+        "moon_sign_janma_rashi": "Moon Sign (Janma Rashi)",
         "generated_on": "Generated on",
         "cover_birth_details_title": "Birth Details",
         "cover_full_name": "Full Name",
@@ -855,6 +1007,7 @@ LOCALES: dict[str, dict] = {
         "basic_panchang_title": "Basic Panchang",
         "basic_panchang_sunrise_title": "Basic Panchang (Sunrise)",
         "advanced_panchang_sunrise_title": "Advanced Panchang (Sunrise)",
+        "sunrise_reference_note": "Calculated for sunrise on your birth date — these may differ by one step from the birth-moment panchang above, which is normal.",
         "planet_panchang_title": "Planet Panchang",
         "planet_panchang_sunrise_title": "Planet Panchang (Sunrise)",
         "dur_muhurtha": "Dur Muhurtha",
@@ -1208,7 +1361,9 @@ LOCALES: dict[str, dict] = {
         ],
 
         "rg_title": "Gemstone Recommendations",
-        "rg_desc": "Gemstones channel planetary energy directly into your life. Your chart reveals three key stones — each serving a different purpose in strengthening your cosmic blueprint.",
+        # Deliberately no stone count: a card is dropped when neither the API nor the
+        # chart can name that stone, and the copy must not promise three regardless.
+        "rg_desc": "Gemstones channel planetary energy directly into your life. Each stone below serves a different purpose in strengthening your cosmic blueprint.",
         "rg_jivan_ratna": "Jivan Ratna (Life Stone)",
         "rg_jivan_desc": "Based on your Lagna lord — your core life force gem",
         "rg_karaka_ratna": "Karaka Ratna (Soul Stone)",
@@ -1374,27 +1529,29 @@ LOCALES: dict[str, dict] = {
         "cta_signoff": "Remember, {name} — the stars illuminate the path, but the journey is yours to walk. We're here whenever you need us.",
 
         "fm_toc_title": "Table of Contents",
-        "fm_toc_section": "Section",
-        "fm_toc_description": "Description",
-        "fm_toc_items": [
-            {"name": "Birth Summary", "desc": "Core birth details, Janma Rashi, Nakshatra, and Ayanamsha"},
-            {"name": "Birth Panchang", "desc": "Tithi, Nakshatra, Yoga, Karana, and time elements at birth"},
-            {"name": "Dasha Predictions", "desc": "Your Vimshottari Mahadasha and Antardasha journey"},
-            {"name": "Birth & Divisional Charts", "desc": "Lagna, Navamsha and divisional charts (D1-D12), North Indian style"},
-            {"name": "Life Area Reports", "desc": "Ascendant, Nakshatra, and predictions for each area of life"},
-            {"name": "Three Pillars", "desc": "Your Lagna, Moon sign, and Nakshatra — the foundation of your chart"},
-            {"name": "Planet Profiles", "desc": "Each planet's placement, sign, dignity, aspects, and effects (incl. outer planets)"},
-            {"name": "Doshas", "desc": "Manglik, Kaal Sarp, Sade Sati, Pitra, and other planetary afflictions"},
-            {"name": "Remedies", "desc": "Rudraksha, Gemstones, Mantras, Ishta Devata, Yantra, and Daan guidance"},
-            {"name": "Annual Forecast", "desc": "Varshaphal — your yearly horoscope analysis"},
-            {"name": "Planetary Nature & Ashtakvarga", "desc": "Planetary nature analysis, Sarvashtakvarga, and Maitri relations"},
-            {"name": "Yoga Analysis", "desc": "Raj Yogas and special planetary combinations"},
-            {"name": "Numerology", "desc": "Moolank, Bhagyank, and numerological personality"},
-            {"name": "Lal Kitab", "desc": "Lal Kitab debts, planetary effects, and remedies"},
-            {"name": "Career Path", "desc": "10th house, Amatyakaraka, and professional direction"},
-            {"name": "Love, Marriage & Home", "desc": "Darakaraka, marriage timing, romance, and home / property / vehicle"},
-            {"name": "Sade Sati Journey", "desc": "Your Saturn transit, its phases, and remedies"},
-        ],
+        # Keyed by TOC_CHAPTERS key -- order lives in TOC_CHAPTERS, never here, and hi
+        # mirrors by key rather than by position.
+        "fm_toc_items": {
+            "birth_summary": {"name": "Birth Summary", "desc": "Core birth details, Janma Rashi, Nakshatra, and Ayanamsha"},
+            "panchang": {"name": "Birth Panchang", "desc": "Tithi, Nakshatra, Yoga, Karana, and time elements at birth"},
+            "dasha": {"name": "Dasha Predictions", "desc": "Your Vimshottari Mahadasha and Antardasha journey"},
+            "charts": {"name": "Birth & Divisional Charts", "desc": "Lagna, Navamsha and divisional charts (D1-D12), North Indian style"},
+            "life_reports": {"name": "Life Area Reports", "desc": "Ascendant, Nakshatra, and predictions for each area of life"},
+            "three_pillars": {"name": "Three Pillars", "desc": "Your Lagna, Moon sign, and Nakshatra — the foundation of your chart"},
+            "planet_profiles": {"name": "Planet Profiles", "desc": "Each planet's placement, sign, dignity, aspects, and effects"},
+            "doshas": {"name": "Doshas", "desc": "Manglik, Kaal Sarp, Sade Sati, Pitra, and other planetary afflictions"},
+            "remedies": {"name": "Remedies", "desc": "Gemstone, mantra, Ishta Devata, yantra, and daan guidance"},
+            "varshaphal": {"name": "Annual Forecast", "desc": "Varshaphal — your yearly horoscope analysis"},
+            "planetary_positions": {"name": "Planetary Positions", "desc": "Sign, sign lord, nakshatra, pada, degree, house and retrogression for all nine planets"},
+            "nature_ashtakvarga": {"name": "Planetary Nature & Ashtakvarga", "desc": "Benefic-malefic nature of each planet and your Sarva Ashtakavarga strength scores"},
+            "numerology": {"name": "Numerology", "desc": "Moolank, Bhagyank, and numerological personality"},
+            "lalkitab": {"name": "Lal Kitab", "desc": "Lal Kitab debts, planetary effects, and remedies"},
+            "yogas": {"name": "Yoga Analysis", "desc": "Raj Yogas and special planetary combinations"},
+            "thematic": {"name": "Thematic Life Analysis", "desc": "Career, finance, relationships, health and spiritual growth read house by house"},
+            "career": {"name": "Career Path", "desc": "10th house, Amatyakaraka, and professional direction"},
+            "marriage_home": {"name": "Love, Marriage & Home", "desc": "Darakaraka, marriage timing, romance, and home / property / vehicle"},
+            "sade_sati": {"name": "Sade Sati Journey", "desc": "Your Saturn transit, its phases, and remedies"},
+        },
 
         # Graha Profile
         "gp_title": "Planet Profiles",
@@ -1479,7 +1636,8 @@ LOCALES: dict[str, dict] = {
         "ar_for": "For",
         "ar_priority": "needs strengthening",
         "ar_mantra": "Mantra",
-        "ar_gemstone": "Gemstone",
+        # No ar_gemstone: stones are prescribed only in remedy_gemstones. See
+        # sections/life_area_remedies.py for why the row was removed.
         "ar_donation": "Donation (Daan)",
         "ar_practice": "Practice",
 
@@ -1524,6 +1682,12 @@ LOCALES: dict[str, dict] = {
         "ss_start": "Start",
         "ss_end": "End",
         "ss_date": "Date",
+        # Printed under a cycle row when Saturn re-crosses a boundary after retrograding,
+        # which is why a "Begins" row can follow an "Ends" row. The second is the weaker
+        # claim, for a row that progresses normally while Saturn happens to be retrograde.
+        # See mark_retrograde_reentries in sections/sade_sati_journey.py.
+        "ss_retro_note": "Saturn re-enters after retrograde",
+        "ss_retrograde_note": "Saturn is retrograde at this time",
         "ss_practices_title": "Daily Practices for Sade Sati",
         "ss_practices_intro": "Saturn loves discipline, simplicity, and honest effort. The more you align with Saturn's energy, the easier this period becomes. These daily practices help you stay grounded and build inner strength:",
         "ss_daily_practices": [
@@ -1591,8 +1755,11 @@ LOCALES: dict[str, dict] = {
         "sunrise": "सूर्योदय",
         "sunset": "सूर्यास्त",
         "ascendant": "लग्न",
+        "ascendant_lord": "लग्न स्वामी",
+        "natal_prefix": "जन्मकालीन",
         "sun_sign": "सूर्य राशि",
         "moon_sign": "चंद्र राशि",
+        "moon_sign_janma_rashi": "चंद्र राशि (जन्म राशि)",
         "cover_birth_details_title": "जन्म विवरण",
         "cover_full_name": "पूरा नाम",
         "generated_on": "निर्मित तिथि",
@@ -1626,6 +1793,7 @@ LOCALES: dict[str, dict] = {
         "basic_panchang_title": "मूल पंचांग",
         "basic_panchang_sunrise_title": "मूल पंचांग (सूर्योदय)",
         "advanced_panchang_sunrise_title": "विस्तृत पंचांग (सूर्योदय)",
+        "sunrise_reference_note": "यह गणना आपकी जन्म तिथि के सूर्योदय के लिए है — ऊपर दिए गए जन्म-समय के पंचांग से एक चरण का अंतर सामान्य है।",
         "planet_panchang_title": "ग्रह पंचांग",
         "planet_panchang_sunrise_title": "ग्रह पंचांग (सूर्योदय)",
         "dur_muhurtha": "दुर्मुहूर्त",
@@ -1979,7 +2147,7 @@ LOCALES: dict[str, dict] = {
         ],
 
         "rg_title": "रत्न अनुशंसा",
-        "rg_desc": "रत्न ग्रहों की ऊर्जा को सीधे आपके जीवन में प्रवाहित करते हैं। आपकी कुंडली तीन प्रमुख रत्न बताती है — प्रत्येक आपके ब्रह्मांडीय खाके को मजबूत करने का अलग उद्देश्य रखता है।",
+        "rg_desc": "रत्न ग्रहों की ऊर्जा को सीधे आपके जीवन में प्रवाहित करते हैं। नीचे दिया प्रत्येक रत्न आपके ब्रह्मांडीय खाके को मजबूत करने का अलग उद्देश्य रखता है।",
         "rg_jivan_ratna": "जीवन रत्न",
         "rg_jivan_desc": "आपके लग्न स्वामी पर आधारित — आपकी मूल जीवन शक्ति का रत्न",
         "rg_karaka_ratna": "कारक रत्न (आत्मा रत्न)",
@@ -2151,27 +2319,28 @@ LOCALES: dict[str, dict] = {
         "cta_signoff": "याद रखें {name} — सितारे रास्ता दिखाते हैं, लेकिन यात्रा आपकी अपनी है। जब भी ज़रूरत हो, हम यहां हैं।",
 
         "fm_toc_title": "विषय सूची",
-        "fm_toc_section": "अनुभाग",
-        "fm_toc_description": "विवरण",
-        "fm_toc_items": [
-            {"name": "जन्म सारांश", "desc": "मूलभूत जन्म विवरण, जन्म राशि, नक्षत्र और अयनांश"},
-            {"name": "जन्म पंचांग", "desc": "जन्म के समय तिथि, नक्षत्र, योग, करण और समय तत्व"},
-            {"name": "दशा भविष्यवाणी", "desc": "आपकी विंशोत्तरी महादशा व अंतरदशा यात्रा"},
-            {"name": "जन्म कुंडली व वर्ग चार्ट", "desc": "लग्न, नवांश और विभागीय चार्ट (D1-D12), उत्तर भारतीय शैली"},
-            {"name": "जीवन क्षेत्र रिपोर्ट", "desc": "लग्न, नक्षत्र और जीवन के प्रत्येक क्षेत्र की भविष्यवाणी"},
-            {"name": "तीन आधार स्तंभ", "desc": "आपका लग्न, चंद्र राशि और नक्षत्र — कुंडली की नींव"},
-            {"name": "ग्रह प्रोफाइल", "desc": "प्रत्येक ग्रह की स्थिति, राशि, गरिमा, दृष्टि और प्रभाव (बाह्य ग्रहों सहित)"},
-            {"name": "दोष", "desc": "मांगलिक, काल सर्प, साढ़े साती, पितृ और अन्य ग्रह दोष"},
-            {"name": "उपाय", "desc": "रुद्राक्ष, रत्न, मंत्र, इष्ट देव, यंत्र और दान मार्गदर्शन"},
-            {"name": "वार्षिक फल", "desc": "वर्षफल — आपका वार्षिक राशिफल विश्लेषण"},
-            {"name": "ग्रह स्वभाव व अष्टकवर्ग", "desc": "ग्रह स्वभाव विश्लेषण, सर्व अष्टकवर्ग और पंचधा मैत्री"},
-            {"name": "योग विश्लेषण", "desc": "राज योग और विशेष ग्रह संयोजन"},
-            {"name": "अंक ज्योतिष", "desc": "मूलांक, भाग्यांक और अंकशास्त्रीय व्यक्तित्व"},
-            {"name": "लाल किताब", "desc": "लाल किताब ऋण, ग्रह प्रभाव और उपाय"},
-            {"name": "करियर पथ", "desc": "दसवां भाव, अमात्यकारक और व्यावसायिक दिशा"},
-            {"name": "प्रेम, विवाह व गृह सुख", "desc": "दाराकारक, विवाह समय, प्रेम तथा घर, संपत्ति व वाहन"},
-            {"name": "साढ़े साती यात्रा", "desc": "आपकी शनि यात्रा, उसके चरण और उपाय"},
-        ],
+        # Keyed by TOC_CHAPTERS key -- mirrors "en" by key, not by position.
+        "fm_toc_items": {
+            "birth_summary": {"name": "जन्म सारांश", "desc": "मूलभूत जन्म विवरण, जन्म राशि, नक्षत्र और अयनांश"},
+            "panchang": {"name": "जन्म पंचांग", "desc": "जन्म के समय तिथि, नक्षत्र, योग, करण और समय तत्व"},
+            "dasha": {"name": "दशा भविष्यवाणी", "desc": "आपकी विंशोत्तरी महादशा व अंतरदशा यात्रा"},
+            "charts": {"name": "जन्म कुंडली व वर्ग चार्ट", "desc": "लग्न, नवांश और विभागीय चार्ट (D1-D12), उत्तर भारतीय शैली"},
+            "life_reports": {"name": "जीवन क्षेत्र रिपोर्ट", "desc": "लग्न, नक्षत्र और जीवन के प्रत्येक क्षेत्र की भविष्यवाणी"},
+            "three_pillars": {"name": "तीन आधार स्तंभ", "desc": "आपका लग्न, चंद्र राशि और नक्षत्र — कुंडली की नींव"},
+            "planet_profiles": {"name": "ग्रह प्रोफाइल", "desc": "प्रत्येक ग्रह की स्थिति, राशि, गरिमा, दृष्टि और प्रभाव"},
+            "doshas": {"name": "दोष", "desc": "मांगलिक, काल सर्प, साढ़े साती, पितृ और अन्य ग्रह दोष"},
+            "remedies": {"name": "उपाय", "desc": "रत्न, मंत्र, इष्ट देव, यंत्र और दान मार्गदर्शन"},
+            "varshaphal": {"name": "वार्षिक फल", "desc": "वर्षफल — आपका वार्षिक राशिफल विश्लेषण"},
+            "planetary_positions": {"name": "ग्रह स्थिति", "desc": "सभी नौ ग्रहों की राशि, राशि स्वामी, नक्षत्र, पद, अंश, भाव और वक्री स्थिति"},
+            "nature_ashtakvarga": {"name": "ग्रह स्वभाव व अष्टकवर्ग", "desc": "प्रत्येक ग्रह का शुभ-अशुभ स्वभाव और आपका सर्व अष्टकवर्ग बल"},
+            "numerology": {"name": "अंक ज्योतिष", "desc": "मूलांक, भाग्यांक और अंकशास्त्रीय व्यक्तित्व"},
+            "lalkitab": {"name": "लाल किताब", "desc": "लाल किताब ऋण, ग्रह प्रभाव और उपाय"},
+            "yogas": {"name": "योग विश्लेषण", "desc": "राज योग और विशेष ग्रह संयोजन"},
+            "thematic": {"name": "विषयवार जीवन विश्लेषण", "desc": "करियर, धन, संबंध, स्वास्थ्य और आध्यात्मिक उन्नति का भाव-आधारित विश्लेषण"},
+            "career": {"name": "करियर पथ", "desc": "दसवां भाव, अमात्यकारक और व्यावसायिक दिशा"},
+            "marriage_home": {"name": "प्रेम, विवाह व गृह सुख", "desc": "दाराकारक, विवाह समय, प्रेम तथा घर, संपत्ति व वाहन"},
+            "sade_sati": {"name": "साढ़े साती यात्रा", "desc": "आपकी शनि यात्रा, उसके चरण और उपाय"},
+        },
 
         # Graha Profile
         "gp_title": "ग्रह प्रोफाइल",
@@ -2256,7 +2425,7 @@ LOCALES: dict[str, dict] = {
         "ar_for": "हेतु —",
         "ar_priority": "सुदृढ़ करने योग्य",
         "ar_mantra": "मंत्र",
-        "ar_gemstone": "रत्न",
+        # No ar_gemstone — see the "en" note above.
         "ar_donation": "दान",
         "ar_practice": "अभ्यास",
 
@@ -2301,6 +2470,9 @@ LOCALES: dict[str, dict] = {
         "ss_start": "आरंभ",
         "ss_end": "समाप्ति",
         "ss_date": "तिथि",
+        # See the "en" note above.
+        "ss_retro_note": "शनि वक्री होकर पुनः प्रवेश",
+        "ss_retrograde_note": "इस समय शनि वक्री है",
         "ss_practices_title": "साढ़े साती के लिए दैनिक अभ्यास",
         "ss_practices_intro": "शनि को अनुशासन, सादगी और ईमानदार प्रयास पसंद है। जितना अधिक आप शनि की ऊर्जा के साथ तालमेल बैठाते हैं, यह काल उतना ही आसान होता है। ये दैनिक अभ्यास आपको जमीन से जुड़े रहने और आंतरिक शक्ति बनाने में मदद करते हैं:",
         "ss_daily_practices": [

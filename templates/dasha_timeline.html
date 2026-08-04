@@ -5,19 +5,19 @@
     <div class="dasha-current-card">
         <div class="period-label">{{ locale.current_mahadasha }}</div>
         <div class="planet-name">{{ locale.planet_names.get(current_dasha.major.planet, current_dasha.major.planet) }}</div>
-        <div class="period-dates">{{ current_dasha.major.start }} → {{ current_dasha.major.end }}</div>
+        <div class="period-dates">{{ current_dasha.major.start | clock12 }} → {{ current_dasha.major.end | clock12 }}</div>
     </div>
 
     <div class="dasha-sub-cards">
         <div class="dasha-sub-card">
             <div class="sub-label">{{ locale.antardasha }}</div>
             <div class="sub-planet">{{ locale.planet_names.get(current_dasha.minor.planet, current_dasha.minor.planet) }}</div>
-            <div class="sub-dates">{{ current_dasha.minor.start }} → {{ current_dasha.minor.end }}</div>
+            <div class="sub-dates">{{ current_dasha.minor.start | clock12 }} → {{ current_dasha.minor.end | clock12 }}</div>
         </div>
         <div class="dasha-sub-card">
             <div class="sub-label">{{ locale.pratyantar }}</div>
             <div class="sub-planet">{{ locale.planet_names.get(current_dasha.sub_minor.planet, current_dasha.sub_minor.planet) }}</div>
-            <div class="sub-dates">{{ current_dasha.sub_minor.start }} → {{ current_dasha.sub_minor.end }}</div>
+            <div class="sub-dates">{{ current_dasha.sub_minor.start | clock12 }} → {{ current_dasha.sub_minor.end | clock12 }}</div>
         </div>
     </div>
 
@@ -55,8 +55,8 @@
             <tr class="{% if current_dasha and dasha.planet == current_dasha.major.planet %}active-dasha{% endif %}">
                 <td>{{ loop.index }}</td>
                 <td><strong>{{ locale.planet_names.get(dasha.planet, dasha.planet) }}</strong></td>
-                <td>{{ dasha.start }}</td>
-                <td>{{ dasha.end }}</td>
+                <td>{{ dasha.start | clock12 }}</td>
+                <td>{{ dasha.end | clock12 }}</td>
             </tr>
             {% endfor %}
         </tbody>

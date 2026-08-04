@@ -23,6 +23,11 @@ IMAGE_ONLY_SECTIONS = {
     "astrologer_intro", "divider_ganesha", "divider_grah", "divider_dosha",
     "offer_banner", "divider_numerology", "divider_lalkitab",
 }
+
+# Sections that need to know which OTHER sections rendered. They are skipped during
+# the main loop -- an empty slot reserves their page position -- and spliced back in
+# afterwards, once the set of rendered names is known. See generate().
+DEFERRED_SECTIONS = {"front_matter_toc"}
 from sections.ashtakvarga import render_ashtakvarga
 from sections.astro_details import render_astro_details
 from sections.cover import render_cover
@@ -149,7 +154,7 @@ def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
     return pdf_bytes
 
 SECTION_RENDERERS = [
-    ("front_page", make_divider_renderer("front_page.png")),
+    ("front_page", make_divider_renderer("front_page.jpg")),
     ("astrologer_intro", make_divider_renderer("astrologer.png")),
     ("authors_note", render_authors_note),
     ("front_matter", render_front_matter),          # disclaimer + how-to-read
@@ -215,6 +220,8 @@ class PDFGenerator:
         report_tier: str = "detailed",
     ) -> bytes:
         sections: list[str] = []
+        rendered: set[str] = set()
+        deferred_slots: dict[str, int] = {}
         for name, renderer in SECTION_RENDERERS:
             if include_sections and name not in include_sections:
                 continue
@@ -222,15 +229,33 @@ class PDFGenerator:
                 continue
             if not settings.pdf_images_enabled and name in IMAGE_ONLY_SECTIONS:
                 continue
+            if name in DEFERRED_SECTIONS:
+                # Hold this page position; filled in below, once we know what rendered.
+                deferred_slots[name] = len(sections)
+                sections.append("")
+                continue
             try:
                 html = renderer(data, lang)
                 if html:
                     sections.append(html)
+                    rendered.add(name)
                     logger.info("Section '%s' rendered", name)
                 else:
                     logger.info("Section '%s' skipped (no data)", name)
             except Exception:
                 logger.exception("Section '%s' failed", name)
+
+        if "front_matter_toc" in deferred_slots:
+            try:
+                toc_html = render_front_matter_toc(data, lang, rendered_sections=rendered)
+            except Exception:
+                logger.exception("Section 'front_matter_toc' failed")
+                toc_html = None
+            # An unfilled slot stays "" — base.html emits nothing for it, so a failed
+            # TOC costs the page and nothing else.
+            sections[deferred_slots["front_matter_toc"]] = toc_html or ""
+            logger.info("Section 'front_matter_toc' %s",
+                        "rendered" if toc_html else "skipped")
 
         brand_footer = None
         if settings.brand_footer_enabled:
@@ -250,7 +275,8 @@ class PDFGenerator:
 
         base_url = TEMPLATES_DIR.as_uri() + "/"
         pdf_bytes: bytes = HTML(string=full_html, base_url=base_url).write_pdf()
-        logger.info("PDF generated: %d bytes, %d sections", len(pdf_bytes), len(sections))
+        logger.info("PDF generated: %d bytes, %d sections",
+                    len(pdf_bytes), sum(1 for s in sections if s))
 
         if settings.filler_images_enabled:
             try:

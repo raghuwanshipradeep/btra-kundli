@@ -7,13 +7,16 @@
 
   {% if saturn and moon %}
   <div style="display: flex; gap: 4mm; margin-bottom: 5mm;">
+    {# Both cards are BIRTH-CHART positions, read from data.planets. The status table
+       below shows Saturn's *current transit* sign, so these must say so explicitly —
+       otherwise the page reads as putting Saturn in two signs at once. #}
     <div class="dasha-current-card rashi-card-saturn" style="flex: 1;">
-      <div class="period-label">{{ locale.planet_names.get("Saturn", "Saturn") }}</div>
+      <div class="period-label">{{ locale.natal_prefix }} {{ locale.planet_names.get("Saturn", "Saturn") }}</div>
       <div class="planet-name">{{ locale.sign_names.get(saturn.sign, saturn.sign) }}</div>
       <div class="period-dates">{{ locale.gp_house_prefix }} {{ saturn.house }}</div>
     </div>
     <div class="dasha-current-card rashi-card-moon" style="flex: 1;">
-      <div class="period-label">{{ locale.planet_names.get("Moon", "Moon") }}</div>
+      <div class="period-label">{{ locale.natal_prefix }} {{ locale.planet_names.get("Moon", "Moon") }}</div>
       <div class="planet-name">{{ locale.sign_names.get(moon.sign, moon.sign) }}</div>
       <div class="period-dates">{{ locale.gp_house_prefix }} {{ moon.house }}</div>
     </div>
@@ -63,7 +66,6 @@
     <table class="data-table" style="font-size: 9.5pt; margin-bottom: 4mm;">
       <thead>
         <tr>
-          <th>#</th>
           <th>{{ locale.ss_phase }}</th>
           <th>{{ locale.ss_sign }}</th>
           <th>{{ locale.ss_date }}</th>
@@ -72,12 +74,20 @@
       <tbody>
         {% for entry in life_details %}
         <tr>
-          <td>{{ loop.index }}</td>
           <td>
             {% if entry is mapping %}
               {%- set raw_phase = entry.get("phase") or entry.get("type") or "" -%}
               {# Unknown enums fall through to the raw value rather than blanking. #}
               {{ phase_labels.get(raw_phase, raw_phase) }}
+              {# Saturn retrograding back over a sign boundary makes "Begins" follow
+                 "Ends"; say so, or the table reads as mis-sorted. A row that progresses
+                 normally but happens to be retrograde gets the weaker note -- claiming a
+                 re-entry there would be wrong. See mark_retrograde_reentries. #}
+              {%- set retro_note = {"reentry": locale.ss_retro_note,
+                                    "retrograde": locale.ss_retrograde_note}.get(entry.get("retro_reason")) -%}
+              {% if retro_note %}
+              <div style="font-size: 8pt; font-style: italic; color: var(--ink-mute);">{{ retro_note }}</div>
+              {% endif %}
             {% else %}
               {{ entry }}
             {% endif %}

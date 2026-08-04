@@ -9,11 +9,14 @@
                 <td>{{ astro.ascendant }}</td>
             </tr>
             <tr>
-                <td>{{ locale.sign_lord }}</td>
+                <td>{{ locale.ascendant_lord }}</td>
                 <td>{{ astro.ascendant_lord }}</td>
             </tr>
+            {# /astro_details has no sun-sign field: its `sign`/`SignLord` pair is the
+               Janma Rashi (the Moon's sign) and its Naksahtra/Charan are the Moon's too,
+               so this row must not be labelled "Sun Sign". #}
             <tr>
-                <td>{{ locale.sun_sign }}</td>
+                <td>{{ locale.moon_sign_janma_rashi }}</td>
                 <td>{{ locale.sign_names.get(astro.sign, astro.sign) }} ({{ locale.planet_names.get(astro.SignLord, astro.SignLord) }})</td>
             </tr>
             <tr>

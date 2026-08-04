@@ -38,7 +38,7 @@ python qa_check.py demo.pdf
 
 ### Two PDF pipelines
 
-1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (56 entries in `SECTION_RENDERERS`: 48 content renderers + 8 divider/banner image renderers)
+1. **Kundli (birth chart):** `POST /generate-kundli` -> `AstrologyAPIClient.fetch_all()` -> `KundliData` -> `PDFGenerator` (41 entries in `SECTION_RENDERERS`: 33 content renderers + 8 divider/banner image renderers)
 2. **Match-making:** `POST /generate-match` -> `AstrologyAPIClient.fetch_match()` -> `MatchData` -> `MatchPDFGenerator` (single `render_matching` section)
 
 Both share `base.html` + `styles.css` for final HTML->PDF conversion via WeasyPrint.
@@ -77,6 +77,11 @@ Each file in `sections/` exports a `render_<name>(data: KundliData, lang: str) -
 2. Create `sections/new_section.py` with `render_new_section(data, lang)` function
 3. Add the renderer to `SECTION_RENDERERS` list in `pdf_generator.py`
 4. Add locale strings for both `"en"` and `"hi"` keys in `LOCALES` dict in `sections/__init__.py`
+5. Claim the section in `TOC_CHAPTERS` (`sections/__init__.py`) — either as a member of an existing chapter or as a new chapter with `fm_toc_items` strings in **both** locales — or, if it's front/back matter, add it to `UNLISTED_SECTIONS` in `tests/test_pdf_generator.py`. The guard tests there fail until you do; that's what stops the Table of Contents drifting out of sync with the report.
+
+### Table of contents
+
+The TOC is **derived**, not hardcoded. `TOC_CHAPTERS` (`sections/__init__.py`) is an ordered list of `(chapter_key, member_section_names)`; `LOCALES[lang]["fm_toc_items"]` holds the printed name/desc keyed by `chapter_key` (so Hindi mirrors English by key, not by position). `PDFGenerator.generate()` skips the `front_matter_toc` entry during the render loop — reserving an empty slot to hold its page position, see `DEFERRED_SECTIONS` — collects the names of sections that returned HTML, then renders the TOC and splices it into that slot. A chapter row prints only if at least one member rendered, so the TOC can't advertise a page the PDF lacks when a section is dropped by the lite tier, `pdf_images_enabled`, `include_sections`, or missing API data. Chapter members must be **contiguous** in `SECTION_RENDERERS` order, else row order would disagree with print order. No page numbers by design — `loop.index` supplies the 1..N chapter sequence and closes up when rows drop.
 
 ### Payment, fulfillment, and delivery (`main.py`)
 

@@ -23,7 +23,8 @@ DOSHA_KEYS_HI: dict[str, str] = {
     "manglik_present_rule": "मांगलिक उपस्थित नियम",
     "manglik_cancel_rule": "मांगलिक निरस्त नियम",
     "percentage_manglik_after_cancellation": "निरस्तीकरण के बाद प्रतिशत",
-    "based_on_aspen": "लग्न के आधार पर",
+    "based_on_aspect": "दृष्टि के आधार पर",
+    "based_on_aspen": "दृष्टि के आधार पर",  # kept: older payloads used this spelling
     "based_on_house": "भाव के आधार पर",
     # Kalsarpa
     "present": "उपस्थित",
@@ -61,11 +62,42 @@ DOSHA_NARRATIVE_KEYS = {
 }
 
 # Explicit display order for the merged Manglik summary so status/percentage surface up top.
+# `is_present` is deliberately NOT first — see _merge_manglik.
 _MANGLIK_ORDER = [
-    "is_present", "is_cancelled", "manglik_status", "percentage_manglik_present",
-    "percentage_manglik_after_cancellation", "is_mars_manglik_cancelled",
+    "manglik_status", "percentage_manglik_present",
+    "percentage_manglik_after_cancellation", "is_cancelled", "is_mars_manglik_cancelled",
     "manglik_report", "manglik_present_rule", "manglik_cancel_rule",
 ]
+
+# /manglik returns manglik_status as a raw enum; printed as-is it leaked "LESS_EFFECTIVE"
+# into the PDF. Same pattern as PHASE_LABELS in sections/sade_sati_journey.py.
+MANGLIK_STATUS_LABELS: dict[str, dict[str, str]] = {
+    "en": {
+        "NOT_EFFECTIVE": "Negligible",
+        "LESS_EFFECTIVE": "Mild",
+        "EFFECTIVE": "Moderate",
+        "HIGHLY_EFFECTIVE": "Strong",
+    },
+    "hi": {
+        "NOT_EFFECTIVE": "नगण्य",
+        "LESS_EFFECTIVE": "हल्का",
+        "EFFECTIVE": "मध्यम",
+        "HIGHLY_EFFECTIVE": "प्रबल",
+    },
+}
+
+
+def _is_empty(v) -> bool:
+    """True for values that would render as a label with nothing beside it.
+
+    `v not in (None, "")` is not enough: an empty list passes it (`[] == ""` is False),
+    which is what produced a bare "Manglik Cancellation Rule" heading with no body.
+    """
+    if v is None:
+        return True
+    if isinstance(v, (str, list, tuple, dict, set)):
+        return len(v) == 0
+    return False
 
 
 def _split_dosha(d: dict | None) -> tuple[dict, dict]:
@@ -77,6 +109,8 @@ def _split_dosha(d: dict | None) -> tuple[dict, dict]:
     for k, v in d.items():
         if k.endswith("_ms") or k.endswith("_id") or k == "planet_small":
             continue
+        if _is_empty(v):
+            continue
         if k in DOSHA_NARRATIVE_KEYS or isinstance(v, (dict, list)):
             narrative[k] = v
         else:
@@ -84,16 +118,41 @@ def _split_dosha(d: dict | None) -> tuple[dict, dict]:
     return summary, narrative
 
 
-def _merge_manglik(simple_manglik: dict | None, manglik: dict | None) -> dict:
-    """Combine the short simple_manglik and detailed manglik into one ordered dict."""
+def _merge_manglik(
+    simple_manglik: dict | None, manglik: dict | None, lang: str = "en"
+) -> dict:
+    """Combine the short simple_manglik and detailed manglik into one ordered dict.
+
+    The two endpoints can disagree: /simple_manglik returns `is_present` as a *severity
+    threshold* flag, so a chart with Mars in the 12th can come back `is_present: false`
+    while /manglik reports 15%, LESS_EFFECTIVE and prose saying the dosha *is* present
+    but mild. Headlining the bare flag put "Present: No" directly above "Manglik Dosha
+    is present". So when the detailed status exists it leads and the simple flag is
+    dropped; `is_present` is only shown when /manglik gave us nothing to say.
+    """
     src: dict = {**(simple_manglik or {}), **(manglik or {})}
-    merged = {k: src[k] for k in _MANGLIK_ORDER if src.get(k) not in (None, "")}
+
+    status = src.get("manglik_status")
+    if isinstance(status, str) and status:
+        labels = MANGLIK_STATUS_LABELS.get(lang, MANGLIK_STATUS_LABELS["en"])
+        src["manglik_status"] = labels.get(
+            status.upper(), status.replace("_", " ").title()
+        )
+    else:
+        # No detailed verdict — fall back to the simple flag rather than showing nothing.
+        src = {"is_present": src.get("is_present"), **src}
+
+    merged = {k: src[k] for k in _MANGLIK_ORDER if not _is_empty(src.get(k))}
+    if "is_present" in src and not _is_empty(src.get("is_present")) and not status:
+        merged = {"is_present": src["is_present"], **merged}
     # Fall back to the simple-manglik message only when no detailed report exists.
     if "manglik_report" not in merged and src.get("msg"):
         merged["msg"] = src["msg"]
     # Carry any remaining meaningful keys not covered above.
     for k, v in src.items():
-        if k not in merged and k not in ("msg",) and v not in (None, ""):
+        if k in ("msg", "is_present"):
+            continue
+        if k not in merged and not _is_empty(v):
             merged[k] = v
     return merged
 
@@ -103,7 +162,6 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
         not data.simple_manglik
         and not data.manglik
         and not data.kalsarpa_details
-        and not data.sadhesati_current_status
         and not data.pitra_dosha_report
     ):
         return None
@@ -111,11 +169,13 @@ def render_dosha(data: KundliData, lang: str = "en") -> str | None:
     locale = LOCALES.get(lang, LOCALES["en"])
 
     # (title, raw dosha dict) — Manglik is the merged simple + detailed view.
+    # Sade Sati is deliberately absent: the dedicated `sade_sati_journey` section renders
+    # the very same sadhesati_current_status dict with natal/transit labelling, and
+    # printing it here too produced the identical table twice in one report.
     raw_sections: list[tuple[str, dict | None]] = [
         (locale.get("manglik_title", "Manglik Analysis"),
-         _merge_manglik(data.simple_manglik, data.manglik) or None),
+         _merge_manglik(data.simple_manglik, data.manglik, lang) or None),
         (locale.get("kalsarpa_title", "Kalsarpa Dosha"), data.kalsarpa_details),
-        (locale.get("sadhesati_status_title", "Sadhesati Status"), data.sadhesati_current_status),
         (locale.get("pitra_dosha_title", "Pitra Dosha"), data.pitra_dosha_report),
     ]
 

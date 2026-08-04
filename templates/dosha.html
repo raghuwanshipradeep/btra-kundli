@@ -9,12 +9,18 @@
   {% elif val is number and val is not sameas true and val is not sameas false and val % 1 != 0 %}
     {{ "%.2f"|format(val) }}
   {% else %}
-    {% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | safe_time }}{% endif %}
+    {# `api_text` here too: long prose can land in the summary table, not just in
+       render_report -- the Pitra Dosha `conclusion` is a full sentence. #}
+    {% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | safe_time | api_text }}{% endif %}
   {% endif %}
 {% endmacro %}
 
 {# Long-form text / rules rendered as flowing "life-report" blocks (label + paragraph)
-   rather than cramped table cells, so descriptions fill the page and page-break cleanly. #}
+   rather than cramped table cells, so descriptions fill the page and page-break cleanly.
+
+   The English branches pipe through `api_text` because everything reaching this macro is
+   raw AstrologyAPI prose (see API_TEXT_FIXUPS in sections/__init__.py). The Hindi branches
+   don't need it -- that text has been through AI translation already. #}
 {% macro render_report(val) %}
   {% if val is none or val == "" %}
     <div class="report-field-text">&mdash;</div>
@@ -30,9 +36,9 @@
           <div class="report-field-label">{{ k | humanize_key(lang) }}</div>
           <div class="report-field-text">
             {% if v is iterable and v is not string %}
-              {% for item in v %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
+              {% for item in v %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item | api_text }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
             {% else %}
-              {% if lang == "hi" %}{{ v | to_hindi_value(lang) }}{% else %}{{ v }}{% endif %}
+              {% if lang == "hi" %}{{ v | to_hindi_value(lang) }}{% else %}{{ v | api_text }}{% endif %}
             {% endif %}
           </div>
         </div>
@@ -40,10 +46,10 @@
     {% endfor %}
   {% elif val is iterable and val is not string %}
     <div class="report-field-text">
-      {% for item in val %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
+      {% for item in val %}{% if lang == "hi" %}{{ item | to_hindi_value(lang) }}{% else %}{{ item | api_text }}{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
     </div>
   {% else %}
-    <div class="report-field-text">{% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val }}{% endif %}</div>
+    <div class="report-field-text">{% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | api_text }}{% endif %}</div>
   {% endif %}
 {% endmacro %}
 

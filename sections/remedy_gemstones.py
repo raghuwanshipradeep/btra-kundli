@@ -3,11 +3,49 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 
-from sections import LOCALES, make_env
+from sections import LOCALES, make_env, planet_to_en
 from sections.remedy_constants import PLANET_TO_GEMSTONE, SIGN_LORDS
 
 if TYPE_CHECKING:
     from models import KundliData
+
+
+def _gem_card(
+    api_stone,
+    derived_planet: str | None,
+    *,
+    type_: str,
+    label_key: str,
+    desc_key: str,
+    narrative: str,
+) -> dict | None:
+    """Build one gemstone card from the API stone, falling back to the derived planet.
+
+    Two things this fixes. (1) The Hindi name now follows the planet actually shown:
+    it used to come from the locally derived planet while the English name came from the
+    API, so when the two disagreed the Devanagari label named a different stone — and in
+    Hindi PDFs the Devanagari is the primary label. (2) A card is emitted whenever
+    *either* source can name a stone; previously life_stone and fortune_stone were gated
+    on the API alone, so when it returned only lucky_stone the page still claimed
+    "three key stones" but printed one.
+    """
+    api_stone = api_stone if isinstance(api_stone, dict) else {}
+    planet = planet_to_en(api_stone.get("planet") or "") or (derived_planet or "")
+    entry = PLANET_TO_GEMSTONE.get(planet, {})
+    name = api_stone.get("name") or entry.get("name", "")
+    if not name:
+        return None
+    return {
+        "type": type_,
+        "label_key": label_key,
+        "desc_key": desc_key,
+        "name": name,
+        "hindi_name": entry.get("hindi", ""),
+        "planet": planet,
+        "weight": api_stone.get("weight", ""),
+        "metal": api_stone.get("metal", ""),
+        "narrative": narrative,
+    }
 
 
 def _compute_atmakaraka(planets: list) -> str | None:
@@ -55,52 +93,24 @@ def render_remedy_gemstones(data: KundliData, lang: str = "en") -> str | None:
     _, ninth_lord = _get_house_sign_lord(data.houses, 9)
     ak_planet = _compute_atmakaraka(data.planets) if data.planets else None
 
-    gem_cards = []
-
-    life = api_stones["life_stone"]
-    if life:
-        derived = PLANET_TO_GEMSTONE.get(lagna_lord, {})
-        gem_cards.append({
-            "type": "life_stone",
-            "label_key": "rg_jivan_ratna",
-            "desc_key": "rg_jivan_desc",
-            "name": life.get("name", derived.get("name", "")),
-            "hindi_name": derived.get("hindi", ""),
-            "planet": life.get("planet", lagna_lord),
-            "weight": life.get("weight", ""),
-            "metal": life.get("metal", ""),
-            "narrative": data.narratives.get("gemstone_life_stone", ""),
-        })
-
-    if ak_planet:
-        derived_ak = PLANET_TO_GEMSTONE.get(ak_planet, {})
-        lucky = api_stones["lucky_stone"]
-        gem_cards.append({
-            "type": "lucky_stone",
-            "label_key": "rg_karaka_ratna",
-            "desc_key": "rg_karaka_desc",
-            "name": lucky.get("name", derived_ak.get("name", "")) if lucky else derived_ak.get("name", ""),
-            "hindi_name": derived_ak.get("hindi", ""),
-            "planet": lucky.get("planet", ak_planet) if lucky else ak_planet,
-            "weight": lucky.get("weight", "") if lucky else "",
-            "metal": lucky.get("metal", "") if lucky else "",
-            "narrative": data.narratives.get("gemstone_lucky_stone", ""),
-        })
-
-    fortune = api_stones["fortune_stone"]
-    if fortune:
-        derived_9 = PLANET_TO_GEMSTONE.get(ninth_lord, {})
-        gem_cards.append({
-            "type": "fortune_stone",
-            "label_key": "rg_bhagya_ratna",
-            "desc_key": "rg_bhagya_desc",
-            "name": fortune.get("name", derived_9.get("name", "")),
-            "hindi_name": derived_9.get("hindi", ""),
-            "planet": fortune.get("planet", ninth_lord),
-            "weight": fortune.get("weight", ""),
-            "metal": fortune.get("metal", ""),
-            "narrative": data.narratives.get("gemstone_fortune_stone", ""),
-        })
+    candidates = [
+        _gem_card(
+            api_stones["life_stone"], lagna_lord,
+            type_="life_stone", label_key="rg_jivan_ratna", desc_key="rg_jivan_desc",
+            narrative=data.narratives.get("gemstone_life_stone", ""),
+        ),
+        _gem_card(
+            api_stones["lucky_stone"], ak_planet,
+            type_="lucky_stone", label_key="rg_karaka_ratna", desc_key="rg_karaka_desc",
+            narrative=data.narratives.get("gemstone_lucky_stone", ""),
+        ),
+        _gem_card(
+            api_stones["fortune_stone"], ninth_lord,
+            type_="fortune_stone", label_key="rg_bhagya_ratna", desc_key="rg_bhagya_desc",
+            narrative=data.narratives.get("gemstone_fortune_stone", ""),
+        ),
+    ]
+    gem_cards = [c for c in candidates if c]
 
     if not gem_cards:
         return None

@@ -26,7 +26,12 @@
   {% elif val is number and val is not sameas true and val is not sameas false and val % 1 != 0 %}
     {{ "%.2f"|format(val) }}
   {% else %}
-    {% if lang == "hi" %}{{ val | to_hindi_value(lang) }}{% else %}{{ val | safe_time }}{% endif %}
+    {# clock12 rather than safe_time: the Basic Panchang and Planet Panchang tables are
+       dumped through this macro wholesale, and their sunrise/sunset/vedic values were the
+       last 24-hour times left in the report. clock12 reformats only strings that really
+       are clocks and returns everything else untouched, so day and nakshatra names still
+       reach to_hindi_value intact. #}
+    {% if lang == "hi" %}{{ val | clock12 | to_hindi_value(lang) }}{% else %}{{ val | clock12 }}{% endif %}
   {% endif %}
 {% endmacro %}
 
@@ -150,27 +155,27 @@
         <tbody>
             <tr>
                 <td><strong>{{ locale.sunrise }}</strong></td>
-                <td>{{ panchang.sunrise | safe_time }}</td>
+                <td>{{ panchang.sunrise | clock12 }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.sunset }}</strong></td>
-                <td>{{ panchang.sunset | safe_time }}</td>
+                <td>{{ panchang.sunset | clock12 }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.moonrise }}</strong></td>
-                <td>{{ panchang.moonrise | safe_time }}</td>
+                <td>{{ panchang.moonrise | clock12 }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.moonset }}</strong></td>
-                <td>{{ panchang.moonset | safe_time }}</td>
+                <td>{{ panchang.moonset | clock12 }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.vedic_sunrise }}</strong></td>
-                <td>{{ panchang.vedic_sunrise | safe_time }}</td>
+                <td>{{ panchang.vedic_sunrise | clock12 }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.vedic_sunset }}</strong></td>
-                <td>{{ panchang.vedic_sunset | safe_time }}</td>
+                <td>{{ panchang.vedic_sunset | clock12 }}</td>
             </tr>
             <tr>
                 <td><strong>{{ locale.sun_sign }}</strong></td>
@@ -258,35 +263,40 @@
             <tr><td><strong>{{ "वार" if lang == "hi" else "Day" }}</strong></td><td>{% if lang == "hi" %}{{ advanced_panchang_sunrise.day | to_hindi_value(lang) }}{% else %}{{ advanced_panchang_sunrise.day }}{% endif %}</td></tr>
             {% endif %}
             {% if advanced_panchang_sunrise.sunrise %}
-            <tr><td><strong>{{ locale.sunrise }}</strong></td><td>{{ advanced_panchang_sunrise.sunrise | safe_time }}</td></tr>
+            <tr><td><strong>{{ locale.sunrise }}</strong></td><td>{{ advanced_panchang_sunrise.sunrise | clock12 }}</td></tr>
             {% endif %}
             {% if advanced_panchang_sunrise.sunset %}
-            <tr><td><strong>{{ locale.sunset }}</strong></td><td>{{ advanced_panchang_sunrise.sunset | safe_time }}</td></tr>
+            <tr><td><strong>{{ locale.sunset }}</strong></td><td>{{ advanced_panchang_sunrise.sunset | clock12 }}</td></tr>
             {% endif %}
             {% if advanced_panchang_sunrise.moonrise %}
-            <tr><td><strong>{{ locale.moonrise }}</strong></td><td>{{ advanced_panchang_sunrise.moonrise | safe_time }}</td></tr>
+            <tr><td><strong>{{ locale.moonrise }}</strong></td><td>{{ advanced_panchang_sunrise.moonrise | clock12 }}</td></tr>
             {% endif %}
             {% if advanced_panchang_sunrise.moonset %}
-            <tr><td><strong>{{ locale.moonset }}</strong></td><td>{{ advanced_panchang_sunrise.moonset | safe_time }}</td></tr>
+            <tr><td><strong>{{ locale.moonset }}</strong></td><td>{{ advanced_panchang_sunrise.moonset | clock12 }}</td></tr>
             {% endif %}
             {% if advanced_panchang_sunrise.vedic_sunrise %}
-            <tr><td><strong>{{ locale.vedic_sunrise }}</strong></td><td>{{ advanced_panchang_sunrise.vedic_sunrise | safe_time }}</td></tr>
+            <tr><td><strong>{{ locale.vedic_sunrise }}</strong></td><td>{{ advanced_panchang_sunrise.vedic_sunrise | clock12 }}</td></tr>
             {% endif %}
             {% if advanced_panchang_sunrise.vedic_sunset %}
-            <tr><td><strong>{{ locale.vedic_sunset }}</strong></td><td>{{ advanced_panchang_sunrise.vedic_sunset | safe_time }}</td></tr>
+            <tr><td><strong>{{ locale.vedic_sunset }}</strong></td><td>{{ advanced_panchang_sunrise.vedic_sunset | clock12 }}</td></tr>
             {% endif %}
           </tbody>
         </table>
 
         <hr class="divider">
 
-        {# --- Tithi / Nakshatra / Yog / Karan --- #}
+        {# --- Tithi / Nakshatra / Yog / Karan ---
+           These are computed for SUNRISE, not the birth moment, so they can legitimately
+           differ by one step from the birth-time panchang above (a yoga boundary falling
+           between birth and sunrise is enough). The caption repeats here because this
+           table often breaks onto the next page, away from the section heading. #}
         {% set panchang_elements = [
             (locale.tithi, advanced_panchang_sunrise.tithi if advanced_panchang_sunrise.tithi is defined else none),
             (locale.nakshatra, advanced_panchang_sunrise.nakshatra if advanced_panchang_sunrise.nakshatra is defined else none),
             (locale.yoga, advanced_panchang_sunrise.yog if advanced_panchang_sunrise.yog is defined else none),
             (locale.karana, advanced_panchang_sunrise.karan if advanced_panchang_sunrise.karan is defined else none),
         ] %}
+        <p style="font-size: 9pt; font-style: italic; margin: 0 0 2mm;">{{ locale.sunrise_reference_note }}</p>
         <table>
           <thead>
             <tr>
@@ -305,7 +315,7 @@
                   {% if elem.details.ruler %} — {{ locale.ruler }}: {{ elem.details.ruler }}{% endif %}
                   {% if elem.details.deity %} — {{ locale.deity }}: {{ elem.details.deity }}{% endif %}
                 </td>
-                <td style="font-size: 9.5pt;">{{ elem.details.special or elem.details.summary or "—" }}</td>
+                <td style="font-size: 9.5pt;">{{ (elem.details.special or elem.details.summary or "—") | api_text }}</td>
               </tr>
               {% elif elem %}
               <tr>
@@ -396,7 +406,7 @@
             {% for name, period in time_periods %}
             <tr>
               <td><strong>{{ name }}</strong></td>
-              <td>{{ period.start | safe_time }} — {{ period.end | safe_time }}</td>
+              <td>{{ period.start | clock12 }} — {{ period.end | clock12 }}</td>
             </tr>
             {% endfor %}
           </tbody>

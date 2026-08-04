@@ -28,7 +28,7 @@
     </div>
 
     <p style="font-size: 9.5pt; color: var(--ink-mute); margin: 0 0 3mm 0;">
-      {{ locale.mj_period }}: {{ entry.start }} → {{ entry.end }}
+      {{ locale.mj_period }}: {{ entry.start | clock12 }} → {{ entry.end | clock12 }}
     </p>
 
     {% if entry.experience %}

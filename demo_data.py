@@ -415,17 +415,22 @@ SAMPLE_RASHI_REPORTS = {
     "Ketu": {"sign": "Cancer", "report": "Ketu in Cancer indicates detachment from emotional comforts."},
 }
 
+# `is_present` and `manglik_status` mirror the live /simple_manglik and /manglik payloads.
+# Without them the demo exercised only _merge_manglik's fallback branch, so the path every
+# paid report takes went unrendered here. See sections/dosha.py::_merge_manglik.
 SAMPLE_SIMPLE_MANGLIK = {
     "is_manglik_pitr": False,
     "is_manglik_chandra": False,
     "percentage_manglik_present": 12.5,
     "is_manglik": False,
+    "is_present": False,
     "manglik_report": "The native is not Manglik. Mars does not adversely affect the 1st, 4th, 7th, 8th or 12th house from Lagna.",
 }
 
 SAMPLE_MANGLIK = {
     "is_manglik_pitr": False,
     "is_manglik_chandra": False,
+    "manglik_status": "NOT_EFFECTIVE",
     "manglik_present_rule": [],
     "manglik_cancel_rule": ["Mars is aspected by Jupiter, canceling Manglik dosha."],
     "percentage_manglik_present": 12.5,
@@ -441,9 +446,20 @@ SAMPLE_KALSARPA = {
     "report": "Kalsarpa Dosha is not present in this horoscope.",
 }
 
+# Mirrors the live /sadhesati_current_status payload. Note which field is which: the real
+# API returns `is_undergoing_sadhesati` as a PROSE SENTENCE and `sadhesati_status` as the
+# boolean — this fixture used to have the two the other way round, so nothing here
+# exercised the branch every paid report takes (see render_sade_sati_journey). `moon_sign`
+# is natal and `saturn_sign` is the current transit; they were absent entirely, so the
+# natal-vs-transit labelling went unrendered.
 SAMPLE_SADHESATI_STATUS = {
-    "is_undergoing_sadhesati": False,
-    "sadhesati_status": "Not undergoing Sadhesati",
+    "considered_date": "3-8-2026",
+    "saturn_retrograde": False,
+    "moon_sign": "Taurus",
+    "saturn_sign": "Pisces",
+    "is_undergoing_sadhesati": "No, currently you are not undergoing Sadhesati.",
+    "sadhesati_phase": "",
+    "sadhesati_status": False,
     "is_undergoing_small_panoti": False,
     "small_panoti_status": "Not undergoing Small Panoti",
 }

@@ -13,6 +13,7 @@ from anthropic import AsyncAnthropic
 
 from config import settings
 from sections import planet_to_en
+from sections.sade_sati_journey import dedupe_life_details
 
 if TYPE_CHECKING:
     from models import KundliData
@@ -860,22 +861,31 @@ async def generate_narratives(
                 m = next((p for p in kundli_data.planets if p.name == "Moon"), None)
                 if m:
                     moon_sign = m.sign
+            # Dedupe exactly as the renderer does, so the prose can't describe cycles the
+            # table doesn't show (the API resamples stationary-Saturn ingresses).
             phases_summary = [
                 {
                     "type": p.get("phase", p.get("type", "")),
                     "saturn_sign": p.get("saturn_sign", p.get("sign", "")),
                     "date": p.get("date", p.get("start", p.get("start_date", ""))),
                 }
-                for p in details if isinstance(p, dict)
+                for p in dedupe_life_details(
+                    [p for p in details if isinstance(p, dict)]
+                )
             ]
+            status = kundli_data.sadhesati_current_status
+            status = status if isinstance(status, dict) else {}
+            # `is_undergoing_sadhesati` is prose, so bool() on it is always True.
+            flag = status.get("sadhesati_status")
+            if isinstance(flag, bool):
+                is_active = flag
+            else:
+                prose = str(status.get("is_undergoing_sadhesati") or "").strip().lower()
+                is_active = bool(prose) and not prose.startswith("no")
             if phases_summary:
                 misc_batch["sade_sati_overview"] = ("sade_sati_overview", {
                     "moon_sign": moon_sign,
-                    "is_active": bool(
-                        kundli_data.sadhesati_current_status
-                        and isinstance(kundli_data.sadhesati_current_status, dict)
-                        and kundli_data.sadhesati_current_status.get("is_undergoing_sadhesati")
-                    ),
+                    "is_active": is_active,
                     "phases": phases_summary,
                 })
 
