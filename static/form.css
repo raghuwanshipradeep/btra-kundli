@@ -318,6 +318,41 @@ body {
     min-height: 600px;
 }
 
+/* Internal mode — TEMPORARY, injected by setupInternalMode() on /internal only.
+   Remove alongside the /internal routes in main.py. */
+.internal-banner {
+    background: var(--cream-alt);
+    border: 1.5px dashed var(--maroon);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    color: var(--charcoal);
+}
+
+.internal-banner label {
+    display: block;
+    margin: 12px 0 4px;
+    font-weight: 600;
+}
+
+.internal-banner input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1.5px solid var(--gold);
+    border-radius: 6px;
+    font-size: 15px;
+    background: #fff;
+}
+
+.internal-note {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--maroon);
+}
+
 /* Error */
 .error-msg {
     background: #FFEBEE;

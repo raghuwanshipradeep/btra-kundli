@@ -4,6 +4,11 @@ let _priceAmount = 0;          // price in rupees, used as Meta Pixel event valu
 const _currency = 'INR';
 let _purchaseTracked = false;  // guard so Purchase fires at most once
 
+// TEMPORARY: /internal serves this same page as a staff tool that generates directly,
+// with no payment step. Everything below keys off this one flag; on "/" it is false and
+// the page behaves exactly as it always has. Remove with the /internal routes in main.py.
+const IS_INTERNAL = location.pathname.replace(/\/+$/, '') === '/internal';
+
 // Safe Meta Pixel wrapper — no-ops if the pixel is blocked or not yet loaded.
 function fbTrack(event, params) {
     if (typeof fbq !== 'function') return;
@@ -18,7 +23,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     populateSelects();
     setupValidationMessages();
     setupAutocomplete();
-    await loadPaymentConfig();
+    if (IS_INTERNAL) {
+        // Skip loadPaymentConfig entirely: _paymentEnabled stays false, so the submit
+        // branch routes to handleFreeFlow and Razorpay is never reached.
+        setupInternalMode();
+    } else {
+        await loadPaymentConfig();
+    }
     setupFormSubmit();
     setupGenerateAnother();
 });
@@ -38,6 +49,40 @@ async function loadPaymentConfig() {
     } catch (err) {
         console.warn('Could not load payment config, falling back to free mode');
     }
+}
+
+// Injects the internal-mode banner + admin key field from JS, so index.html carries no
+// internal-only markup and "/" is untouched by this feature.
+function setupInternalMode() {
+    const form = document.getElementById('kundliForm');
+    if (!form) return;
+
+    const box = document.createElement('div');
+    box.className = 'internal-banner';
+    box.innerHTML = `
+        <strong>Internal mode</strong> — generates the report directly, no payment taken.
+        <label for="adminKey">Admin key</label>
+        <input type="password" id="adminKey" autocomplete="current-password"
+               placeholder="X-Admin-Key" />
+        <span class="internal-note">Generation takes a few minutes. Keep this tab open.</span>
+    `;
+    form.parentNode.insertBefore(box, form);
+
+    // sessionStorage, not localStorage: convenient across repeat generations, gone when
+    // the browser session ends.
+    const keyInput = document.getElementById('adminKey');
+    keyInput.value = sessionStorage.getItem('kundliAdminKey') || '';
+    keyInput.addEventListener('change', () => {
+        sessionStorage.setItem('kundliAdminKey', keyInput.value.trim());
+    });
+
+    const btnText = document.querySelector('#submitBtn .btn-text');
+    if (btnText) btnText.textContent = 'Generate Kundli (internal)';
+}
+
+function getAdminKey() {
+    const el = document.getElementById('adminKey');
+    return el ? el.value.trim() : '';
 }
 
 function populateSelects() {
@@ -242,12 +287,16 @@ function setupFormSubmit() {
         const btnText = submitBtn.querySelector('.btn-text');
         const btnLoader = submitBtn.querySelector('.btn-loader');
         submitBtn.disabled = true;
-        btnText.textContent = 'Processing...';
+        // Internal runs are synchronous and slow — say so rather than showing a bare spinner.
+        btnText.textContent = IS_INTERNAL ? 'Generating… this can take a few minutes' : 'Processing...';
         btnLoader.style.display = 'inline-block';
         hideError();
 
-        // Meta Pixel: user submitted valid birth details
-        fbTrack('Lead', { content_name: 'Kundli Form', currency: _currency, value: _priceAmount });
+        // Meta Pixel: user submitted valid birth details. Skipped for internal staff runs
+        // so test generations don't pollute ad reporting.
+        if (!IS_INTERNAL) {
+            fbTrack('Lead', { content_name: 'Kundli Form', currency: _currency, value: _priceAmount });
+        }
 
         const payload = {
             name: document.getElementById('name').value.trim(),
@@ -278,13 +327,22 @@ function setupFormSubmit() {
 
 async function handleFreeFlow(payload) {
     try {
-        const resp = await fetch('/generate-kundli', {
+        const headers = { 'Content-Type': 'application/json' };
+        if (IS_INTERNAL) headers['X-Admin-Key'] = getAdminKey();
+
+        const resp = await fetch(IS_INTERNAL ? '/internal/generate-kundli' : '/generate-kundli', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify(payload),
         });
 
         if (!resp.ok) {
+            if (resp.status === 401) {
+                throw new Error('Invalid admin key — check the key above and try again.');
+            }
+            if (resp.status === 504) {
+                throw new Error('Generation timed out on the server. Please try again.');
+            }
             const errData = await resp.json().catch(() => ({}));
             throw new Error(errData.detail || `Server error: ${resp.status}`);
         }
@@ -390,7 +448,9 @@ function showPdfResult(blob, name, year) {
 function resetSubmitButton() {
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = false;
-    const label = _paymentEnabled ? `Pay ${_priceDisplay} & Generate Kundli` : 'Generate Kundli PDF';
+    const label = IS_INTERNAL
+        ? 'Generate Kundli (internal)'
+        : (_paymentEnabled ? `Pay ${_priceDisplay} & Generate Kundli` : 'Generate Kundli PDF');
     submitBtn.querySelector('.btn-text').textContent = label;
     submitBtn.querySelector('.btn-loader').style.display = 'none';
 }

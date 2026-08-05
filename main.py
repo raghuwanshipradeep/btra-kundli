@@ -344,6 +344,15 @@ async def index():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+# TEMPORARY: staff-facing form that generates a report directly, with no payment step.
+# Serves the same index.html as "/" — form.js switches to internal mode off the pathname,
+# so there is only ever one copy of the form. Remove this route, /internal/generate-kundli,
+# and the IS_INTERNAL branch in form.js together when the sheet flow covers this need.
+@app.get("/internal", include_in_schema=False)
+async def internal_form():
+    return FileResponse(STATIC_DIR / "index.html")
+
+
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok", "version": "1.0.0"}
@@ -558,6 +567,42 @@ async def generate_kundli(request: KundliRequest) -> StreamingResponse:
         raise HTTPException(status_code=403, detail="Payment required. Use /create-order flow.")
 
     pdf_bytes, filename = await _build_kundli_pdf(request)
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
+
+
+# TEMPORARY: backs the /internal form. Unlike /generate-kundli this is gated by X-Admin-Key
+# rather than a global "anyone may generate free" flag, and it applies the same concurrency
+# slot + wall-clock timeout the paid path uses, since a detailed report is minutes of work.
+# It records nothing: no Drive archive, no Pabbly, no Supabase, no credit spend — a direct
+# download is not an order.
+@app.post("/internal/generate-kundli", include_in_schema=False)
+async def internal_generate_kundli(
+    request: KundliRequest,
+    x_admin_key: str | None = Header(None),
+) -> StreamingResponse:
+    if not settings.admin_key or x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    async with _get_generation_slots():
+        try:
+            pdf_bytes, _ = await asyncio.wait_for(
+                _build_kundli_pdf(request),
+                timeout=settings.generation_timeout_seconds,
+            )
+        except asyncio.TimeoutError:
+            logger.error("INTERNAL generation timed out after %ss", settings.generation_timeout_seconds)
+            raise HTTPException(status_code=504, detail="Generation timed out")
+
+    # _build_kundli_pdf's own filename is First##Phone##Email.pdf — fine for the Drive
+    # archive, wrong for a browser download, so build a clean one instead.
+    safe_name = "".join(c for c in request.name if c.isalnum() or c in " _-").strip()
+    filename = f"kundli_{safe_name or 'report'}_{request.year}.pdf"
+
+    logger.info("INTERNAL generated %s (%d bytes)", filename, len(pdf_bytes))
     return StreamingResponse(
         BytesIO(pdf_bytes),
         media_type="application/pdf",
