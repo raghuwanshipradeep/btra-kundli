@@ -23,6 +23,9 @@ class KundliRequest(BaseModel):
     state: str = ""
     pincode: str = ""
     report_tier: str = "detailed"
+    # Which brand the report is emitted under: "batraa" (default) or "bloomx".
+    # Resolved by branding.get_brand(); anything unrecognised falls back to Batraa.
+    kundli_type: str = "batraa"
 
 
 class BirthDetails(BaseModel):

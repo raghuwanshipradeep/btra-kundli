@@ -6,6 +6,7 @@ import pathlib
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
+from branding import BATRAA_ONLY_SECTIONS, brand_for
 from config import settings
 from models import KundliData
 from sections import _format_degree, _safe_time, humanize_key, to_hindi_value
@@ -63,17 +64,20 @@ from sections.three_pillars import render_three_pillars
 from sections.sade_sati_journey import render_sade_sati_journey
 from sections.mahadasha_journey import render_mahadasha_journey
 from sections.numerology_personality import render_numerology_personality
-from sections.divider_images import make_divider_renderer, make_link_banner_renderer
+from sections.divider_images import (
+    make_divider_renderer,
+    make_link_banner_renderer,
+    render_front_page,
+)
 
 logger = logging.getLogger(__name__)
 
 TEMPLATES_DIR = pathlib.Path(__file__).parent / "templates"
 
-# Promotional filler images, rotated across sparse pages and capped at
-# settings.filler_max_images placements per report.
-_FILLER_IMAGES = [
-    str(TEMPLATES_DIR / "images" / "btr_image.JPG"),
-]
+# Fallback promo art for callers that pass no brand, as bare filenames under
+# templates/images. The per-brand list lives on branding.Brand.filler_images; this
+# stays only so a bare _fill_gap_pages(pdf) keeps its old behaviour.
+_FILLER_IMAGES = ["btr_image.JPG"]
 # Content below this fraction of page height is the footer / page-number band and
 # is ignored when measuring how far down real content reaches.
 _FILLER_FOOTER_ZONE = 0.90
@@ -82,16 +86,23 @@ _FILLER_FOOTER_ZONE = 0.90
 _FILLER_MIN_PAGE_GAP = 12
 
 
-def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
+def _fill_gap_pages(pdf_bytes: bytes, filler_images: "tuple[str, ...] | None" = None) -> bytes:
     """Overlay a promotional image into the empty bottom band of any page (after
     settings.filler_skip_pages) whose bottom gap exceeds settings.filler_gap_threshold,
     stopping after settings.filler_max_images placements.
-    Same-page overlay only (page count unchanged). Best-effort: never raises."""
+    Same-page overlay only (page count unchanged). Best-effort: never raises.
+
+    filler_images holds the brand's promo art (bare filenames under templates/images).
+    An empty tuple means this brand has no promo art, so the pass is a no-op -- that is
+    how a Bloomx report avoids carrying Batraa promos."""
     import fitz  # PyMuPDF
 
-    paths = [p for p in _FILLER_IMAGES if pathlib.Path(p).exists()]
+    names = _FILLER_IMAGES if filler_images is None else list(filler_images)
+    candidates = [str(TEMPLATES_DIR / "images" / n) for n in names]
+    paths = [p for p in candidates if pathlib.Path(p).exists()]
     if not paths:
-        logger.warning("Filler images missing; skipping gap-fill pass")
+        if names:
+            logger.warning("Filler images missing; skipping gap-fill pass")
         return pdf_bytes
 
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -154,7 +165,9 @@ def _fill_gap_pages(pdf_bytes: bytes) -> bytes:
     return pdf_bytes
 
 SECTION_RENDERERS = [
-    ("front_page", make_divider_renderer("front_page.jpg")),
+    # Brand-aware: the image follows data.request.kundli_type, so it cannot be a
+    # make_divider_renderer() closure (those bind the filename at import time).
+    ("front_page", render_front_page),
     ("astrologer_intro", make_divider_renderer("astrologer.png")),
     ("authors_note", render_authors_note),
     ("front_matter", render_front_matter),          # disclaimer + how-to-read
@@ -219,6 +232,11 @@ class PDFGenerator:
         include_sections: list[str] | None = None,
         report_tier: str = "detailed",
     ) -> bytes:
+        # Resolved once per render and kept local: this instance is a process-wide
+        # singleton rendered by several threads at once, so nothing brand-specific
+        # may be stored on self.
+        brand = brand_for(data)
+
         sections: list[str] = []
         rendered: set[str] = set()
         deferred_slots: dict[str, int] = {}
@@ -228,6 +246,10 @@ class PDFGenerator:
             if report_tier == "lite" and name in LITE_SKIP_SECTIONS:
                 continue
             if not settings.pdf_images_enabled and name in IMAGE_ONLY_SECTIONS:
+                continue
+            # Batraa's own artwork (astrologer photo, third-party offer banner) must
+            # never appear under another brand.
+            if not brand.is_batraa and name in BATRAA_ONLY_SECTIONS:
                 continue
             if name in DEFERRED_SECTIONS:
                 # Hold this page position; filled in below, once we know what rendered.
@@ -258,12 +280,12 @@ class PDFGenerator:
                         "rendered" if toc_html else "skipped")
 
         brand_footer = None
-        if settings.brand_footer_enabled:
+        if brand.footer_enabled:
             brand_footer = {
                 "enabled": True,
-                "name": settings.brand_footer_name,
-                "url": settings.brand_footer_url,
-                "phone": settings.brand_footer_phone,
+                "name": brand.footer_name,
+                "url": brand.footer_url,
+                "phone": brand.footer_phone,
             }
 
         full_html = self._base_template.render(
@@ -280,7 +302,7 @@ class PDFGenerator:
 
         if settings.filler_images_enabled:
             try:
-                pdf_bytes = _fill_gap_pages(pdf_bytes)
+                pdf_bytes = _fill_gap_pages(pdf_bytes, brand.filler_images)
             except Exception:
                 logger.exception("Filler-image pass failed; using PDF without fillers")
 

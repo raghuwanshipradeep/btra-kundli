@@ -320,6 +320,33 @@ body {
 
 /* Internal mode — TEMPORARY, injected by setupInternalMode() on /internal only.
    Remove alongside the /internal routes in main.py. */
+
+/* z-index clears the .autocomplete-dropdown at z-index 100 above. */
+.internal-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--malefic);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* A different hue is the at-a-glance tell that this is not the customer page;
+   the padding clears the fixed bar above. */
+body.internal-mode {
+    padding-top: 44px;
+    background: linear-gradient(160deg, #001a1a 0%, #0e2c2c 30%, #003d3d 60%, #001a1a 100%);
+}
+
 .internal-banner {
     background: var(--cream-alt);
     border: 1.5px dashed var(--maroon);

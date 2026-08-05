@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 
+from branding import brand_for
 from sections import LOCALES, TOC_CHAPTERS, make_env
 
 if TYPE_CHECKING:
@@ -17,7 +18,8 @@ logger = logging.getLogger(__name__)
 def render_front_matter(data: KundliData, lang: str = "en") -> str | None:
     """Disclaimer + 'How to Read This Report' pages."""
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = make_env()
+    # Brand passed for the logo in partials/brand_signature.html (included twice here).
+    env = make_env(brand_for(data))
     template = env.get_template("front_matter.html")
     return template.render(
         name=data.request.name,
@@ -63,7 +65,7 @@ def render_front_matter_toc(
     the render loop; see DEFERRED_SECTIONS there.
     """
     locale = LOCALES.get(lang, LOCALES["en"])
-    env = make_env()
+    env = make_env(brand_for(data))
     template = env.get_template("front_matter_toc.html")
     return template.render(
         name=data.request.name,

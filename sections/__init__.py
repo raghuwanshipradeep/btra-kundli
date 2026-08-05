@@ -135,7 +135,14 @@ def truncate_sentences(text, max_sentences: int = 6):
     return text
 
 
-def make_env() -> Environment:
+def make_env(brand=None) -> Environment:
+    """Build a fresh Jinja environment.
+
+    A new Environment per call, so setting brand globals here is request-scoped and
+    thread-safe -- unlike PDFGenerator._env, which is a shared singleton. Pass a
+    branding.Brand for templates that include partials/brand_signature.html; omit it
+    and the logo falls back to the Batraa asset.
+    """
     env = Environment(loader=FileSystemLoader("templates"))
     env.filters["safe_time"] = _safe_time
     # 12-hour AM/PM, for sites that definitely hold a clock time. safe_time stays the
@@ -155,6 +162,13 @@ def make_env() -> Environment:
     # (section artwork) and settings.pdf_logo_enabled (the brand signature).
     env.globals["show_images"] = settings.pdf_images_enabled
     env.globals["show_logo"] = settings.pdf_logo_enabled
+    # partials/brand_signature.html reads these; defaults keep the Batraa logo for
+    # every renderer that has no brand to pass.
+    env.globals["brand_logo"] = getattr(brand, "logo_image", None) or "kundli_logo.png"
+    env.globals["brand_logo_alt"] = (
+        getattr(brand, "logo_alt", None)
+        or "The Batraa Numerology — Your Personalized Kundli Report"
+    )
     return env
 
 

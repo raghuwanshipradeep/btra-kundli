@@ -94,5 +94,7 @@ def map_sheet_row(row: dict) -> tuple[KundliRequest | None, str | None]:
         state=row.get("state") or "",
         pincode=str(row.get("pin_code") or ""),
         report_tier="detailed",
+        # The sheet flow is Batraa-only; nothing in sheet_orders selects a brand yet.
+        kundli_type="batraa",
     )
     return request, None

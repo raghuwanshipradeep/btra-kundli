@@ -20,6 +20,22 @@ class Settings(BaseSettings):
     brand_footer_url: str = ""
     brand_footer_phone: str = ""
 
+    # The second brand, selected per request via KundliRequest.kundli_type="bloomx".
+    # See branding.py, which resolves one of these two sets into a Brand profile.
+    # Unlike the Batraa block above these carry real defaults rather than "", so a
+    # Bloomx report renders correctly even before .env is populated.
+    bloomx_author_name: str = "https://bloomxsolutions.com/"
+    bloomx_author_title: str = "Astrologer"
+    bloomx_cta_consult_url: str = "https://bloomxsolutions.com/"
+    bloomx_cta_pooja_url: str = "https://bloomxsolutions.com/"
+    bloomx_cta_rudraksha_url: str = "https://bloomxsolutions.com/"
+    bloomx_brand_footer_enabled: bool = True
+    bloomx_brand_footer_name: str = "The Bloomx Solutions"
+    bloomx_brand_footer_url: str = "https://bloomxsolutions.com/"
+    bloomx_brand_footer_phone: str = "+91-7000190457"
+    bloomx_cover_image: str = "bloomx_kundli_cover.png"
+    bloomx_logo_image: str = "bloomx_logo_dark.png"
+
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = ""

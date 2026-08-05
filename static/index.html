@@ -144,6 +144,16 @@
                         <option value="hi">Hindi (&#x0939;&#x093F;&#x0928;&#x094D;&#x0926;&#x0940;)</option>
                     </select>
                 </div>
+                <!-- Brand selector. Hidden by default and revealed only in internal
+                     mode by setupInternalMode(), so a paying customer on "/" cannot
+                     order a Bloomx report through the Batraa payment account. -->
+                <div class="form-group" id="kundliTypeGroup" style="display: none;">
+                    <label for="kundliType">Kundli Type</label>
+                    <select id="kundliType" name="kundliType">
+                        <option value="batraa">Batraa Numerology</option>
+                        <option value="bloomx">Bloomx</option>
+                    </select>
+                </div>
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">

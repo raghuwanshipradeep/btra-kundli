@@ -57,6 +57,17 @@ function setupInternalMode() {
     const form = document.getElementById('kundliForm');
     if (!form) return;
 
+    // "/" and "/internal" serve the same HTML, so without a loud signal it is easy to fill
+    // in the paid page by habit and get a payment sheet instead. Bar is fixed rather than
+    // in-flow so it stays visible next to the submit button at the bottom of a long form.
+    document.title = 'INTERNAL — Kundli (no payment)';
+    document.body.classList.add('internal-mode');
+
+    const bar = document.createElement('div');
+    bar.className = 'internal-topbar';
+    bar.textContent = '⚠ Internal mode — no payment taken';
+    document.body.insertBefore(bar, document.body.firstChild);
+
     const box = document.createElement('div');
     box.className = 'internal-banner';
     box.innerHTML = `
@@ -75,6 +86,10 @@ function setupInternalMode() {
     keyInput.addEventListener('change', () => {
         sessionStorage.setItem('kundliAdminKey', keyInput.value.trim());
     });
+
+    // Brand choice is staff-only — see the comment on #kundliTypeGroup in index.html.
+    const typeGroup = document.getElementById('kundliTypeGroup');
+    if (typeGroup) typeGroup.style.display = '';
 
     const btnText = document.querySelector('#submitBtn .btn-text');
     if (btnText) btnText.textContent = 'Generate Kundli (internal)';
@@ -315,6 +330,9 @@ function setupFormSubmit() {
             gender: document.getElementById('gender').value,
             state: document.getElementById('state').value.trim(),
             pincode: document.getElementById('pincode').value.trim(),
+            // Only selectable in internal mode; on "/" the group stays hidden and this
+            // is always 'batraa', matching the KundliRequest default.
+            kundli_type: document.getElementById('kundliType').value,
         };
 
         if (_paymentEnabled) {
